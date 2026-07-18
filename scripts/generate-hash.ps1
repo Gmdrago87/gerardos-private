@@ -8,7 +8,8 @@ if (-not $password) {
 }
 
 # Configuración de PBKDF2
-$iterations = 600000
+# IMPORTANTE: Cloudflare Workers limita las iteraciones a un máximo de 100,000
+$iterations = 100000
 $saltSize = 16
 $hashSize = 32
 
