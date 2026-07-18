@@ -109,14 +109,14 @@ export async function onRequestPost(context) {
         const payload = {
             sub: env.GITHUB_USERNAME,
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
+            exp: Math.floor(Date.now() / 1000) + (60 * 60) // 1 hora de seguridad
         };
         
         const token = await signJwt(payload, env.JWT_SECRET);
         
-        // Configurar cookie httpOnly + Secure + SameSite
+        // Cookie de sesión: se borra al cerrar el navegador (sin Max-Age)
         const isProduction = env.NODE_ENV === "production";
-        let cookieString = `session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`;
+        let cookieString = `session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax`;
         if (isProduction || request.url.startsWith("https://")) {
             cookieString += "; Secure";
         }
