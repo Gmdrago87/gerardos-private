@@ -91,7 +91,7 @@ export async function onRequestPost(context) {
         }
         
         // Verificar contraseña
-        const isValid = await verifyPassword(password, env.PASSWORD_HASH);
+        const isValid = await verifyPassword(password, env.PASSWORD_HASH.trim());
         if (!isValid) {
             return new Response(JSON.stringify({ error: "Contraseña incorrecta" }), {
                 status: 401,
