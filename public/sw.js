@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardmaestre-portfolio-v5';
+const CACHE_NAME = 'gerardmaestre-portfolio-v6';
 
 const urlsToCache = [
   './',
@@ -35,6 +35,11 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return;
+
+  // NUNCA cachear las llamadas a la API del backend — deben ir siempre a la red
+  // para que las cookies de sesión funcionen correctamente
+  if (event.request.url.includes('/api/')) return;
+
   const isDynamic = event.request.url.includes('database.json') || event.request.url.includes('api.github.com');
   if (isDynamic) {
     event.respondWith(staleWhileRevalidate(event.request));
