@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source de GitHub.">
+    <meta name="theme-color" content="#1e1e2e">
+    <meta name="author" content="GerardMaestre">
+    <meta name="keywords" content="portfolio, github, glassmorphism, web development, open source">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gerardmaestre.github.io/Project_Repositorios_Github/">
+    <meta property="og:title" content="GerardMaestre | Portfolio Web">
+    <meta property="og:description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source.">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://gerardmaestre.github.io/Project_Repositorios_Github/">
+    <meta property="twitter:title" content="GerardMaestre | Portfolio Web">
+    <meta property="twitter:description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source.">
+    <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <title>Gerard Maestre — Portafolio</title>
+    
+    <!-- Preload -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.github.com">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons - Lucide -->
+    <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="app.js"></script>
+    
+</head>
+
+<body class="web-mode">
+
+    <!-- macOS Desktop -->
+    <div class="mac-desktop">
+
+        <!-- macOS Wallpaper layer -->
+        <div class="mac-wallpaper"></div>
+
+        <!-- ===== macOS Menu Bar ===== -->
+        <nav class="mac-menubar" role="menubar" aria-label="Barra de menú macOS">
+            <div class="mac-menubar__left">
+                <span class="mac-menubar__apple" aria-label="Apple">&#63743;</span>
+                <span class="mac-menubar__app-name">GerardOS</span>
+                <span class="mac-menubar__item">Archivo</span>
+                <span class="mac-menubar__item">Edición</span>
+                <span class="mac-menubar__item">Visualización</span>
+                <span class="mac-menubar__item">Ventana</span>
+                <span class="mac-menubar__item">Ayuda</span>
+            </div>
+            <div class="mac-menubar__right">
+                <span class="mac-menubar__status-icon" title="Sesión Segura" style="color: #22c55e;">
+                    <i data-lucide="shield-check"></i>
+                </span>
+                <span class="mac-menubar__status-icon" title="Cerrar Sesión" id="mac-logout-btn" style="cursor: pointer; color: #f87171;">
+                    <i data-lucide="log-out"></i>
+                </span>
+                <span class="mac-menubar__status-icon" title="Wi-Fi">
+                    <i data-lucide="wifi"></i>
+                </span>
+                <span class="mac-menubar__status-icon" title="Batería">
+                    <i data-lucide="battery-full"></i>
+                </span>
+                <span class="mac-menubar__status-icon" title="Brillo">
+                    <i data-lucide="sun"></i>
+                </span>
+                <span id="mac-clock" class="mac-menubar__clock" aria-live="polite"></span>
+            </div>
+        </nav>
+
+        <!-- ===== Desktop Window Area ===== -->
+        <div class="mac-window-area">
+
+            <!-- Pantalla de Carga (overlay fixed) -->
+            <div id="loading" class="loading-screen">
+                <div class="loading-content">
+                    <div class="loading-spinner">
+                        <div class="spinner-ring spinner-ring--outer"></div>
+                        <div class="spinner-ring spinner-ring--middle"></div>
+                        <div class="spinner-ring spinner-ring--inner"></div>
+                    </div>
+                    <div class="loading-info">
+                        <p id="loading-text" class="loading-label">
+                            <span class="loading-gradient-text">Cargando portafolio</span>
+                        </p>
+                        <p id="loading-status" class="loading-status">Preparando interfaz...</p>
+                        <div class="loading-dots">
+                            <span class="loading-dot loading-dot--purple"></span>
+                            <span class="loading-dot loading-dot--blue"></span>
+                            <span class="loading-dot loading-dot--cyan"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notificación Toast (overlay fixed) -->
+            <div id="toast" class="toast hidden">
+                <div class="toast__panel glass-panel">
+                    <div class="toast__content">
+                        <div class="toast__icon-wrapper">
+                            <i data-lucide="wifi-off"></i>
+                        </div>
+                        <div class="toast__text">
+                            <p class="toast__title">Modo Caché</p>
+                            <p class="toast__message">Datos almacenados localmente</p>
+                        </div>
+                        <button class="toast__close" onclick="document.getElementById('toast').classList.add('hidden')">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón Volver Arriba -->
+            <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
+                <i data-lucide="arrow-up"></i>
+            </button>
+
+            <!-- ===== macOS Window ===== -->
+            <div class="mac-window" id="mac-main-window">
+
+                <!-- Window Title Bar -->
+                <div class="mac-window__titlebar" id="mac-window-titlebar">
+                    <div class="mac-window__controls">
+                        <span class="mac-window__btn mac-window__btn--close" id="mac-btn-close" title="Cerrar">
+                            <svg viewBox="0 0 10 10" width="6" height="6" class="mac-window__btn-icon"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="mac-window__btn mac-window__btn--minimize" id="mac-btn-minimize" title="Minimizar">
+                            <svg viewBox="0 0 10 10" width="8" height="2" class="mac-window__btn-icon"><path d="M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="mac-window__btn mac-window__btn--maximize" id="mac-btn-maximize" title="Ampliar">
+                            <svg viewBox="0 0 10 10" width="7" height="7" class="mac-window__btn-icon"><path d="M1 9l8-8M9 9V1H1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                    </div>
+                    <div class="mac-window__title">
+                        <i data-lucide="github" class="mac-window__title-icon"></i>
+                        Gerard Maestre — Portafolio
+                    </div>
+                </div>
+
+                <!-- Window Content (scrollable) -->
+                <div class="mac-window__content" id="mac-window-content">
+
+                    <!-- Contenido Principal -->
+                    <main class="main-content" id="main-content">
+                        
+                        <!-- Cabecera -->
+                        <header class="header-layout">
+                            
+                            <!-- Barra Lateral - Perfil -->
+                            <aside class="sidebar">
+                                <div class="profile-card glass-panel">
+                                    <div class="avatar-container">
+                                        <div class="avatar-frame">
+                                            <img id="avatar" src="" alt="Avatar de usuario" loading="lazy" class="avatar-img">
+                                        </div>
+                                        <div class="avatar-status">
+                                            <i data-lucide="zap"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="profile-info">
+                                        <h1 id="name" class="profile-name"></h1>
+                                        <p id="username" class="profile-username"></p>
+                                    </div>
+                                    
+                                    <a id="github-link" href="#" target="_blank" rel="noopener noreferrer" class="profile-github-btn">
+                                        <span class="shimmer-overlay"></span>
+                                        <span class="btn-inner">
+                                            <i data-lucide="github"></i>
+                                            Ver perfil completo
+                                        </span>
+                                    </a>
+
+                                    <div class="profile-counters">
+                                        <div class="counter-card glass-panel">
+                                            <div class="counter-icon counter-icon--purple">
+                                                <i data-lucide="users"></i>
+                                            </div>
+                                            <p id="followers" class="counter-value">0</p>
+                                            <p class="counter-label">Followers</p>
+                                        </div>
+
+                                        <div class="counter-card glass-panel">
+                                            <div class="counter-icon counter-icon--blue">
+                                                <i data-lucide="user-plus"></i>
+                                            </div>
+                                            <p id="following" class="counter-value">0</p>
+                                            <p class="counter-label">Following</p>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </aside>
+
+                            <!-- Contenido Principal de Cabecera -->
+                            <div class="header-content">
+                                <!-- Hero -->
+                                <div class="hero-banner glass-panel">
+                                    <div class="hero-glow"></div>
+                                    <div class="hero-body">
+                                        <h2 class="hero-title">
+                                            <span>Portafolio</span>
+                                            <span>Gerard Maestre</span>
+                                        </h2>
+                                        <p class="hero-description">
+                                            Explorá mis proyectos open source de manera mas estructurada y con varias opciones dinamicas
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Cuadrícula de Estadísticas -->
+                                <div class="stats-grid">
+                                    <div class="stat-card glass-panel">
+                                        <div class="stat-icon stat-icon--purple">
+                                            <i data-lucide="code-2"></i>
+                                        </div>
+                                        <h3 id="total-repos" class="stat-value">0</h3>
+                                        <p class="stat-label">Repositorios</p>
+                                    </div>
+                                    <div class="stat-card glass-panel">
+                                        <div class="stat-icon stat-icon--yellow">
+                                            <i data-lucide="star"></i>
+                                        </div>
+                                        <h3 id="total-stars" class="stat-value">0</h3>
+                                        <p class="stat-label">Estrellas</p>
+                                    </div>
+                                    <div class="stat-card glass-panel">
+                                        <div class="stat-icon stat-icon--blue">
+                                            <i data-lucide="git-fork"></i>
+                                        </div>
+                                        <h3 id="total-forks" class="stat-value">0</h3>
+                                        <p class="stat-label">Forks</p>
+                                    </div>
+                                    <div class="stat-card glass-panel">
+                                        <div class="stat-icon stat-icon--pink">
+                                            <i data-lucide="terminal"></i>
+                                        </div>
+                                        <h3 id="top-lang" class="stat-value stat-value--small">...</h3>
+                                        <p class="stat-label">Top Lenguaje</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <!-- Barra de Búsqueda -->
+                        <div class="search-wrapper">
+                            <div class="glass-search-bar">
+                                <div class="search-form">
+                                    <div class="search-row">
+                                        <div class="search-field">
+                                            <i data-lucide="search" class="search-field__icon"></i>
+                                            <input type="text" 
+                                                   id="search-input" 
+                                                   placeholder="Buscar proyectos...">
+                                        </div>
+                                        <button id="toggle-filters-btn" class="btn-filter" title="Mostrar/Ocultar Filtros">
+                                            <i data-lucide="sliders-horizontal"></i>
+                                        </button>
+                                        <button id="refresh-data-btn" 
+                                                class="btn-refresh"
+                                                title="Refrescar datos desde GitHub API"
+                                                onclick="forceRefreshData()">
+                                            <i data-lucide="refresh-cw"></i>
+                                            <span class="btn-refresh__label">Refrescar</span>
+                                        </button>
+                                        <button id="btn-open-create-repo" class="btn-refresh" style="background: rgba(0, 242, 234, 0.15); color: #00f2ea; border: 1px solid rgba(0, 242, 234, 0.3);" title="Nuevo Repositorio">
+                                            <i data-lucide="plus-circle"></i>
+                                            <span class="btn-refresh__label">Nuevo</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="data-source-indicator" class="data-source hidden">
+                                        <i data-lucide="info"></i>
+                                        <span id="data-source-text">Fuente de datos: API</span>
+                                        <span id="cache-age-text"></span>
+                                    </div>
+                                    
+                                    <div id="filters-row" class="filters-row hidden">
+                                        <div class="sort-group">
+                                            <span class="sort-group__label">Ordenar:</span>
+                                            <button class="sort-btn active-sort" data-sort="updated" onclick="applySorting('updated')">
+                                                <i data-lucide="clock"></i> Recientes
+                                            </button>
+                                            <button class="sort-btn" data-sort="stars" onclick="applySorting('stars')">
+                                                <i data-lucide="star"></i> Estrellas
+                                            </button>
+                                            <button class="sort-btn" data-sort="forks" onclick="applySorting('forks')">
+                                                <i data-lucide="git-fork"></i> Forks
+                                            </button>
+                                            <button class="sort-btn" data-sort="name" onclick="applySorting('name')">
+                                                <i data-lucide="arrow-down-a-z"></i> A-Z
+                                            </button>
+                                        </div>
+                                        <div class="language-group scrollbar-hide" id="filter-container">
+                                            <button class="filter-btn filter-btn--active" data-filter="all" onclick="filterByLang('all', this)">
+                                                Todos
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cuadrícula de Repositorios -->
+                        <div id="repos-grid" class="repos-grid">
+                            <!-- Rellenado por JS -->
+                        </div>
+
+                        <!-- Cargar Más -->
+                        <div class="load-more-section">
+                            <button id="load-more-btn" class="btn-load-more hidden">
+                                <span class="btn-load-more__inner">
+                                    <i data-lucide="chevrons-down"></i>
+                                    Cargar más proyectos
+                                    <i data-lucide="chevrons-down"></i>
+                                </span>
+                            </button>
+                            <p id="showing-count" class="results-count"></p>
+                        </div>
+
+                        <!-- Pie de Página -->
+                        <footer class="site-footer">
+                            <div class="footer-content">
+                                <p class="footer-author">Diseñado y desarrollado por Gerard Maestre</p>
+                                <p class="footer-copyright">&copy; <span id="year"></span> GerardMaestre</p>
+                            </div>
+                        </footer>
+                    </main>
+
+                </div><!-- /mac-window__content -->
+            </div><!-- /mac-window -->
+
+        </div><!-- /mac-window-area -->
+
+        <!-- ===== macOS Dock ===== -->
+        <div class="mac-dock-container" role="toolbar" aria-label="Dock">
+            <div class="mac-dock">
+                <div class="mac-dock__item" title="Inicio" id="dock-home">
+                    <div class="mac-dock__icon mac-dock__icon--home">
+                        <i data-lucide="home"></i>
+                    </div>
+                    <span class="mac-dock__label">Inicio</span>
+                </div>
+                <div class="mac-dock__item" title="Perfil" id="dock-profile">
+                    <div class="mac-dock__icon mac-dock__icon--profile">
+                        <i data-lucide="user"></i>
+                    </div>
+                    <span class="mac-dock__label">Perfil</span>
+                </div>
+                <div class="mac-dock__item" title="Buscar" id="dock-search">
+                    <div class="mac-dock__icon mac-dock__icon--search">
+                        <i data-lucide="search"></i>
+                    </div>
+                    <span class="mac-dock__label">Buscar</span>
+                </div>
+                <div class="mac-dock__item" title="Repositorios" id="dock-repos">
+                    <div class="mac-dock__icon mac-dock__icon--repos">
+                        <i data-lucide="code-2"></i>
+                    </div>
+                    <span class="mac-dock__label">Repos</span>
+                </div>
+                <div class="mac-dock__separator"></div>
+                <a class="mac-dock__item" title="GitHub" id="dock-github" href="https://github.com/GerardMaestre" target="_blank" rel="noopener noreferrer">
+                    <div class="mac-dock__icon mac-dock__icon--github">
+                        <i data-lucide="github"></i>
+                    </div>
+                    <span class="mac-dock__label">GitHub</span>
+                </a>
+            </div>
+        </div>
+
+    </div><!-- /mac-desktop -->
+
+    <!-- Modal Visor de Código (fixed overlay, outside window) -->
+    <div id="modal" class="modal hidden">
+        <div class="modal__backdrop" onclick="closeModal()"></div>
+        <div class="modal__container glass-panel">
+            <div class="modal__header">
+                <div class="modal__title-row">
+                    <div class="modal__icon">
+                        <i data-lucide="github"></i>
+                    </div>
+                    <h3 id="modal-title" class="modal__title">Repository</h3>
+                </div>
+                <button class="modal__close" onclick="closeModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal__body">
+                <div class="modal__sidebar" id="file-tree">
+                    <div class="modal__placeholder">
+                        <div class="modal__placeholder-inner">
+                            <i data-lucide="folder"></i>
+                            <p class="modal__placeholder-text">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal__code-area" id="code-container">
+                    <div id="code-viewer" class="modal__code-viewer">
+                        <i data-lucide="mouse-pointer"></i>
+                        <p>Selecciona un archivo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Login (macOS Lock Screen style) -->
+    <div id="mac-login-screen" class="login-screen hidden">
+        <div class="login-backdrop"></div>
+        <div class="login-card glass-panel">
+            <div class="login-avatar-container">
+                <div class="login-avatar-frame">
+                    <img src="https://avatars.githubusercontent.com/u/232252917?v=4" alt="Gerard" class="login-avatar-img">
+                </div>
+            </div>
+            <h2 class="login-title">Gerard Maestre</h2>
+            <p class="login-subtitle">Introduce tu contraseña para acceder a GerardOS</p>
+            <form id="mac-login-form" class="login-form">
+                <div class="login-field">
+                    <i data-lucide="lock" class="login-field__icon"></i>
+                    <input type="password" id="mac-login-password" placeholder="Contraseña" required>
+                </div>
+                <p id="mac-login-error" class="login-error-msg"></p>
+                <button type="submit" id="mac-login-btn" class="login-submit-btn">Acceder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Crear Repositorio (fixed overlay) -->
+    <div id="create-repo-modal" class="modal hidden">
+        <div class="modal__backdrop" onclick="document.getElementById('create-repo-modal').classList.add('hidden')"></div>
+        <div class="modal__container modal__container--small glass-panel">
+            <div class="modal__header">
+                <div class="modal__title-row">
+                    <div class="modal__icon"><i data-lucide="plus-circle"></i></div>
+                    <h3 class="modal__title">Nuevo Repositorio</h3>
+                </div>
+                <button class="modal__close" id="create-repo-cancel-btn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="create-repo-form" class="modal__form">
+                <div class="form-group">
+                    <label for="repo-name" class="form-label">Nombre del repositorio</label>
+                    <input type="text" id="repo-name" class="form-input" placeholder="ej. mi-proyecto-secreto" required>
+                </div>
+                <div class="form-group">
+                    <label for="repo-desc" class="form-label">Descripción (opcional)</label>
+                    <textarea id="repo-desc" class="form-textarea" placeholder="Descripción breve de tu repositorio..."></textarea>
+                </div>
+                <div class="form-group form-group--row">
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="repo-private" class="form-checkbox" checked>
+                        <span>Repositorio Privado 🔒</span>
+                    </label>
+                </div>
+                <p id="create-repo-error" class="form-error-msg"></p>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="create-repo-cancel-btn">Cancelar</button>
+                    <button type="submit" id="create-repo-submit-btn" class="btn-submit">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inicializar Iconos -->
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+</html>
