@@ -27,33 +27,23 @@ function bytesToHex(buffer) {
         .join("");
 }
 
-// Limpiar el hash de cualquier basura que Cloudflare pueda haber inyectado
+// Limpiar el hash de cualquier carácter extraño
 function cleanHashString(raw) {
-    // Eliminar TODOS los caracteres de espacio, salto de línea, retorno de carro, tabulaciones, comillas
     return raw.replace(/[\s\r\n\t"']/g, '');
 }
 
-// Verificar contraseña usando PBKDF2 nativo compatible con el generador
+// Verificar contraseña usando PBKDF2 nativo (máximo 100,000 iteraciones por límite de Cloudflare Workers)
 async function verifyPassword(password, storedHashString) {
     try {
-        // Limpiar el hash agresivamente
         const cleaned = cleanHashString(storedHashString);
-        
         const parts = cleaned.split(":");
         if (parts.length !== 5 || parts[0] !== "pbkdf2" || parts[1] !== "sha256") {
-            return { valid: false, debug: `parts=${parts.length}, p0=${parts[0]}, p1=${parts[1]}, cleaned_len=${cleaned.length}` };
+            return false;
         }
         
         const iterations = parseInt(parts[2], 10);
-        const saltHex = parts[3];
+        const saltBytes = hexToBytes(parts[3]);
         const storedHashHex = parts[4];
-        
-        // Validar que sal y hash son hexadecimales válidos
-        if (!/^[0-9a-fA-F]+$/.test(saltHex) || !/^[0-9a-fA-F]+$/.test(storedHashHex)) {
-            return { valid: false, debug: `invalid_hex salt_len=${saltHex.length} hash_len=${storedHashHex.length}` };
-        }
-        
-        const saltBytes = hexToBytes(saltHex);
         
         // Importar la contraseña recibida
         const baseKey = await crypto.subtle.importKey(
@@ -77,11 +67,10 @@ async function verifyPassword(password, storedHashString) {
         );
         
         const derivedHex = bytesToHex(derivedBits);
-        const matches = constantTimeCompare(derivedHex, storedHashHex);
-        
-        return { valid: matches, debug: `iter=${iterations} salt_len=${saltHex.length} stored_len=${storedHashHex.length} derived_len=${derivedHex.length} match=${matches}` };
+        return constantTimeCompare(derivedHex, storedHashHex);
     } catch (e) {
-        return { valid: false, debug: `exception: ${e.message}` };
+        console.error("Error verificando contraseña:", e);
+        return false;
     }
 }
 
@@ -90,11 +79,7 @@ export async function onRequestPost(context) {
     
     // Verificar configuración
     if (!env.PASSWORD_HASH || !env.JWT_SECRET || !env.GITHUB_USERNAME) {
-        const missing = [];
-        if (!env.PASSWORD_HASH) missing.push("PASSWORD_HASH");
-        if (!env.JWT_SECRET) missing.push("JWT_SECRET");
-        if (!env.GITHUB_USERNAME) missing.push("GITHUB_USERNAME");
-        return new Response(JSON.stringify({ error: `Servidor desconfigurado: faltan ${missing.join(", ")}` }), {
+        return new Response(JSON.stringify({ error: "Servidor desconfigurado: faltan variables de entorno básicas" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
         });
@@ -111,27 +96,10 @@ export async function onRequestPost(context) {
             });
         }
         
-        // Verificar contraseña con diagnóstico
-        const result = await verifyPassword(password, env.PASSWORD_HASH);
-        
-        if (!result.valid) {
-            // Incluir info de diagnóstico (sin revelar datos sensibles)
-            const rawLen = env.PASSWORD_HASH.length;
-            const cleanedLen = cleanHashString(env.PASSWORD_HASH).length;
-            const hasNewlines = env.PASSWORD_HASH.includes('\n') || env.PASSWORD_HASH.includes('\r');
-            const hasQuotes = env.PASSWORD_HASH.includes('"') || env.PASSWORD_HASH.includes("'");
-            
-            return new Response(JSON.stringify({ 
-                error: "Contraseña incorrecta",
-                _diag: {
-                    raw_len: rawLen,
-                    clean_len: cleanedLen,
-                    has_newlines: hasNewlines,
-                    has_quotes: hasQuotes,
-                    verify_debug: result.debug,
-                    hash_preview: cleanHashString(env.PASSWORD_HASH).substring(0, 30) + "..."
-                }
-            }), {
+        // Verificar contraseña
+        const isValid = await verifyPassword(password, env.PASSWORD_HASH);
+        if (!isValid) {
+            return new Response(JSON.stringify({ error: "Contraseña incorrecta" }), {
                 status: 401,
                 headers: { "Content-Type": "application/json" }
             });
