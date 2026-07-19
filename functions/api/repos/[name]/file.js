@@ -13,6 +13,13 @@ export async function onRequestGet(context) {
             headers: { "Content-Type": "application/json" }
         });
     }
+
+    if (path.includes("..") || path.includes("\0")) {
+        return new Response(JSON.stringify({ error: "Ruta de archivo inválida" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
     
     if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
         return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
@@ -96,6 +103,13 @@ export async function onRequestPut(context) {
             });
         }
         
+        if (path.includes("..") || path.includes("\0")) {
+            return new Response(JSON.stringify({ error: "Ruta de archivo inválida" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
         const headers = {
             "Authorization": `Bearer ${context.data.session.github_token}`,
             "Accept": "application/vnd.github+json",
@@ -168,6 +182,13 @@ export async function onRequestDelete(context) {
         
         if (!path || !message || !sha) {
             return new Response(JSON.stringify({ error: "Faltan parámetros requeridos (path, message, sha)" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        if (path.includes("..") || path.includes("\0")) {
+            return new Response(JSON.stringify({ error: "Ruta de archivo inválida" }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" }
             });

@@ -5,12 +5,31 @@ export async function onRequestGet(context) {
     const url = new URL(request.url);
     console.log(`[API] OAuth Callback recibido en: ${url.pathname}`);
     
+    // Función auxiliar para obtener cookies
+    function getCookie(request, name) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (!cookieHeader) return null;
+        const cookies = cookieHeader.split(";");
+        for (let cookie of cookies) {
+            const [key, val] = cookie.trim().split("=");
+            if (key === name) return decodeURIComponent(val);
+        }
+        return null;
+    }
+
     const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const storedState = getCookie(request, "oauth_state");
     console.log(`[API] Código extraído: ${code ? "SÍ (oculto)" : "NO"}`);
 
     if (!code) {
         console.error("[API] Error: Falta el código de autorización.");
         return new Response("Falta el código de autorización.", { status: 400 });
+    }
+
+    if (!state || state !== storedState) {
+        console.error("[API] Error: Token CSRF (state) inválido o expirado.");
+        return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
     }
 
     if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.JWT_SECRET || !env.GITHUB_USERNAME) {
@@ -38,7 +57,7 @@ export async function onRequestGet(context) {
         
         if (tokenData.error) {
             console.error(`[API] Error de GitHub OAuth: ${tokenData.error_description}`);
-            return new Response(`Error de OAuth: ${tokenData.error_description}`, { status: 400 });
+            return new Response(`Error al autenticar con GitHub. Por favor, inténtalo de nuevo.`, { status: 400 });
         }
 
         const accessToken = tokenData.access_token;
@@ -60,7 +79,7 @@ export async function onRequestGet(context) {
         // Solo el dueño configurado en las variables de entorno puede acceder
         if (userData.login.toLowerCase() !== env.GITHUB_USERNAME.toLowerCase()) {
             console.error(`[API] Acceso Denegado. Esperado: ${env.GITHUB_USERNAME}, Recibido: ${userData.login}`);
-            return new Response(`Acceso Denegado. Este panel pertenece a ${env.GITHUB_USERNAME}. Tú has iniciado sesión como ${userData.login}.`, { status: 403 });
+            return new Response(`Acceso Denegado. Este panel es privado y no estás autorizado.`, { status: 403 });
         }
 
         console.log("[API] Generando sesión local JWT...");
@@ -76,23 +95,28 @@ export async function onRequestGet(context) {
         const jwt = await signJwt(payload, env.JWT_SECRET);
         console.log("[API] Sesión generada correctamente. Redirigiendo al inicio.");
 
-        // 5. Establecer la cookie y redirigir al inicio
+        // 5. Establecer la cookie y redirigir al inicio, además de limpiar oauth_state
         const isProduction = env.NODE_ENV === "production";
-        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Lax`;
+        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict`;
+        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+        
         if (isProduction || request.url.startsWith("https://")) {
             cookieString += "; Secure";
+            clearStateCookie += "; Secure";
         }
 
-        return new Response("", {
+        const responseHeaders = new Headers();
+        responseHeaders.set("Location", "/");
+        responseHeaders.append("Set-Cookie", cookieString);
+        responseHeaders.append("Set-Cookie", clearStateCookie);
+
+        return new Response(null, {
             status: 302,
-            headers: {
-                "Location": "/",
-                "Set-Cookie": cookieString
-            }
+            headers: responseHeaders
         });
 
     } catch (e) {
         console.error(`[API] Excepción procesando el login con GitHub: ${e.message}`);
-        return new Response("Error procesando el login con GitHub: " + e.message, { status: 500 });
+        return new Response("Error interno del servidor durante el login.", { status: 500 });
     }
 }

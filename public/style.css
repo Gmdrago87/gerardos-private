@@ -3333,3 +3333,252 @@ body.web-mode .btn-scroll-top {
 #ai-content p {
   margin-bottom: 1rem;
 }
+
+/* ------ Dock Icon AI Theme ------ */
+.mac-dock__icon--ai { background: linear-gradient(145deg, #a78bfa, #7c3aed); color: #fff; }
+
+/* ------ AI Modal & Chat Interface ------ */
+.ai-modal-container {
+  max-width: 700px !important;
+  width: 90vw;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-quick-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+}
+
+.ai-quick-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ai-quick-action {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.ai-quick-action:hover {
+  background: rgba(167, 139, 250, 0.2);
+  border-color: #a78bfa;
+  color: #fff;
+}
+
+.ai-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-chat-msg {
+  display: flex;
+  gap: 12px;
+  max-width: 85%;
+}
+
+.ai-chat-msg--user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.ai-chat-msg--ai {
+  align-self: flex-start;
+}
+
+.ai-msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-msg-avatar--user {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+}
+
+.ai-msg-avatar--ai {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff;
+}
+
+.ai-msg-bubble {
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.ai-chat-msg--user .ai-msg-bubble {
+  background: rgba(59, 130, 246, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #fff;
+  border-bottom-right-radius: 2px;
+}
+
+.ai-chat-msg--ai .ai-msg-bubble {
+  background: rgba(30, 30, 45, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-bottom-left-radius: 2px;
+}
+
+.ai-chat-input-row {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ai-chat-input-row input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.ai-chat-input-row input:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
+}
+
+.ai-code-block {
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 10px 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.ai-inline-code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: #a78bfa;
+}
+
+/* ------ Mobile Responsive (iOS Style Adaptation) ------ */
+@media (max-width: 768px) {
+  .mac-desktop {
+    padding: 0;
+  }
+
+  .mac-window {
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    max-width: 100vw !important;
+  }
+
+  .mac-window__titlebar {
+    padding: 10px 14px;
+  }
+
+  .mac-window__title {
+    font-size: 0.85rem;
+  }
+
+  /* Transform macOS Dock into iOS Bottom Tab Bar */
+  .mac-dock-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0;
+    background: rgba(15, 10, 31, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .mac-dock {
+    width: 100%;
+    justify-content: space-around;
+    padding: 6px 0 10px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mac-dock__separator {
+    display: none;
+  }
+
+  .mac-dock__item {
+    width: auto;
+    flex: 1;
+  }
+
+  .mac-dock__item:hover {
+    transform: none;
+  }
+
+  .mac-dock__icon {
+    width: 28px;
+    height: 28px;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .mac-dock__icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mac-dock__label {
+    position: static;
+    transform: none;
+    background: transparent;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    padding: 0;
+    margin-top: 2px;
+    display: block !important;
+  }
+
+  .ai-modal-container {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+}
+

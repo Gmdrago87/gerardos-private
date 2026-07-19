@@ -1,12 +1,14 @@
-import { USERNAME, debounce } from './modules/utils.js';
+import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
 import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, fetchCommits, fetchBranches } from './modules/api.js';
 import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
+import { initAI } from './modules/ai_ui.js';
 
 async function initApp() {
     initShortcuts();
+    initAI();
     updateLoadingStatus('Verificando sesión...');
     try {
         const session = await checkSession();
@@ -277,8 +279,8 @@ async function loadCommitsList(repoName, branch) {
                 <div class="commit-item">
                     ${avatar}
                     <div class="commit-info">
-                        <p class="commit-msg">${c.commit.message}</p>
-                        <p class="commit-meta">${c.commit.author.name} · ${date}</p>
+                        <p class="commit-msg">${escapeHtml(c.commit.message)}</p>
+                        <p class="commit-meta">${escapeHtml(c.commit.author.name)} · ${date}</p>
                     </div>
                 </div>
             `;
@@ -477,7 +479,7 @@ async function loadKanbanIssues() {
             card.dataset.number = issue.number;
             
             card.innerHTML = `
-                <div class="kanban-card-title">${issue.title}</div>
+                <div class="kanban-card-title">${escapeHtml(issue.title)}</div>
                 <div class="kanban-card-meta">
                     <span>#${issue.number}</span>
                     <span>${issue.comments} 💬</span>
@@ -559,12 +561,12 @@ async function loadActions() {
         data.workflow_runs.forEach(run => {
             const statusColor = run.conclusion === 'success' ? '#00ff00' : (run.conclusion === 'failure' ? '#ff0000' : '#ffff00');
             const date = new Date(run.created_at).toLocaleString();
-            const logLine = `\n[${date}] ${run.name} #${run.run_number}\n> Estado: <span style="color:${statusColor}">${run.status} - ${run.conclusion || 'pending'}</span>\n> Actor: ${run.actor.login}\n> Mensaje: ${run.head_commit.message.split('\\n')[0]}\n----------------------------------------`;
+            const logLine = `\n[${date}] ${escapeHtml(run.name)} #${run.run_number}\n> Estado: <span style="color:${statusColor}">${run.status} - ${run.conclusion || 'pending'}</span>\n> Actor: ${escapeHtml(run.actor.login)}\n> Mensaje: ${escapeHtml(run.head_commit.message.split('\\n')[0])}\n----------------------------------------`;
             logContainer.innerHTML += logLine;
         });
         
     } catch (e) {
-        logContainer.innerHTML += `\n> [ERROR] ${e.message}\n`;
+        logContainer.innerHTML += `\n> [ERROR] ${escapeHtml(e.message)}\n`;
     }
 }
 
@@ -660,9 +662,9 @@ function initCommandPalette() {
             if (count > 5) return;
             if (r.name.toLowerCase().includes(query)) {
                 html += `
-                <div class="palette-item" onclick="window.openRepoFromPalette('${r.name}')">
+                <div class="palette-item" data-repo-name="${escapeHtml(r.name).replace(/"/g, '&quot;')}" onclick="window.openRepoFromPalette(this.getAttribute('data-repo-name'))">
                     <i data-lucide="book" class="palette-item-icon" style="width:16px;height:16px"></i>
-                    <span class="palette-item-title">${r.name}</span>
+                    <span class="palette-item-title">${escapeHtml(r.name)}</span>
                 </div>`;
                 count++;
             }

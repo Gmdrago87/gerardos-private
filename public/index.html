@@ -45,12 +45,13 @@
     <!-- IndexedDB Wrapper -->
     <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
     
-    <!-- Service Worker Cache Management Removed: Usando Headers de Cache -->
+    <!-- Service Worker PWA -->
     <script>
-    // Limpieza única de caché antiguo si existiera
-    if ('caches' in window) {
-        caches.keys().then(function(names) {
-            names.forEach(function(name) { caches.delete(name); });
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('[PWA] Service Worker registrado con éxito:', reg.scope))
+                .catch(err => console.log('[PWA] Error registrando Service Worker:', err));
         });
     }
     </script>
@@ -389,6 +390,12 @@
                     </div>
                     <span class="mac-dock__label">Repos</span>
                 </div>
+                <div class="mac-dock__item" title="Asistente IA" id="dock-ai">
+                    <div class="mac-dock__icon mac-dock__icon--ai">
+                        <i data-lucide="bot"></i>
+                    </div>
+                    <span class="mac-dock__label">GerardOS AI</span>
+                </div>
                 <div class="mac-dock__item" title="Ajustes" id="dock-settings" onclick="document.getElementById('settings-modal').classList.remove('hidden')">
                     <div class="mac-dock__icon mac-dock__icon--settings">
                         <i data-lucide="settings"></i>
@@ -406,6 +413,51 @@
         </div>
 
     </div><!-- /mac-desktop -->
+
+    <!-- Modal Asistente de IA -->
+    <div id="ai-modal" class="modal hidden">
+        <div class="modal__backdrop" onclick="document.getElementById('ai-modal').classList.add('hidden')"></div>
+        <div class="modal__container glass-panel ai-modal-container">
+            <div class="modal__header">
+                <div class="modal__title-row" style="flex: 1;">
+                    <div class="modal__icon-badge" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa;">
+                        <i data-lucide="bot"></i>
+                    </div>
+                    <div class="modal__titles">
+                        <h3 class="modal__title">Asistente GerardOS AI</h3>
+                        <p class="modal__subtitle">Cloudflare Workers AI (Llama 3 8B)</p>
+                    </div>
+                </div>
+                <button class="modal__close" id="ai-close-btn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div class="ai-quick-actions-bar">
+                <span class="ai-quick-label">Acciones de Código:</span>
+                <button class="ai-quick-action" data-action="explain"><i data-lucide="help-circle"></i> Explicar</button>
+                <button class="ai-quick-action" data-action="refactor"><i data-lucide="sparkles"></i> Refactorizar</button>
+                <button class="ai-quick-action" data-action="find_bugs"><i data-lucide="shield-alert"></i> Buscar Bugs</button>
+                <button class="ai-quick-action" data-action="comment"><i data-lucide="file-text"></i> Comentar</button>
+            </div>
+
+            <div class="ai-chat-body" id="ai-messages">
+                <div class="ai-chat-msg ai-chat-msg--ai">
+                    <div class="ai-msg-avatar ai-msg-avatar--ai"><i data-lucide="bot"></i></div>
+                    <div class="ai-msg-bubble">
+                        Hola, soy el asistente GerardOS AI. ¿En qué puedo ayudarte hoy con tu código o tu portafolio?
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-chat-input-row">
+                <input type="text" id="ai-input" placeholder="Haz una pregunta a la IA o selecciona una acción..." autocomplete="off">
+                <button id="ai-send-btn" class="btn-refresh" style="padding: 10px 16px;">
+                    <i data-lucide="send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Visor de Código (fixed overlay, outside window) -->
     <div id="modal" class="modal hidden">

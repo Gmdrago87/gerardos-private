@@ -243,8 +243,8 @@ function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
             <div class="repo-card__actions" id="actions-${repo.id}">
                 ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link"><i data-lucide="globe"></i> WEB</a>` : ''}
                 <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link"><i data-lucide="external-link"></i></a>
-                <a href="https://vscode.dev/github/GerardMaestre/${repo.name}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
-                <button class="repo-card__delete-btn" onclick="event.stopPropagation(); window.deleteRepoGlobal('${repo.name}')" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
+                <a href="https://vscode.dev/github/GerardMaestre/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
+                <button class="repo-card__delete-btn" data-repo-name="${escapeHtml(repo.name).replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
             </div>
         </div>
         ${badgesHtml}
@@ -329,7 +329,7 @@ function generateFolderHtml(item, repoName, branch) {
             <summary class="tree-folder__summary">
                 <i data-lucide="folder" class="tree-folder__icon tree-folder__icon--closed"></i>
                 <i data-lucide="folder-open" class="tree-folder__icon tree-folder__icon--open"></i>
-                <span class="tree-folder__name">${item.name}</span>
+                <span class="tree-folder__name">${escapeHtml(item.name)}</span>
             </summary>
             <div class="tree-folder__children">
                 ${generateTreeHTML(item.children, repoName, branch)}
@@ -341,11 +341,11 @@ function generateFolderHtml(item, repoName, branch) {
 function generateFileHtml(item, repoName, branch) {
     return `
         <div class="tree-file file-node"
-             data-repo="${repoName}"
-             data-branch="${branch}"
-             data-path="${item.path}">
+             data-repo="${escapeHtml(repoName).replace(/"/g, '&quot;')}"
+             data-branch="${escapeHtml(branch).replace(/"/g, '&quot;')}"
+             data-path="${escapeHtml(item.path).replace(/"/g, '&quot;')}">
             <i data-lucide="file-code"></i>
-            ${item.name}
+            ${escapeHtml(item.name)}
         </div>
     `;
 }
@@ -516,7 +516,7 @@ async function handleAiAction(editor, action) {
         }
         
         // Formatear markdown básico (backticks)
-        let htmlResult = data.result
+        let htmlResult = escapeHtml(data.result)
             .replace(/```([\s\S]*?)```/g, '<pre style="background:#1a1a1a;padding:15px;border-radius:8px;overflow-x:auto;margin:10px 0;"><code>$1</code></pre>')
             .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">$1</code>');
             
