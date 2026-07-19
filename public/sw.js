@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1';
+const CACHE_NAME = 'gerardos-v2';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -19,7 +19,16 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('[Service Worker] Pre-cacheando recursos estáticos');
-            return cache.addAll(STATIC_ASSETS);
+            return Promise.all(
+                STATIC_ASSETS.map(url => {
+                    return fetch(new Request(url, { cache: 'reload' })).then(response => {
+                        if (response.ok) {
+                            return cache.put(url, response);
+                        }
+                        throw new Error('Network response was not ok');
+                    }).catch(err => console.warn('[Service Worker] Error cacheando', url, err));
+                })
+            );
         }).then(() => self.skipWaiting())
     );
 });
@@ -63,14 +72,15 @@ self.addEventListener('fetch', (event) => {
             if (cachedResponse) {
                 // Actualizar en segundo plano (stale-while-revalidate)
                 fetch(event.request).then((networkResponse) => {
-                    if (networkResponse.status === 200) {
+                    // Evitar cachear redirecciones a páginas de login (común en repositorios privados/Cloudflare Access)
+                    if (networkResponse.ok && !networkResponse.redirected) {
                         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
                     }
                 }).catch(() => {});
                 return cachedResponse;
             }
             return fetch(event.request).then((networkResponse) => {
-                if (networkResponse.status === 200 && event.request.method === 'GET') {
+                if (networkResponse.ok && event.request.method === 'GET' && !networkResponse.redirected) {
                     const responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
                 }

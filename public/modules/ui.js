@@ -426,7 +426,7 @@ export function renderFileContent(content, path, element) {
                 clearInterval(checkInterval);
                 viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
                 initMonaco(content, path);
-            } else if (attempts > 50) { // 5 segundos
+            } else if (attempts > 150) { // 15 segundos
                 clearInterval(checkInterval);
                 const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
                 viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
