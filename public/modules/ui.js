@@ -384,12 +384,152 @@ export function showFileLoading() {
     viewer.innerHTML = `<div class="modal__loading"><div class="loading-spinner-small" style="width:1.5rem;height:1.5rem;border:2px solid var(--color-primary);border-top-color:transparent;border-radius:9999px;animation:spin 1s linear infinite"></div></div>`;
 }
 
+let currentEditor = null;
+
+function getLanguageFromPath(path) {
+    const ext = path.split('.').pop().toLowerCase();
+    const map = {
+        'js': 'javascript', 'json': 'json', 'html': 'html', 'css': 'css',
+        'md': 'markdown', 'py': 'python', 'ts': 'typescript', 'yaml': 'yaml', 'yml': 'yaml',
+        'sh': 'shell', 'bash': 'shell', 'c': 'c', 'cpp': 'cpp', 'cs': 'csharp', 'java': 'java'
+    };
+    return map[ext] || 'plaintext';
+}
+
 export function renderFileContent(content, path, element) {
     document.querySelectorAll('.file-node').forEach(d => d.classList.remove('tree-file--active'));
     if (element) element.classList.add('tree-file--active');
+    
     const viewer = document.getElementById('code-viewer');
-    const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
-    viewer.innerHTML = `<pre class="code-content">${escaped}</pre>`;
+    
+    // Show save button
+    const actionsContainer = document.getElementById('modal-actions-container');
+    if (actionsContainer) actionsContainer.style.display = 'flex';
+    
+    if (window.monaco && window.monacoReady) {
+        viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
+        initMonaco(content, path);
+    } else {
+        viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Cargando editor...</p></div>';
+        if (window.lucide) window.lucide.createIcons();
+        
+        let attempts = 0;
+        const checkInterval = setInterval(() => {
+            attempts++;
+            if (window.monaco && window.monacoReady) {
+                clearInterval(checkInterval);
+                viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
+                initMonaco(content, path);
+            } else if (attempts > 50) { // 5 segundos
+                clearInterval(checkInterval);
+                const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
+                viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
+            }
+        }, 100);
+    }
+}
+
+function initMonaco(content, path) {
+    if (currentEditor) {
+        currentEditor.dispose();
+    }
+    const container = document.getElementById('monaco-container');
+    if (!container) return;
+    
+    currentEditor = window.monaco.editor.create(container, {
+        value: content,
+        language: getLanguageFromPath(path),
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: false },
+        fontSize: 14,
+        fontFamily: "'JetBrains Mono', monospace",
+        scrollBeyondLastLine: false,
+        roundedSelection: false,
+        padding: { top: 16, bottom: 16 }
+    });
+    
+    // AI Copilot Actions
+    currentEditor.addAction({
+        id: 'ai-explain',
+        label: '🤖 IA: Explicar Código',
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 1.5,
+        run: (ed) => handleAiAction(ed, 'explain')
+    });
+    
+    currentEditor.addAction({
+        id: 'ai-refactor',
+        label: '🤖 IA: Refactorizar',
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 1.6,
+        run: (ed) => handleAiAction(ed, 'refactor')
+    });
+    
+    currentEditor.addAction({
+        id: 'ai-find-bugs',
+        label: '🤖 IA: Buscar Bugs',
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 1.7,
+        run: (ed) => handleAiAction(ed, 'find_bugs')
+    });
+    
+    currentEditor.addAction({
+        id: 'ai-comment',
+        label: '🤖 IA: Añadir Comentarios',
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 1.8,
+        run: (ed) => handleAiAction(ed, 'comment')
+    });
+}
+
+async function handleAiAction(editor, action) {
+    let code = editor.getModel().getValueInRange(editor.getSelection());
+    if (!code || code.trim() === '') {
+        code = editor.getValue();
+    }
+    
+    const modal = document.getElementById('ai-modal');
+    const loading = document.getElementById('ai-loading');
+    const contentBox = document.getElementById('ai-content');
+    
+    if (!modal || !loading || !contentBox) return;
+    
+    modal.classList.remove('hidden');
+    loading.style.display = 'flex';
+    contentBox.innerHTML = '';
+    
+    try {
+        const res = await fetch('/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, action })
+        });
+        
+        const data = await res.json();
+        
+        loading.style.display = 'none';
+        
+        if (!res.ok) {
+            contentBox.innerHTML = `<div style="color:red;">Error: ${data.error || 'Fallo desconocido'}</div>`;
+            return;
+        }
+        
+        // Formatear markdown básico (backticks)
+        let htmlResult = data.result
+            .replace(/```([\s\S]*?)```/g, '<pre style="background:#1a1a1a;padding:15px;border-radius:8px;overflow-x:auto;margin:10px 0;"><code>$1</code></pre>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">$1</code>');
+            
+        contentBox.innerHTML = htmlResult;
+        
+    } catch (e) {
+        loading.style.display = 'none';
+        contentBox.innerHTML = `<div style="color:red;">Error de conexión: ${e.message}</div>`;
+    }
+}
+
+export function getCurrentEditorContent() {
+    return currentEditor ? currentEditor.getValue() : null;
 }
 
 export function showViewerError(message, type = 'error') {
@@ -424,6 +564,15 @@ function importDynamicMarked() {
 export function closeModal() {
     const modal = document.getElementById('modal');
     modal.classList.add('closing');
+    
+    const actionsContainer = document.getElementById('modal-actions-container');
+    if (actionsContainer) actionsContainer.style.display = 'none';
+    
+    if (currentEditor) {
+        currentEditor.dispose();
+        currentEditor = null;
+    }
+    
     setTimeout(() => {
         modal.classList.add('hidden');
         modal.classList.remove('closing');

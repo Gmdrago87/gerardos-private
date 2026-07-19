@@ -1,9 +1,9 @@
 {
-  "name": "GerardMaestre - Liquid Glass Portfolio",
-  "short_name": "GerardMaestre Portfolio",
-  "description": "Portafolio personal con diseño Glassmorphism que muestra proyectos de GitHub en tiempo real.",
+  "name": "GerardOS Ultimate",
+  "short_name": "GerardOS",
+  "description": "Sistema Operativo de Desarrollo (PWA) con diseño Glassmorphism.",
   "start_url": "./index.html", 
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#0f0a1f",
   "theme_color": "#8b5cf6",
   "icons": [

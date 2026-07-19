@@ -14,7 +14,7 @@ export async function onRequestGet(context) {
         });
     }
     
-    if (!env.GITHUB_PAT || !env.GITHUB_USERNAME) {
+    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
         return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
     }
     
     const headers = {
-        "Authorization": `Bearer ${env.GITHUB_PAT}`,
+        "Authorization": `Bearer ${context.data.session.github_token}`,
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "GerardOS-Private-Dashboard"
@@ -68,6 +68,148 @@ export async function onRequestGet(context) {
         }
     } catch (e) {
         return new Response(JSON.stringify({ error: "Error al leer el archivo en el servidor" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+}
+
+export async function onRequestPut(context) {
+    const { env, params, request } = context;
+    const repoName = params.name;
+    
+    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
+        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+    
+    try {
+        const body = await request.json();
+        const { path, message, content, branch, sha } = body;
+        
+        if (!path || !message || content === undefined) {
+            return new Response(JSON.stringify({ error: "Faltan parámetros requeridos (path, message, content)" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        const headers = {
+            "Authorization": `Bearer ${context.data.session.github_token}`,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "GerardOS-Private-Dashboard"
+        };
+        
+        // Encode content to base64 properly handling UTF-8
+        const utf8Bytes = new TextEncoder().encode(content);
+        let binaryString = "";
+        for (let i = 0; i < utf8Bytes.length; i++) {
+            binaryString += String.fromCharCode(utf8Bytes[i]);
+        }
+        const base64Content = btoa(binaryString);
+        
+        const requestBody = {
+            message: message,
+            content: base64Content,
+            branch: branch || "main"
+        };
+        
+        if (sha) {
+            requestBody.sha = sha;
+        }
+        
+        const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
+        const putUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/contents/${safePath}`;
+        
+        const res = await fetch(putUrl, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            return new Response(JSON.stringify({ error: data.message || "Error al guardar el archivo" }), {
+                status: res.status,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        return new Response(JSON.stringify({ ok: true, commit: data.commit, content: data.content }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+        });
+    } catch (e) {
+        return new Response(JSON.stringify({ error: "Error interno al procesar la petición de guardado" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+}
+
+export async function onRequestDelete(context) {
+    const { env, params, request } = context;
+    const repoName = params.name;
+    
+    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
+        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+    
+    try {
+        const body = await request.json();
+        const { path, message, branch, sha } = body;
+        
+        if (!path || !message || !sha) {
+            return new Response(JSON.stringify({ error: "Faltan parámetros requeridos (path, message, sha)" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        const headers = {
+            "Authorization": `Bearer ${context.data.session.github_token}`,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "GerardOS-Private-Dashboard"
+        };
+        
+        const requestBody = {
+            message: message,
+            sha: sha,
+            branch: branch || "main"
+        };
+        
+        const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
+        const deleteUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/contents/${safePath}`;
+        
+        const res = await fetch(deleteUrl, {
+            method: "DELETE",
+            headers,
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            return new Response(JSON.stringify({ error: data.message || "Error al eliminar el archivo" }), {
+                status: res.status,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        return new Response(JSON.stringify({ ok: true, commit: data.commit }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+        });
+    } catch (e) {
+        return new Response(JSON.stringify({ error: "Error interno al procesar la petición de eliminación" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
         });

@@ -1,7 +1,7 @@
 export async function onRequestGet(context) {
     const { env } = context;
     
-    if (!env.GITHUB_PAT || !env.GITHUB_USERNAME) {
+    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
         return new Response(JSON.stringify({ error: "Falta configurar GITHUB_PAT o GITHUB_USERNAME" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
@@ -9,7 +9,7 @@ export async function onRequestGet(context) {
     }
     
     const headers = {
-        "Authorization": `Bearer ${env.GITHUB_PAT}`,
+        "Authorization": `Bearer ${context.data.session.github_token}`,
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "GerardOS-Private-Dashboard"
@@ -51,7 +51,7 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
     const { request, env } = context;
     
-    if (!env.GITHUB_PAT) {
+    if (!context.data.session.github_token) {
         return new Response(JSON.stringify({ error: "Falta configurar GITHUB_PAT" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
@@ -70,7 +70,7 @@ export async function onRequestPost(context) {
         }
         
         const headers = {
-            "Authorization": `Bearer ${env.GITHUB_PAT}`,
+            "Authorization": `Bearer ${context.data.session.github_token}`,
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "GerardOS-Private-Dashboard",

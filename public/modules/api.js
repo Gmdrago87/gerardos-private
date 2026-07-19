@@ -124,3 +124,75 @@ export async function fetchBranches(repoName) {
     if (!res.ok) throw new Error('Error branches API');
     return res.json();
 }
+
+export async function saveFileContent(repoName, branch, path, content, message, sha) {
+    const res = await fetch(`/api/repos/${repoName}/file`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, branch, content, message, sha }),
+        credentials: "include"
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "No se pudo guardar el archivo");
+    }
+    return res.json();
+}
+
+export async function deleteFile(repoName, branch, path, message, sha) {
+    const res = await fetch(`/api/repos/${repoName}/file`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, branch, message, sha }),
+        credentials: "include"
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "No se pudo eliminar el archivo");
+    }
+    return res.json();
+}
+
+// Kanban (Issues) Endpoints
+export async function fetchIssues(repoName) {
+    const url = `/api/repos/${repoName}/issues`;
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error('Error al obtener issues');
+    return res.json();
+}
+
+export async function createIssue(repoName, title, body, labels) {
+    const res = await fetch(`/api/repos/${repoName}/issues`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body, labels }),
+        credentials: "include"
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "No se pudo crear la tarea");
+    }
+    return res.json();
+}
+
+export async function updateIssue(repoName, issueNumber, state, labels) {
+    const res = await fetch(`/api/repos/${repoName}/issues`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issue_number: issueNumber, state, labels }),
+        credentials: "include"
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "No se pudo actualizar la tarea");
+    }
+    return res.json();
+}
+
+// Actions (Workflows) Endpoint
+export async function fetchActions(repoName) {
+    const url = `/api/repos/${repoName}/actions`;
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error('Error al obtener actions');
+    return res.json();
+}

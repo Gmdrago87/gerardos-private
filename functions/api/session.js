@@ -1,4 +1,4 @@
-import { verifyJwt } from "./_middleware.js";
+import { verifyJwt } from "../_shared/jwt.js";
 
 function getCookie(request, name) {
     const cookieHeader = request.headers.get("Cookie");
@@ -16,6 +16,7 @@ function getCookie(request, name) {
 
 export async function onRequestGet(context) {
     const { request, env } = context;
+    console.log("[API] Verificando sesión actual en /api/session");
     
     if (!env.JWT_SECRET) {
         return new Response(JSON.stringify({ authenticated: false, error: "JWT_SECRET no configurado" }), {
@@ -33,7 +34,7 @@ export async function onRequestGet(context) {
     }
     
     const payload = await verifyJwt(token, env.JWT_SECRET);
-    if (!payload) {
+    if (!payload || !payload.github_token) {
         return new Response(JSON.stringify({ authenticated: false }), {
             status: 200,
             headers: { "Content-Type": "application/json" }

@@ -6,7 +6,7 @@ export async function onRequestGet(context) {
     const branch = url.searchParams.get("branch") || "main";
     const page = url.searchParams.get("page") || "1";
     
-    if (!env.GITHUB_PAT || !env.GITHUB_USERNAME) {
+    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
         return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
@@ -14,7 +14,7 @@ export async function onRequestGet(context) {
     }
     
     const headers = {
-        "Authorization": `Bearer ${env.GITHUB_PAT}`,
+        "Authorization": `Bearer ${context.data.session.github_token}`,
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "GerardOS-Private-Dashboard"

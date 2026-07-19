@@ -1,4 +1,4 @@
-import { signJwt } from "./_middleware.js";
+import { signJwt } from "../_shared/jwt.js";
 
 // Comparación en tiempo constante para evitar ataques de temporización
 function constantTimeCompare(a, b) {

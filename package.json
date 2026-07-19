@@ -1,0 +1,12 @@
+{
+  "name": "gerardos-private",
+  "version": "1.0.0",
+  "description": "GerardOS Private Dashboard",
+  "scripts": {
+    "start": "npx wrangler pages dev public --port 8789",
+    "deploy": "npx wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "^4.112.0"
+  }
+}

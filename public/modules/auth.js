@@ -9,27 +9,8 @@ export async function checkSession() {
     }
 }
 
-export async function login(password) {
-    try {
-        const res = await fetch("/api/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ password }),
-            credentials: "include"
-        });
-        
-        if (!res.ok) {
-            const err = await res.json();
-            return { ok: false, error: err.error || "Error al iniciar sesión" };
-        }
-        
-        return { ok: true };
-    } catch (e) {
-        console.error("Error al hacer login:", e);
-        return { ok: false, error: "Error de red o conexión" };
-    }
+export function login() {
+    window.location.href = "/api/oauth/login";
 }
 
 export async function logout() {

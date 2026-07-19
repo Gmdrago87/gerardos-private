@@ -1,0 +1,10 @@
+node_modules/
+.env
+.dev.vars
+.wrangler/
+*.zip
+*.log
+database.json
+Project_Repositorios_Github-main/
+_replace_token.js
+_upload_fix.js

@@ -10,11 +10,6 @@ const state = {
 
 const listeners = {};
 
-const sessionCache = {
-    trees: new Map(),
-    files: new Map()
-};
-
 export function getState() {
     return state;
 }
@@ -37,18 +32,53 @@ function notify(event, data) {
     }
 }
 
-export function getCachedTree(key) {
-    return sessionCache.trees.get(key);
+// Caching con IndexedDB (usando idb-keyval que está disponible globalmente si se cargó desde CDN)
+export async function getCachedTree(key) {
+    try {
+        if (window.idbKeyval) {
+            return await window.idbKeyval.get(`tree_${key}`);
+        }
+    } catch(e) {
+        console.warn("IndexedDB no disponible", e);
+    }
+    return null;
 }
 
-export function setCachedTree(key, val) {
-    sessionCache.trees.set(key, val);
+export async function setCachedTree(key, val) {
+    try {
+        if (window.idbKeyval) {
+            if (val === null) {
+                await window.idbKeyval.del(`tree_${key}`);
+            } else {
+                await window.idbKeyval.set(`tree_${key}`, val);
+            }
+        }
+    } catch(e) {
+        console.warn("IndexedDB no disponible", e);
+    }
 }
 
-export function getCachedFile(key) {
-    return sessionCache.files.get(key);
+export async function getCachedFile(key) {
+    try {
+        if (window.idbKeyval) {
+            return await window.idbKeyval.get(`file_${key}`);
+        }
+    } catch(e) {
+        console.warn("IndexedDB no disponible", e);
+    }
+    return null;
 }
 
-export function setCachedFile(key, val) {
-    sessionCache.files.set(key, val);
+export async function setCachedFile(key, val) {
+    try {
+        if (window.idbKeyval) {
+            if (val === null) {
+                await window.idbKeyval.del(`file_${key}`);
+            } else {
+                await window.idbKeyval.set(`file_${key}`, val);
+            }
+        }
+    } catch(e) {
+        console.warn("IndexedDB no disponible", e);
+    }
 }

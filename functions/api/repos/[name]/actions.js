@@ -17,11 +17,11 @@ export async function onRequestGet(context) {
     };
     
     try {
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/branches`;
-        const res = await fetch(fetchUrl, { headers });
+        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/actions/runs?per_page=15`;
         
+        const res = await fetch(fetchUrl, { headers });
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: "No se pudieron obtener las ramas" }), {
+            return new Response(JSON.stringify({ error: "No se pudieron obtener los actions" }), {
                 status: res.status,
                 headers: { "Content-Type": "application/json" }
             });
@@ -29,18 +29,12 @@ export async function onRequestGet(context) {
         
         const data = await res.json();
         
-        // Mapear ramas para simplificar la respuesta
-        const mappedBranches = data.map(item => ({
-            name: item.name,
-            protected: item.protected
-        }));
-        
-        return new Response(JSON.stringify(mappedBranches), {
+        return new Response(JSON.stringify(data), {
             status: 200,
             headers: { "Content-Type": "application/json" }
         });
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error al listar ramas en el servidor" }), {
+        return new Response(JSON.stringify({ error: "Error interno al obtener actions" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
         });

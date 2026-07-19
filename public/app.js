@@ -3,8 +3,10 @@ import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCac
 import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, fetchCommits, fetchBranches } from './modules/api.js';
 import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
+import { initShortcuts } from './modules/shortcuts.js';
 
 async function initApp() {
+    initShortcuts();
     updateLoadingStatus('Verificando sesión...');
     try {
         const session = await checkSession();
@@ -40,8 +42,6 @@ function showLoginScreen() {
     if (mainWindow) mainWindow.style.opacity = '0.3';
     if (loginScreen) {
         loginScreen.classList.remove('hidden');
-        const pwdInput = document.getElementById('mac-login-password');
-        pwdInput?.focus();
     }
 }
 
@@ -55,54 +55,12 @@ function hideLoginScreen() {
 
 async function handleLoginSubmit(e) {
     if (e) e.preventDefault();
-    const pwdInput = document.getElementById('mac-login-password');
-    const errorEl = document.getElementById('mac-login-error');
-    const btn = document.getElementById('mac-login-btn');
-    
-    if (!pwdInput) return;
-    const password = pwdInput.value;
-    
-    if (!password) {
-        if (errorEl) errorEl.textContent = 'Introduce tu contraseña';
-        return;
-    }
-    
+    const btn = document.getElementById('mac-login-github-btn') || document.getElementById('mac-login-btn');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span class="login-spinner"></span> Verificando...';
+        btn.innerHTML = '<span class="login-spinner"></span> Redirigiendo a GitHub...';
     }
-    if (errorEl) errorEl.textContent = '';
-    
-    const result = await login(password);
-    
-    if (result.ok) {
-        hideLoginScreen();
-        // Mostrar cargador del sistema de nuevo
-        const loadingScreen = document.getElementById('loading');
-        if (loadingScreen) {
-            loadingScreen.style.display = 'flex';
-            loadingScreen.style.opacity = '1';
-        }
-        await initApp();
-    } else {
-        if (errorEl) errorEl.textContent = result.error || 'Contraseña incorrecta';
-        pwdInput.value = '';
-        pwdInput.focus();
-        
-        // Efecto de vibración (shake) en la ventana de login
-        const loginCard = document.querySelector('.login-card');
-        if (loginCard) {
-            loginCard.classList.add('shake-anim');
-            setTimeout(() => {
-                loginCard.classList.remove('shake-anim');
-            }, 500);
-        }
-    }
-    
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = 'Acceder';
-    }
+    login(); // redirect to OAuth
 }
 
 function handleCachedSuccess(cached) {
@@ -209,9 +167,13 @@ function handleSortClick(sortBy) {
 
 // Visor de Código & Ramas & Commits
 let currentBranch = 'main';
+let currentRepoInfo = null;
+let currentFilePath = null;
 
 async function handleCardClick(repo) {
+    currentRepoInfo = repo;
     currentBranch = repo.default_branch || 'main';
+    currentFilePath = null;
     prepareRepoViewer(repo.name);
     
     // Cargar ramas
@@ -228,10 +190,10 @@ async function handleCardClick(repo) {
 async function loadRepoTreeAndReadme(repo, branch) {
     try {
         const cacheKey = `${repo.name}:${branch}`;
-        let data = getCachedTree(cacheKey);
+        let data = await getCachedTree(cacheKey);
         if (!data) {
             data = await fetchRepoTree(repo.name, branch);
-            setCachedTree(cacheKey, data);
+            await setCachedTree(cacheKey, data);
         }
         const blobs = renderRepoTree(repo, data, (fileNode) => handleFileClick(fileNode, branch));
         
@@ -331,13 +293,14 @@ async function loadCommitsList(repoName, branch) {
 
 async function handleFileClick(element, branch) {
     const { repo, path } = element.dataset;
+    currentFilePath = path;
     showFileLoading();
     try {
         const cacheKey = `${repo}:${branch}:${path}`;
-        let content = getCachedFile(cacheKey);
+        let content = await getCachedFile(cacheKey);
         if (!content) {
             content = await fetchFileContent(repo, branch, path);
-            setCachedFile(cacheKey, content);
+            await setCachedFile(cacheKey, content);
         }
         renderFileContent(content, path, element);
     } catch (e) {
@@ -348,10 +311,10 @@ async function handleFileClick(element, branch) {
 async function loadReadme(repoName, branch, path) {
     try {
         const cacheKey = `readme:${repoName}:${branch}:${path}`;
-        let content = getCachedFile(cacheKey);
+        let content = await getCachedFile(cacheKey);
         if (!content) {
             content = await fetchFileContent(repoName, branch, path);
-            setCachedFile(cacheKey, content);
+            await setCachedFile(cacheKey, content);
         }
         renderReadme(content);
     } catch (e) {
@@ -363,12 +326,382 @@ function handleCloneClick(url, btn) {
     copyCloneCommand(url, btn);
 }
 
+import { saveFileContent } from './modules/api.js';
+import { getCurrentEditorContent } from './modules/ui.js';
+
+async function handleSaveFile() {
+    if (!currentRepoInfo || !currentFilePath) return;
+    
+    const content = getCurrentEditorContent();
+    if (content === null) return;
+    
+    const btn = document.getElementById('modal-save-btn');
+    const originalContent = btn.innerHTML;
+    btn.classList.add('is-saving');
+    btn.disabled = true;
+    
+    const message = prompt('Escribe un mensaje para este commit:', `Update ${currentFilePath}`);
+    if (message === null) {
+        btn.classList.remove('is-saving');
+        btn.disabled = false;
+        return; // Cancelled
+    }
+    
+    try {
+        // Necesitamos el SHA actual del archivo para actualizarlo
+        const treeData = await getCachedTree(`${currentRepoInfo.name}:${currentBranch}`);
+        let sha = null;
+        if (treeData) {
+            const blob = treeData.tree.find(i => i.path === currentFilePath);
+            if (blob) sha = blob.sha;
+        }
+        
+        await saveFileContent(currentRepoInfo.name, currentBranch, currentFilePath, content, message, sha);
+        
+        // Actualizar la cache
+        const cacheKey = `${currentRepoInfo.name}:${currentBranch}:${currentFilePath}`;
+        await setCachedFile(cacheKey, content);
+        
+        btn.innerHTML = '<i data-lucide="check"></i> Guardado';
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.classList.remove('is-saving');
+            btn.disabled = false;
+            if (window.lucide) window.lucide.createIcons();
+        }, 2000);
+        
+        // Refrescar el historial de commits
+        loadCommitsList(currentRepoInfo.name, currentBranch);
+        
+    } catch(err) {
+        alert(`Error al guardar: ${err.message}`);
+        btn.innerHTML = originalContent;
+        btn.classList.remove('is-saving');
+        btn.disabled = false;
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+import { deleteFile } from './modules/api.js';
+
+async function handleNewFile() {
+    if (!currentRepoInfo) return;
+    const path = prompt('Introduce la ruta completa del nuevo archivo (ej: src/utils.js):');
+    if (!path) return;
+    
+    try {
+        await saveFileContent(currentRepoInfo.name, currentBranch, path, "// Nuevo archivo creado desde GerardOS\n", "Create " + path, null);
+        
+        // Invalidar cache del árbol para forzar recarga
+        const cacheKey = `${currentRepoInfo.name}:${currentBranch}`;
+        await setCachedTree(cacheKey, null);
+        
+        await loadRepoTreeAndReadme(currentRepoInfo, currentBranch);
+        alert(`Archivo ${path} creado con éxito.`);
+    } catch(err) {
+        alert(`Error al crear archivo: ${err.message}`);
+    }
+}
+
+async function handleDeleteFile() {
+    if (!currentRepoInfo || !currentFilePath) {
+        alert("Selecciona primero un archivo para eliminarlo.");
+        return;
+    }
+    
+    const confirmDelete = confirm(`⚠️ ¿Estás seguro de eliminar PERMANENTEMENTE el archivo '${currentFilePath}'?`);
+    if (!confirmDelete) return;
+    
+    try {
+        const treeData = await getCachedTree(`${currentRepoInfo.name}:${currentBranch}`);
+        let sha = null;
+        if (treeData) {
+            const blob = treeData.tree.find(i => i.path === currentFilePath);
+            if (blob) sha = blob.sha;
+        }
+        
+        if (!sha) {
+            alert("No se pudo obtener el SHA del archivo.");
+            return;
+        }
+        
+        await deleteFile(currentRepoInfo.name, currentBranch, currentFilePath, "Delete " + currentFilePath, sha);
+        
+        // Invalidar caches
+        await setCachedTree(`${currentRepoInfo.name}:${currentBranch}`, null);
+        await setCachedFile(`${currentRepoInfo.name}:${currentBranch}:${currentFilePath}`, null);
+        
+        document.getElementById('code-viewer').innerHTML = '<i data-lucide="mouse-pointer"></i><p>Selecciona un archivo</p>';
+        if (window.lucide) window.lucide.createIcons();
+        currentFilePath = null;
+        
+        await loadRepoTreeAndReadme(currentRepoInfo, currentBranch);
+        
+    } catch(err) {
+        alert(`Error al eliminar: ${err.message}`);
+    }
+}
+
+// Kanban Logic
+import { fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
+
+async function loadKanbanIssues() {
+    if (!currentRepoInfo) return;
+    try {
+        const issues = await fetchIssues(currentRepoInfo.name);
+        
+        const todoContainer = document.getElementById('kanban-todo');
+        const progressContainer = document.getElementById('kanban-progress');
+        const doneContainer = document.getElementById('kanban-done');
+        
+        todoContainer.innerHTML = '';
+        progressContainer.innerHTML = '';
+        doneContainer.innerHTML = '';
+        
+        issues.forEach(issue => {
+            // No mostrar Pull Requests
+            if (issue.pull_request) return;
+            
+            // Determinar columna basada en labels o estado
+            let col = todoContainer;
+            if (issue.state === 'closed') {
+                col = doneContainer;
+            } else if (issue.labels.some(l => l.name.toLowerCase().includes('progress') || l.name.toLowerCase().includes('doing'))) {
+                col = progressContainer;
+            }
+            
+            const card = document.createElement('div');
+            card.className = 'kanban-card';
+            card.draggable = true;
+            card.dataset.number = issue.number;
+            
+            card.innerHTML = `
+                <div class="kanban-card-title">${issue.title}</div>
+                <div class="kanban-card-meta">
+                    <span>#${issue.number}</span>
+                    <span>${issue.comments} 💬</span>
+                </div>
+            `;
+            
+            card.addEventListener('dragstart', (e) => {
+                card.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', issue.number);
+            });
+            card.addEventListener('dragend', () => card.classList.remove('dragging'));
+            
+            col.appendChild(card);
+        });
+        
+    } catch (e) {
+        console.error("Error al cargar issues", e);
+    }
+}
+
+async function handleNewIssue() {
+    if (!currentRepoInfo) return;
+    const title = prompt('Título de la nueva tarea:');
+    if (!title) return;
+    const body = prompt('Descripción (opcional):');
+    try {
+        await createIssue(currentRepoInfo.name, title, body || '');
+        await loadKanbanIssues();
+    } catch (e) {
+        alert('Error al crear la tarea: ' + e.message);
+    }
+}
+
+function setupKanbanDragAndDrop() {
+    const columns = document.querySelectorAll('.kanban-col');
+    columns.forEach(col => {
+        col.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            if (dragging) col.querySelector('.kanban-cards').appendChild(dragging);
+        });
+        col.addEventListener('drop', async e => {
+            e.preventDefault();
+            const number = e.dataTransfer.getData('text/plain');
+            const state = col.dataset.state;
+            
+            try {
+                if (state === 'closed') {
+                    await updateIssue(currentRepoInfo.name, number, 'closed');
+                } else if (state === 'in-progress') {
+                    await updateIssue(currentRepoInfo.name, number, 'open', ['in-progress']);
+                } else {
+                    // back to open / todo
+                    await updateIssue(currentRepoInfo.name, number, 'open', []);
+                }
+            } catch (err) {
+                alert('Error al actualizar la tarea: ' + err.message);
+                loadKanbanIssues(); // revertir si falla
+            }
+        });
+    });
+}
+
+// Actions Logic
+async function loadActions() {
+    if (!currentRepoInfo) return;
+    const logContainer = document.getElementById('actions-log');
+    if (!logContainer) return;
+    
+    logContainer.innerHTML = '> Obteniendo workflows desde GitHub Actions...\n';
+    try {
+        const data = await fetchActions(currentRepoInfo.name);
+        
+        if (!data.workflow_runs || data.workflow_runs.length === 0) {
+            logContainer.innerHTML += '> No se encontraron ejecuciones de Actions.\n';
+            return;
+        }
+        
+        data.workflow_runs.forEach(run => {
+            const statusColor = run.conclusion === 'success' ? '#00ff00' : (run.conclusion === 'failure' ? '#ff0000' : '#ffff00');
+            const date = new Date(run.created_at).toLocaleString();
+            const logLine = `\n[${date}] ${run.name} #${run.run_number}\n> Estado: <span style="color:${statusColor}">${run.status} - ${run.conclusion || 'pending'}</span>\n> Actor: ${run.actor.login}\n> Mensaje: ${run.head_commit.message.split('\\n')[0]}\n----------------------------------------`;
+            logContainer.innerHTML += logLine;
+        });
+        
+    } catch (e) {
+        logContainer.innerHTML += `\n> [ERROR] ${e.message}\n`;
+    }
+}
+
+// Live Preview Logic
+async function loadPreview() {
+    if (!currentRepoInfo) return;
+    const iframe = document.getElementById('preview-frame');
+    if (!iframe) return;
+    
+    iframe.srcdoc = "<h3>Generando previsualización...</h3>";
+    
+    try {
+        const cacheKeyTree = `${currentRepoInfo.name}:${currentBranch}`;
+        const treeData = await getCachedTree(cacheKeyTree);
+        if (!treeData) return;
+        
+        let htmlContent = "";
+        let cssContent = "";
+        let jsContent = "";
+        
+        // Buscar index.html, style.css, script.js
+        for (const file of treeData.tree) {
+            if (file.type !== 'blob') continue;
+            const path = file.path.toLowerCase();
+            
+            if (path.endsWith('.html') || path.endsWith('.css') || path.endsWith('.js')) {
+                const fCacheKey = `${currentRepoInfo.name}:${currentBranch}:${file.path}`;
+                let content = await getCachedFile(fCacheKey);
+                if (!content) {
+                    content = await fetchFileContent(currentRepoInfo.name, currentBranch, file.path);
+                    await setCachedFile(fCacheKey, content);
+                }
+                
+                if (path === 'index.html' || path.endsWith('/index.html')) {
+                    htmlContent = content;
+                } else if (path.endsWith('.css')) {
+                    cssContent += `\n/* ${path} */\n${content}`;
+                } else if (path.endsWith('.js')) {
+                    jsContent += `\n/* ${path} */\n${content}`;
+                }
+            }
+        }
+        
+        if (!htmlContent) {
+            iframe.srcdoc = "<h3 style='font-family:sans-serif;padding:20px'>No se encontró ningún archivo .html en el repositorio.</h3>";
+            return;
+        }
+        
+        // Inyectar CSS y JS en el HTML
+        let finalHtml = htmlContent;
+        if (cssContent) {
+            finalHtml = finalHtml.replace('</head>', `<style>${cssContent}</style></head>`);
+        }
+        if (jsContent) {
+            finalHtml = finalHtml.replace('</body>', `<script>${jsContent}</script></body>`);
+        }
+        
+        iframe.srcdoc = finalHtml;
+        
+    } catch (e) {
+        iframe.srcdoc = `<h3 style='color:red;padding:20px'>Error al cargar preview: ${e.message}</h3>`;
+    }
+}
+
 function handleLoadMore() {
     const s = getState();
     const newCount = s.visibleCount + 9;
     setState({ visibleCount: newCount });
     renderRepos(s.filteredRepos, true, '', handleCardClick, handleCloneClick);
 }
+
+// Command Palette Logic
+function initCommandPalette() {
+    const cmdInput = document.getElementById('cmd-input');
+    const resultsContainer = document.getElementById('palette-results');
+    
+    if (!cmdInput || !resultsContainer) return;
+    
+    cmdInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        resultsContainer.innerHTML = '';
+        
+        if (!query) return;
+        
+        const s = getState();
+        const repos = s.allRepos;
+        
+        let html = '';
+        let count = 0;
+        
+        // Buscar repositorios
+        repos.forEach(r => {
+            if (count > 5) return;
+            if (r.name.toLowerCase().includes(query)) {
+                html += `
+                <div class="palette-item" onclick="window.openRepoFromPalette('${r.name}')">
+                    <i data-lucide="book" class="palette-item-icon" style="width:16px;height:16px"></i>
+                    <span class="palette-item-title">${r.name}</span>
+                </div>`;
+                count++;
+            }
+        });
+        
+        // Comandos de sistema
+        const commands = [
+            { id: 'settings', icon: 'settings', title: 'Abrir Ajustes' },
+            { id: 'new-repo', icon: 'plus', title: 'Crear Repositorio' }
+        ];
+        
+        commands.forEach(c => {
+            if (c.title.toLowerCase().includes(query)) {
+                html += `
+                <div class="palette-item" onclick="window.runCommandFromPalette('${c.id}')">
+                    <i data-lucide="${c.icon}" class="palette-item-icon" style="width:16px;height:16px"></i>
+                    <span class="palette-item-title">${c.title}</span>
+                </div>`;
+            }
+        });
+        
+        resultsContainer.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
+    });
+}
+
+// Exponer funciones globales para el Command Palette (ya que usan onclick HTML)
+window.openRepoFromPalette = (repoName) => {
+    document.getElementById('command-palette').classList.add('hidden');
+    const s = getState();
+    const repo = s.allRepos.find(r => r.name === repoName);
+    if (repo) handleCardClick(repo);
+};
+
+window.runCommandFromPalette = (cmdId) => {
+    document.getElementById('command-palette').classList.add('hidden');
+    if (cmdId === 'new-repo') showCreateRepoModal();
+    if (cmdId === 'settings') alert('Ajustes en construcción...');
+};
 
 // Modal Crear Repo
 function showCreateRepoModal() {
@@ -470,8 +803,54 @@ function initStaticListeners() {
         }
     });
     
+    // Listener para el botón de Guardar
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) saveBtn.onclick = handleSaveFile;
+    
+    // Listeners File Tree Toolbar
+    const btnNewFile = document.getElementById('btn-new-file');
+    if (btnNewFile) btnNewFile.onclick = handleNewFile;
+    const btnDelFile = document.getElementById('btn-delete-file');
+    if (btnDelFile) btnDelFile.onclick = handleDeleteFile;
+    
+    // Modal Tabs
+    document.querySelectorAll('.modal-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Desactivar todos
+            document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            });
+            // Activar actual
+            tab.classList.add('active');
+            const target = document.getElementById(`tab-${tab.dataset.tab}`);
+            if (target) {
+                target.classList.add('active');
+                target.style.display = tab.dataset.tab === 'code' ? 'flex' : 'flex';
+                
+                if (tab.dataset.tab === 'kanban') loadKanbanIssues();
+                if (tab.dataset.tab === 'actions') loadActions();
+                if (tab.dataset.tab === 'preview') loadPreview();
+            }
+        });
+    });
+    
+    // Preview Refresh
+    const btnRefreshPreview = document.getElementById('btn-refresh-preview');
+    if (btnRefreshPreview) btnRefreshPreview.onclick = loadPreview;
+    
+    // Kanban New Task
+    const btnNewIssue = document.getElementById('btn-new-issue');
+    if (btnNewIssue) btnNewIssue.onclick = handleNewIssue;
+    setupKanbanDragAndDrop();
+    
+    // Command Palette
+    initCommandPalette();
+    
     // Listeners Login
-    document.getElementById('mac-login-form').onsubmit = handleLoginSubmit;
+    const loginBtn = document.getElementById('mac-login-github-btn');
+    if (loginBtn) loginBtn.onclick = handleLoginSubmit;
     
     // Listeners Logout
     const logoutBtn = document.getElementById('mac-logout-btn');
@@ -570,16 +949,6 @@ function exposeGlobals() {
     window.deleteRepoGlobal = triggerDeleteRepo;
 }
 
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW registered:', reg))
-                .catch(err => console.error('SW registration failed:', err));
-        });
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
     initStaticListeners();
@@ -588,5 +957,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initWindowControls();
     initDockActions();
     exposeGlobals();
-    registerServiceWorker();
 });
