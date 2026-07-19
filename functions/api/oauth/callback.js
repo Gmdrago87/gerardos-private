@@ -94,15 +94,15 @@ export async function onRequestGet(context) {
             sub: userData.login,
             github_token: accessToken,
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 horas de sesión
+            exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos de sesión
         };
         
         const jwt = await signJwt(payload, env.JWT_SECRET);
         console.log("[API] Sesión generada correctamente. Redirigiendo al inicio.");
 
-        // 5. Establecer la cookie y redirigir al inicio, además de limpiar oauth_state
+        // 5. Establecer la cookie (con expiración de 30 minutos) y redirigir al inicio, además de limpiar oauth_state
         const isProduction = env.NODE_ENV === "production";
-        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict`;
+        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 30}`;
         let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
         
         if (isProduction || request.url.startsWith("https://")) {
