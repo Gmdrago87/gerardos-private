@@ -53,6 +53,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
+    // No interceptar peticiones de extensiones de Chrome u otros esquemas no http/https
+    if (!url.protocol.startsWith('http')) {
+        return;
+    }
+
     // No cachear peticiones a la API o llamadas a GitHub
     if (url.pathname.startsWith('/api/') || url.hostname.includes('github.com')) {
         event.respondWith(
