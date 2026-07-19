@@ -11,8 +11,13 @@ export async function onRequestGet(context) {
         if (!cookieHeader) return null;
         const cookies = cookieHeader.split(";");
         for (let cookie of cookies) {
-            const [key, val] = cookie.trim().split("=");
-            if (key === name) return decodeURIComponent(val);
+            const trimmed = cookie.trim();
+            const eqIdx = trimmed.indexOf("=");
+            if (eqIdx !== -1) {
+                const key = trimmed.substring(0, eqIdx);
+                const val = trimmed.substring(eqIdx + 1);
+                if (key === name) return decodeURIComponent(val);
+            }
         }
         return null;
     }

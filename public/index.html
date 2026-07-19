@@ -182,7 +182,7 @@
                                 <div class="profile-card glass-panel">
                                     <div class="avatar-container">
                                         <div class="avatar-frame">
-                                            <img id="avatar" src="" alt="Avatar de usuario" loading="lazy" class="avatar-img">
+                                            <img id="avatar" src="https://avatars.githubusercontent.com/u/232252917?v=4" alt="Gerard Maestre" loading="lazy" class="avatar-img">
                                         </div>
                                         <div class="avatar-status">
                                             <i data-lucide="zap"></i>
@@ -598,31 +598,6 @@
         </div>
     </div>
 
-    <!-- AI Modal -->
-    <div id="ai-modal" class="modal hidden" style="z-index: 10005;">
-        <div class="modal__backdrop" onclick="document.getElementById('ai-modal').classList.add('hidden')"></div>
-        <div class="modal__container glass-panel" style="max-width: 700px; width: 90%;">
-            <div class="modal__header" style="background: rgba(168, 85, 247, 0.1); border-bottom: 1px solid var(--color-primary);">
-                <div class="modal__title-row" style="flex: 1;">
-                    <div class="modal__icon" style="color: var(--color-primary);">
-                        <i data-lucide="bot"></i>
-                    </div>
-                    <h3 class="modal__title">GerardOS AI Copilot</h3>
-                </div>
-                <button class="modal__close" onclick="document.getElementById('ai-modal').classList.add('hidden')">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="modal__body" style="padding: 20px; flex-direction: column; max-height: 70vh; overflow-y: auto;">
-                <div id="ai-loading" class="hidden" style="display:flex; flex-direction:column; align-items:center; gap:15px; padding: 30px;">
-                    <div class="loading-spinner" style="border-top-color: var(--color-primary);"></div>
-                    <p>La Inteligencia Artificial está pensando...</p>
-                </div>
-                <div id="ai-content" style="font-family: var(--font-sans); color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;"></div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Crear Repositorio (fixed overlay) -->
     <div id="create-repo-modal" class="modal hidden">
         <div class="modal__backdrop" onclick="document.getElementById('create-repo-modal').classList.add('hidden')"></div>
@@ -632,7 +607,7 @@
                     <div class="modal__icon"><i data-lucide="plus-circle"></i></div>
                     <h3 class="modal__title">Nuevo Repositorio</h3>
                 </div>
-                <button class="modal__close" id="create-repo-cancel-btn">
+                <button class="modal__close" onclick="document.getElementById('create-repo-modal').classList.add('hidden')">
                     <i data-lucide="x"></i>
                 </button>
             </div>

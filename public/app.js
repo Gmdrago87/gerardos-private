@@ -118,6 +118,7 @@ function processData(user, repos, source) {
     setupFilters(repos, handleFilterClick);
     renderRepos(repos, false, '', handleCardClick, handleCloneClick);
     showDataSourceIndicator(source);
+    if (window.lucide) window.lucide.createIcons();
 }
 
 function handleFilterClick(lang, btnElement) {
@@ -952,6 +953,7 @@ function exposeGlobals() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.lucide) window.lucide.createIcons();
     initApp();
     initStaticListeners();
     initScrollBtn();

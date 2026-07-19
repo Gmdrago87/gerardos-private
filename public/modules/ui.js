@@ -1,5 +1,6 @@
 import { LANG_COLORS, FILTER_BTN_INACTIVE, FILTER_BTN_ACTIVE, FILTER_BTN_ALL_ACTIVE, escapeHtml, sanitizeUrl, highlightText } from './utils.js';
 import { getState } from './state.js';
+import { sendAIMessage } from './ai_ui.js';
 
 export function animateCounter(element, target, duration = 1500) {
     if (!element) return;
@@ -43,13 +44,18 @@ export function showError(msg) {
 
 export function renderProfile(user) {
     const avatarImg = document.getElementById('avatar');
-    avatarImg.src = user.avatar_url;
-    avatarImg.alt = `${user.name || user.login} - Avatar`;
+    if (avatarImg) {
+        avatarImg.src = user.avatar_url || 'https://avatars.githubusercontent.com/u/232252917?v=4';
+        avatarImg.alt = `${user.name || user.login || 'Gerard'} - Avatar`;
+        avatarImg.onerror = () => {
+            avatarImg.src = 'https://avatars.githubusercontent.com/u/232252917?v=4';
+        };
+    }
     document.getElementById('name').textContent = user.name || 'GerardMaestre';
-    document.getElementById('username').textContent = `@${user.login}`;
-    animateCounter(document.getElementById('followers'), user.followers, 1000);
-    animateCounter(document.getElementById('following'), user.following, 1000);
-    document.getElementById('github-link').href = user.html_url;
+    document.getElementById('username').textContent = `@${user.login || 'Gmdrago87'}`;
+    animateCounter(document.getElementById('followers'), user.followers || 0, 1000);
+    animateCounter(document.getElementById('following'), user.following || 0, 1000);
+    document.getElementById('github-link').href = user.html_url || 'https://github.com/GerardMaestre';
 }
 
 export function calculateStats(repos) {
@@ -490,42 +496,11 @@ async function handleAiAction(editor, action) {
     }
     
     const modal = document.getElementById('ai-modal');
-    const loading = document.getElementById('ai-loading');
-    const contentBox = document.getElementById('ai-content');
-    
-    if (!modal || !loading || !contentBox) return;
-    
-    modal.classList.remove('hidden');
-    loading.style.display = 'flex';
-    contentBox.innerHTML = '';
-    
-    try {
-        const res = await fetch('/api/ai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, action })
-        });
-        
-        const data = await res.json();
-        
-        loading.style.display = 'none';
-        
-        if (!res.ok) {
-            contentBox.innerHTML = `<div style="color:red;">Error: ${data.error || 'Fallo desconocido'}</div>`;
-            return;
-        }
-        
-        // Formatear markdown básico (backticks)
-        let htmlResult = escapeHtml(data.result)
-            .replace(/```([\s\S]*?)```/g, '<pre style="background:#1a1a1a;padding:15px;border-radius:8px;overflow-x:auto;margin:10px 0;"><code>$1</code></pre>')
-            .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">$1</code>');
-            
-        contentBox.innerHTML = htmlResult;
-        
-    } catch (e) {
-        loading.style.display = 'none';
-        contentBox.innerHTML = `<div style="color:red;">Error de conexión: ${e.message}</div>`;
+    if (modal) {
+        modal.classList.remove('hidden');
     }
+    
+    sendAIMessage(code, action);
 }
 
 export function getCurrentEditorContent() {
