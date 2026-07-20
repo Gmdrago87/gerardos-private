@@ -805,20 +805,43 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
         return;
     }
     
+    console.log(`\n=== DEPURACIÓN: TOGGLE VISIBILITY ===`);
+    console.log(`[1] Repo seleccionado:`, repoName);
+    console.log(`[2] isCurrentlyPrivate local:`, isCurrentlyPrivate);
+    console.log(`[3] Intentando cambiar a:`, newPrivateState);
+
     showToast('Actualizando...', `Haciendo repositorio ${actionText.toLowerCase()}...`, 'info');
     try {
         const updatedRepo = await updateRepoVisibility(repoName, newPrivateState);
+        console.log(`[4] Respuesta de la API recibida.`);
+        console.log(`[5] Valor de 'private' devuelto por GitHub:`, updatedRepo.private);
+        console.log(`[6] Objeto devuelto entero:`, updatedRepo);
+        
         showToast('Repositorio Actualizado', `El repo '${repoName}' ahora es ${actionText.toLowerCase()}.`, 'success');
         
         // Actualización optimista del estado local para reflejar el cambio de inmediato
         const state = getState();
+        console.log(`[7] Buscando repo en el estado local...`);
+        const localRepo = state.allRepos.find(r => r.name === repoName);
+        console.log(`[8] Estado local antes del cambio:`, localRepo ? localRepo.private : 'No encontrado');
+        
         if (state.allRepos) {
             const updatedAll = state.allRepos.map(r => r.name === repoName ? updatedRepo : r);
             setState({ allRepos: updatedAll });
-            if (state.user) saveToCache(state.user, updatedAll);
+            console.log(`[9] Estado actualizado en memoria.`);
+            
+            // Check other repos state
+            const debugList = updatedAll.filter(r => r.private).map(r => r.name);
+            console.log(`[10] Lista de repositorios privados AHORA en memoria:`, debugList);
+
+            if (state.user) {
+                saveToCache(state.user, updatedAll);
+                console.log(`[11] Caché guardada.`);
+            }
             runFilterAndSearch();
         }
     } catch(err) {
+        console.error(`[ERROR] Toggle Visibility:`, err);
         alert(`Error al actualizar: ${err.message}`);
     }
 }
