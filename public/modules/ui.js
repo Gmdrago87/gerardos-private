@@ -175,10 +175,36 @@ function generateBadgesHtml(topics) {
 export function renderRepos(repos, append = false, searchTerm = '', onCardClick, onCloneClick) {
     const grid = document.getElementById('repos-grid');
     const loadMoreBtn = document.getElementById('load-more-btn');
+    if (!grid) return;
+
+    // Guardar referencias globales para event delegation de cero costo
+    window._onCardClickGlobal = onCardClick;
+    window._onCloneClickGlobal = onCloneClick;
+
+    if (!grid.dataset.delegated) {
+        grid.dataset.delegated = 'true';
+        grid.addEventListener('click', (e) => {
+            const cloneBtn = e.target.closest('.repo-card__clone-btn');
+            if (cloneBtn) {
+                e.stopPropagation();
+                const url = cloneBtn.dataset.cloneUrl;
+                if (window._onCloneClickGlobal) window._onCloneClickGlobal(url, cloneBtn);
+                return;
+            }
+            const card = e.target.closest('.repo-card');
+            if (card && !e.target.closest('a') && !e.target.closest('button')) {
+                const repoName = card.dataset.repoName;
+                const s = getState();
+                const repo = s.allRepos.find(r => r.name === repoName);
+                if (repo && window._onCardClickGlobal) window._onCardClickGlobal(repo);
+            }
+        });
+    }
+
     if (!append) grid.innerHTML = '';
     if (repos.length === 0) {
         grid.innerHTML = `<div class="repos-grid__empty">Sin resultados encontrados</div>`;
-        loadMoreBtn.classList.add('hidden');
+        if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
         document.getElementById('showing-count').textContent = '';
         return;
     }
@@ -186,9 +212,10 @@ export function renderRepos(repos, append = false, searchTerm = '', onCardClick,
     const startIndex = append ? visibleCount - 9 : 0;
     const itemsToShow = repos.slice(startIndex, visibleCount);
     if (append && itemsToShow.length === 0) return;
+
     const fragment = document.createDocumentFragment();
     itemsToShow.forEach(repo => {
-        const card = createCardElement(repo, searchTerm, onCardClick, onCloneClick);
+        const card = createCardElement(repo, searchTerm);
         fragment.appendChild(card);
     });
     grid.appendChild(fragment);
@@ -196,41 +223,39 @@ export function renderRepos(repos, append = false, searchTerm = '', onCardClick,
 }
 
 function updateLoadMoreUi(total, visible, btn, append) {
-    if (visible < total) {
-        btn.classList.remove('hidden');
-    } else {
-        btn.classList.add('hidden');
+    if (btn) {
+        if (visible < total) {
+            btn.classList.remove('hidden');
+        } else {
+            btn.classList.add('hidden');
+        }
     }
-    document.getElementById('showing-count').textContent = `Mostrando ${Math.min(visible, total)} de ${total}`;
+    const countEl = document.getElementById('showing-count');
+    if (countEl) countEl.textContent = `Mostrando ${Math.min(visible, total)} de ${total}`;
     if (window.lucide) window.lucide.createIcons();
     if (!append) setTimeout(() => setupIntersectionObserver(), 100);
 }
 
-function createCardElement(repo, searchTerm, onCardClick, onCloneClick) {
+function createCardElement(repo, searchTerm) {
     const card = document.createElement('div');
-    // Simulate Living Ecosystem pulse
-    const randomPulse = Math.random();
-    let pulseClass = '';
-    if (randomPulse > 0.8) pulseClass = ' pulse-success';
-    else if (randomPulse > 0.6) pulseClass = ' pulse-danger';
-    
-    card.className = 'repo-card' + pulseClass;
+    card.className = 'repo-card';
+    card.dataset.repoName = repo.name;
     const langColor = LANG_COLORS[repo.language] || '#ffffff';
     const repoName = escapeHtml(repo.name);
     const repoDesc = escapeHtml(repo.description) || 'Sin descripción disponible.';
     const highlightedName = searchTerm ? highlightText(repoName, searchTerm) : repoName;
     const highlightedDesc = searchTerm ? highlightText(repoDesc, searchTerm) : repoDesc;
-    const updateBadge = getUpdateBadgeText(repo.pushed_at);
+    const updateBadge = getUpdateBadgeText(repo._pushedTime || repo.pushed_at);
     const webUrl = getWebUrl(repo.homepage);
     const hasWeb = webUrl !== '#';
     card.innerHTML = getCardHtml(repo, highlightedName, highlightedDesc, langColor, updateBadge, webUrl, hasWeb);
-    setupCardEventListeners(card, repo, onCardClick, onCloneClick);
     return card;
 }
 
-function getUpdateBadgeText(pushedAt) {
-    const days = Math.floor((Date.now() - new Date(pushedAt)) / 86400000);
-    if (days === 0) return 'Hoy';
+function getUpdateBadgeText(pushedTimeOrString) {
+    const pushedMs = typeof pushedTimeOrString === 'number' ? pushedTimeOrString : new Date(pushedTimeOrString).getTime();
+    const days = Math.floor((Date.now() - pushedMs) / 86400000);
+    if (days <= 0) return 'Hoy';
     if (days === 1) return 'Ayer';
     if (days < 7) return `Hace ${days} días`;
     if (days < 30) return `Hace ${Math.floor(days / 7)} semanas`;
@@ -245,8 +270,11 @@ function getWebUrl(homepage) {
 
 function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
     const htmlUrl = sanitizeUrl(repo.html_url);
+    const cloneUrl = sanitizeUrl(repo.clone_url);
     const badgesHtml = generateBadgesHtml(repo.topics);
     const privateBadge = repo.private ? '<span class="repo-card__private-badge" title="Repositorio Privado"><i data-lucide="lock"></i> Privado</span>' : '';
+    const safeRepoName = escapeHtml(repo.name).replace(/"/g, '&quot;');
+
     return `
         <div class="repo-card__header">
             <div class="repo-card__folder-icon">
@@ -254,11 +282,12 @@ function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
                 ${privateBadge}
             </div>
             <div class="repo-card__actions" id="actions-${repo.id}">
+                <button class="repo-card__clone-btn" data-clone-url="${cloneUrl}" title="Copiar 'git clone'"><i data-lucide="clipboard-copy"></i></button>
                 ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link"><i data-lucide="globe"></i> WEB</a>` : ''}
                 <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link"><i data-lucide="external-link"></i></a>
                 <a href="https://vscode.dev/github/GerardMaestre/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
-                <button class="repo-card__toggle-visibility-btn" data-repo-name="${escapeHtml(repo.name).replace(/"/g, '&quot;')}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}"></i></button>
-                <button class="repo-card__delete-btn" data-repo-name="${escapeHtml(repo.name).replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
+                <button class="repo-card__toggle-visibility-btn" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}"></i></button>
+                <button class="repo-card__delete-btn" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
             </div>
         </div>
         ${badgesHtml}
@@ -273,22 +302,6 @@ function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
             </div>
         </div>
     `;
-}
-
-function setupCardEventListeners(card, repo, onCardClick, onCloneClick) {
-    const cloneBtn = document.createElement('button');
-    cloneBtn.className = 'repo-card__clone-btn';
-    cloneBtn.title = "Copiar 'git clone'";
-    cloneBtn.innerHTML = '<i data-lucide="clipboard-copy"></i>';
-    cloneBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        onCloneClick(sanitizeUrl(repo.clone_url), cloneBtn);
-    });
-    const actions = card.querySelector(`#actions-${repo.id}`);
-    if (actions) actions.insertBefore(cloneBtn, actions.firstChild);
-    card.addEventListener('click', (e) => {
-        if (!e.target.closest('a') && !e.target.closest('button')) onCardClick(repo);
-    });
 }
 
 let cardObserver = null;

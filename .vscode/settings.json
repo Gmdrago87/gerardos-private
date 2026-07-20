@@ -1,3 +1,27 @@
 {
-    "liveServer.settings.port": 5501
+  "liveServer.settings.port": 5501,
+  // --- RENDIMIENTO Y RECURSOS DEL EDITOR ---
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.wrangler/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/.wrangler": true,
+    "**/node_modules": true,
+    "**/package-lock.json": true
+  },
+  // --- HIGIENE Y ESTÁNDARES DE CÓDIGO ---
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  // --- OPTIMIZACIÓN JAVASCRIPT / CLOUDFLARE ---
+  "javascript.implicitProjectConfig.checkJs": false,
+  "javascript.suggest.completeFunctionCalls": true
 }

@@ -14,15 +14,10 @@ export async function onRequestGet(context) {
         ]);
         
         if (!userRes.ok || !reposRes.ok) {
-            const userErr = await userRes.text();
-            const reposErr = await reposRes.text();
-            console.error("Error GitHub:", { userErr, reposErr });
             return jsonResponse({ error: "Error al comunicarse con GitHub" }, 502);
         }
         
-        const user = await userRes.json();
-        const repos = await reposRes.json();
-        
+        const [user, repos] = await Promise.all([userRes.json(), reposRes.json()]);
         return jsonResponse({ user, repos });
     } catch (err) {
         return jsonResponse({ error: "Error interno en el proxy del backend" }, 500);
@@ -42,12 +37,11 @@ export async function onRequestPost(context) {
         }
         
         const headers = getGitHubHeaders(context, true);
-        
         const gitHubBody = JSON.stringify({
             name,
             description: description || "",
-            private: !!isPrivate,
-            auto_init: true // inicializar con un README.md vacío
+            private: Boolean(isPrivate),
+            auto_init: true
         });
         
         const res = await fetch("https://api.github.com/user/repos", {
@@ -56,16 +50,17 @@ export async function onRequestPost(context) {
             body: gitHubBody
         });
         
+        const data = await res.json();
         if (!res.ok) {
-            const errText = await res.text();
-            console.error("Error al crear repo en GitHub:", errText);
-            return jsonResponse({ error: "No se pudo crear el repositorio en GitHub" }, 502);
+            return jsonResponse({ error: data?.message || "No se pudo crear el repositorio en GitHub" }, res.status);
         }
         
-        const data = await res.json();
         return jsonResponse(data, 201);
     } catch (e) {
-        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
+        if (e?.message?.startsWith("UNSUPPORTED_MEDIA") || e?.message?.startsWith("PAYLOAD_") || e?.message?.startsWith("INVALID_")) {
+            return jsonParseErrorResponse(e);
+        }
         return jsonResponse({ error: "Formato de petición inválido" }, 400);
     }
 }
+

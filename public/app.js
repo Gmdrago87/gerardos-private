@@ -135,11 +135,20 @@ function handleCriticalError(error) {
 }
 
 function processData(user, repos, source) {
-    setState({ user: user, allRepos: repos, filteredRepos: repos });
+    // Pre-indexar timestamps y cadenas en minúscula para eliminar alocaciones en búsquedas y ordenamientos
+    const indexedRepos = repos.map(repo => ({
+        ...repo,
+        _lowerName: repo.name ? repo.name.toLowerCase() : '',
+        _lowerDesc: repo.description ? repo.description.toLowerCase() : '',
+        _pushedTime: repo.pushed_at ? new Date(repo.pushed_at).getTime() : 0,
+        _updatedTime: (repo.updated_at || repo.pushed_at) ? new Date(repo.updated_at || repo.pushed_at).getTime() : 0
+    }));
+
+    setState({ user: user, allRepos: indexedRepos, filteredRepos: indexedRepos });
     renderProfile(user);
-    calculateStats(repos);
-    setupFilters(repos, handleFilterClick);
-    renderRepos(repos, false, '', handleCardClick, handleCloneClick);
+    calculateStats(indexedRepos);
+    setupFilters(indexedRepos, handleFilterClick);
+    renderRepos(indexedRepos, false, '', handleCardClick, handleCloneClick);
     showDataSourceIndicator(source);
     if (window.lucide) window.lucide.createIcons();
 }
@@ -162,13 +171,16 @@ function handleFilterClick(lang, btnElement) {
 
 function runFilterAndSearch() {
     const s = getState();
-    const term = document.getElementById('search-input').value.toLowerCase();
+    const input = document.getElementById('search-input');
+    const term = input ? input.value.toLowerCase().trim() : '';
+    const lang = s.currentLangFilter;
+    
     const filtered = s.allRepos.filter(repo => {
-        const matchesSearch = repo.name.toLowerCase().includes(term) || 
-                               (repo.description || '').toLowerCase().includes(term);
-        const matchesLang = s.currentLangFilter === 'all' || repo.language === s.currentLangFilter;
-        return matchesSearch && matchesLang;
+        if (lang !== 'all' && repo.language !== lang) return false;
+        if (!term) return true;
+        return repo._lowerName.includes(term) || repo._lowerDesc.includes(term);
     });
+    
     const sorted = sortRepositories(filtered, s.currentSort);
     setState({ filteredRepos: sorted, visibleCount: 9 });
     renderRepos(sorted, false, term, handleCardClick, handleCloneClick);
@@ -179,8 +191,8 @@ function sortRepositories(repos, sortBy) {
     if (sortBy === 'stars') return sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
     if (sortBy === 'forks') return sorted.sort((a, b) => b.forks_count - a.forks_count);
     if (sortBy === 'name') return sorted.sort((a, b) => a.name.localeCompare(b.name));
-    if (sortBy === 'updated') return sorted.sort((a, b) => new Date(b.updated_at || b.pushed_at) - new Date(a.updated_at || a.pushed_at));
-    return sorted.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
+    if (sortBy === 'updated') return sorted.sort((a, b) => b._updatedTime - a._updatedTime);
+    return sorted.sort((a, b) => b._pushedTime - a._pushedTime);
 }
 
 function handleSortClick(sortBy) {

@@ -9,80 +9,66 @@ const state = {
     currentSort: 'updated'
 };
 
-const listeners = {};
-
+// Zero-cost state getter (evita structuredClone profundo en hot paths)
 export function getState() {
-    return structuredClone(state);
+    return state;
 }
 
 export function setState(update) {
     Object.assign(state, update);
 }
 
-
-
-// Caching con IndexedDB (usando idb-keyval que está disponible globalmente si se cargó desde CDN)
+// Caching con IndexedDB
 export async function getCachedTree(key) {
     try {
-        if (window.idbKeyval) {
-            return await window.idbKeyval.get(`tree_${key}`);
-        }
-    } catch(e) {
-        console.warn("IndexedDB no disponible", e);
+        return window.idbKeyval ? await window.idbKeyval.get(`tree_${key}`) : null;
+    } catch {
+        return null;
     }
-    return null;
 }
 
 export async function setCachedTree(key, val) {
     try {
-        if (window.idbKeyval) {
-            if (val === null) {
-                await window.idbKeyval.del(`tree_${key}`);
-            } else {
-                await window.idbKeyval.set(`tree_${key}`, val);
-            }
+        if (!window.idbKeyval) return;
+        if (val === null) {
+            await window.idbKeyval.del(`tree_${key}`);
+        } else {
+            await window.idbKeyval.set(`tree_${key}`, val);
         }
-    } catch(e) {
-        console.warn("IndexedDB no disponible", e);
+    } catch (e) {
+        console.warn("IndexedDB error", e);
     }
 }
 
 export async function getCachedFile(key) {
     try {
-        if (window.idbKeyval) {
-            return await window.idbKeyval.get(`file_${key}`);
-        }
-    } catch(e) {
-        console.warn("IndexedDB no disponible", e);
+        return window.idbKeyval ? await window.idbKeyval.get(`file_${key}`) : null;
+    } catch {
+        return null;
     }
-    return null;
 }
 
 export async function setCachedFile(key, val) {
     try {
-        if (window.idbKeyval) {
-            if (val === null) {
-                await window.idbKeyval.del(`file_${key}`);
-            } else {
-                await window.idbKeyval.set(`file_${key}`, val);
-            }
+        if (!window.idbKeyval) return;
+        if (val === null) {
+            await window.idbKeyval.del(`file_${key}`);
+        } else {
+            await window.idbKeyval.set(`file_${key}`, val);
         }
-    } catch(e) {
-        console.warn("IndexedDB no disponible", e);
+    } catch (e) {
+        console.warn("IndexedDB error", e);
     }
 }
-
 
 export async function clearPrivateRepoCache() {
     try {
         if (!window.idbKeyval) return;
         const keys = await window.idbKeyval.keys();
-        await Promise.all(
-            keys
-                .filter(key => typeof key === "string" && (key.startsWith("file_") || key.startsWith("tree_")))
-                .map(key => window.idbKeyval.del(key))
-        );
+        const targets = keys.filter(key => typeof key === "string" && (key.startsWith("file_") || key.startsWith("tree_")));
+        await Promise.all(targets.map(key => window.idbKeyval.del(key)));
     } catch (e) {
         console.warn("No se pudo limpiar la caché privada", e);
     }
 }
+

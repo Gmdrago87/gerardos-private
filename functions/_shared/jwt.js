@@ -1,22 +1,25 @@
 // Funciones auxiliares para JWT usando Web Crypto API nativa (compatible con Cloudflare Workers)
 function base64UrlEncode(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
+    const len = bytes.byteLength;
     let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
+    const CHUNK_SIZE = 0x8000;
+    for (let i = 0; i < len; i += CHUNK_SIZE) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK_SIZE));
     }
-    const base64 = btoa(binary);
-    return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 function base64UrlDecode(str) {
-    str = str.replace(/-/g, "+").replace(/_/g, "/");
-    while (str.length % 4) {
-        str += "=";
+    let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = base64.length % 4;
+    if (pad) {
+        base64 += "=".repeat(4 - pad);
     }
-    const binary = atob(str);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
         bytes[i] = binary.charCodeAt(i);
     }
     return bytes.buffer;

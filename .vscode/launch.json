@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Wrangler Pages Dev",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "pages", "dev", "public", "--port", "8789"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Ejecutar generate.js",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/generate.js",
+      "console": "integratedTerminal"
+    }
+  ]
+}
