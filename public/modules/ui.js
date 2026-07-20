@@ -35,7 +35,7 @@ export function showError(msg) {
     document.getElementById('loading').innerHTML = `
         <div class="error-screen">
             <p class="error-title">¡Ups!</p>
-            <p class="error-message">${msg}</p>
+            <p class="error-message">${escapeHtml(msg)}</p>
             <button id="retry-btn" class="btn-retry">Reintentar</button>
         </div>
     `;
@@ -285,18 +285,23 @@ function setupCardEventListeners(card, repo, onCardClick, onCloneClick) {
     });
 }
 
+let cardObserver = null;
+
 export function setupIntersectionObserver() {
-    const observer = new IntersectionObserver((entries) => {
+    if (cardObserver) {
+        cardObserver.disconnect();
+    }
+    cardObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('animate-in');
-                observer.unobserve(entry.target);
+                cardObserver.unobserve(entry.target);
             }
         });
     }, { root: null, rootMargin: '0px', threshold: 0.1 });
     document.querySelectorAll('.repo-card').forEach(card => {
         card.classList.add('fade-in-hidden');
-        observer.observe(card);
+        cardObserver.observe(card);
     });
 }
 
@@ -393,6 +398,7 @@ export function showFileLoading() {
 }
 
 let currentEditor = null;
+let monacoCheckInterval = null;
 
 function getLanguageFromPath(path) {
     const ext = path.split('.').pop().toLowerCase();
@@ -422,14 +428,17 @@ export function renderFileContent(content, path, element) {
         if (window.lucide) window.lucide.createIcons();
         
         let attempts = 0;
-        const checkInterval = setInterval(() => {
+        if (monacoCheckInterval) clearInterval(monacoCheckInterval);
+        monacoCheckInterval = setInterval(() => {
             attempts++;
             if (window.monaco && window.monacoReady) {
-                clearInterval(checkInterval);
+                clearInterval(monacoCheckInterval);
+                monacoCheckInterval = null;
                 viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
                 initMonaco(content, path);
             } else if (attempts > 150) { // 15 segundos
-                clearInterval(checkInterval);
+                clearInterval(monacoCheckInterval);
+                monacoCheckInterval = null;
                 const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
                 viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
             }
@@ -520,10 +529,11 @@ export function showViewerError(message, type = 'error') {
 export async function renderReadme(content) {
     const viewer = document.getElementById('code-viewer');
     if (!window.marked) await importDynamicMarked();
+    if (!window.DOMPurify) await importDynamicDOMPurify();
     viewer.innerHTML = `
         <div class="h-full overflow-auto custom-scroll">
             <div class="markdown-body">
-                ${window.marked.parse(content)}
+                ${window.DOMPurify.sanitize(window.marked.parse(content))}
             </div>
         </div>`;
 }
@@ -538,12 +548,27 @@ function importDynamicMarked() {
     });
 }
 
+function importDynamicDOMPurify() {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load DOMPurify'));
+        document.head.appendChild(script);
+    });
+}
+
 export function closeModal() {
     const modal = document.getElementById('modal');
     modal.classList.add('closing');
     
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'none';
+    
+    if (monacoCheckInterval) {
+        clearInterval(monacoCheckInterval);
+        monacoCheckInterval = null;
+    }
     
     if (currentEditor) {
         currentEditor.dispose();

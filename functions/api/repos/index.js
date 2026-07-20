@@ -1,23 +1,12 @@
+import { getGitHubHeaders, requireAuth } from '../../_shared/github.js';
+
 export async function onRequestGet(context) {
-    const { env } = context;
+    const authError = requireAuth(context);
+    if (authError) return authError;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Falta configurar GITHUB_PAT o GITHUB_USERNAME" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
-    }
-    
-    const headers = {
-        "Authorization": `Bearer ${context.data.session.github_token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "GerardOS-Private-Dashboard"
-    };
+    const headers = getGitHubHeaders(context);
     
     try {
-        // Consultar el perfil del usuario autenticado (GET /user) y sus repositorios
-        // Usamos /user en lugar de /users/username para que cargue la info privada si está disponible
         const [userRes, reposRes] = await Promise.all([
             fetch("https://api.github.com/user", { headers }),
             fetch("https://api.github.com/user/repos?per_page=100&sort=updated&type=all", { headers })
@@ -49,17 +38,11 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-    const { request, env } = context;
-    
-    if (!context.data.session.github_token) {
-        return new Response(JSON.stringify({ error: "Falta configurar GITHUB_PAT" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
-    }
+    const authError = requireAuth(context);
+    if (authError) return authError;
     
     try {
-        const body = await request.json();
+        const body = await context.request.json();
         const { name, description, isPrivate } = body;
         
         if (!name) {
@@ -69,13 +52,7 @@ export async function onRequestPost(context) {
             });
         }
         
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard",
-            "Content-Type": "application/json"
-        };
+        const headers = getGitHubHeaders(context, true);
         
         const gitHubBody = JSON.stringify({
             name,

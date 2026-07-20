@@ -5,26 +5,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source de GitHub.">
-    <meta name="theme-color" content="#1e1e2e">
+    <meta name="theme-color" content="#8b5cf6">
     <meta name="author" content="GerardMaestre">
     <meta name="keywords" content="portfolio, github, glassmorphism, web development, open source">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gerardmaestre.github.io/Project_Repositorios_Github/">
+    <meta property="og:url" content="https://gerardos-private.pages.dev/">
     <meta property="og:title" content="GerardMaestre | Portfolio Web">
     <meta property="og:description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source.">
     <meta property="og:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://gerardmaestre.github.io/Project_Repositorios_Github/">
+    <meta property="twitter:url" content="https://gerardos-private.pages.dev/">
     <meta property="twitter:title" content="GerardMaestre | Portfolio Web">
     <meta property="twitter:description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source.">
     <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
     
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json">
+    
+    <!-- SEO & Canonical -->
+    <link rel="canonical" href="https://gerardos-private.pages.dev/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      "name": "Gerard Maestre",
+      "url": "https://gerardos-private.pages.dev/",
+      "image": "https://avatars.githubusercontent.com/u/232252917?v=4"
+    }
+    </script>
     
     <title>Gerard Maestre — Portafolio</title>
     
@@ -281,6 +293,7 @@
                                             <i data-lucide="search" class="search-field__icon"></i>
                                             <input type="text" 
                                                    id="search-input" 
+                                                   aria-label="Buscar proyectos"
                                                    placeholder="Buscar proyectos...">
                                         </div>
                                         <button id="toggle-filters-btn" class="btn-filter" title="Mostrar/Ocultar Filtros">
@@ -451,7 +464,7 @@
             </div>
 
             <div class="ai-chat-input-row">
-                <input type="text" id="ai-input" placeholder="Haz una pregunta a la IA o selecciona una acción..." autocomplete="off">
+                <input type="text" id="ai-input" aria-label="Pregunta al asistente de IA" placeholder="Haz una pregunta a la IA o selecciona una acción..." autocomplete="off">
                 <button id="ai-send-btn" class="btn-refresh" style="padding: 10px 16px;">
                     <i data-lucide="send"></i>
                 </button>
@@ -551,7 +564,7 @@
                     <span style="font-size: 0.9rem; font-family: monospace;">localhost:3000 (Live Preview)</span>
                     <button id="btn-refresh-preview" style="margin-left: auto; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px;"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i></button>
                 </div>
-                <iframe id="preview-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+                <iframe id="preview-frame" sandbox="allow-scripts" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
 
             <!-- TAB: ACTIONS -->
@@ -590,7 +603,7 @@
         <div class="palette-container glass-panel">
             <div class="palette-search-row">
                 <i data-lucide="search" style="color:var(--text-secondary); width:20px; height:20px;"></i>
-                <input type="text" id="cmd-input" class="palette-input" placeholder="Buscar repositorios, comandos... (Esc para salir)" autocomplete="off">
+                <input type="text" id="cmd-input" class="palette-input" aria-label="Buscar comandos" placeholder="Buscar repositorios, comandos... (Esc para salir)" autocomplete="off">
             </div>
             <div id="palette-results" class="palette-results">
                 <!-- Se rellena por JS -->
@@ -680,7 +693,7 @@
                 
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                     <h4 style="color: var(--text-primary); margin-bottom: 10px;">Fondo de Pantalla</h4>
-                    <select id="bg-selector" class="modal__input" style="width: 100%;" onchange="document.body.style.backgroundImage = 'url(' + this.value + ')'">
+                    <select id="bg-selector" aria-label="Seleccionar fondo de pantalla" class="modal__input" style="width: 100%;" onchange="document.body.style.backgroundImage = 'url(' + this.value + ')'">
                         <option value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop">Liquid Abstract (Defecto)</option>
                         <option value="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2564&auto=format&fit=crop">Neon City</option>
                         <option value="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2342&auto=format&fit=crop">Deep Space</option>

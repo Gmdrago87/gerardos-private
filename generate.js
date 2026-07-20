@@ -36,16 +36,29 @@ function saveDatabase(user, repos) {
         user: mapUser(user),
         repos: repos.map(mapRepo)
     };
-    fs.writeFileSync('database.json', JSON.stringify(data, null, 2));
-    console.log('✅ database.json actualizado con éxito.');
+    fs.writeFileSync('public/database.json', JSON.stringify(data, null, 2));
+    console.log('✅ public/database.json actualizado con éxito.');
+    
+    // Update sw.js cache name dynamically
+    try {
+        const swPath = 'public/sw.js';
+        let swContent = fs.readFileSync(swPath, 'utf8');
+        const timestamp = Date.now();
+        swContent = swContent.replace(/const CACHE_NAME = 'gerardos-[^']+';/, `const CACHE_NAME = 'gerardos-v${timestamp}';`);
+        fs.writeFileSync(swPath, swContent);
+        console.log(`✅ Cache en sw.js actualizada a gerardos-v${timestamp}`);
+    } catch (e) {
+        console.error('⚠️ No se pudo actualizar sw.js:', e.message);
+    }
 }
 
 async function updatePortfolio() {
     console.log(`🤖 Iniciando actualización automática para @${USERNAME}...`);
     try {
+        const headers = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
         const [userRes, reposRes] = await Promise.all([
-            fetch(`https://api.github.com/users/${USERNAME}`),
-            fetch(`https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`)
+            fetch(`https://api.github.com/users/${USERNAME}`, { headers }),
+            fetch(`https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`, { headers })
         ]);
         if (!userRes.ok || !reposRes.ok) throw new Error('API fetch failed');
         const user = await userRes.json();

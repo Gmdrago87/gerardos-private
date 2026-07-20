@@ -1,20 +1,17 @@
+import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+
 export async function onRequestGet(context) {
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
     const { env, params } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
-    const headers = {
-        "Authorization": `Bearer ${context.data.session.github_token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "GerardOS-Private-Dashboard"
-    };
+    const headers = getGitHubHeaders(context);
     
     try {
         const res = await fetch(`https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}`, { headers });
@@ -39,18 +36,17 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestDelete(context) {
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
     const { env, params, request } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
     try {
-        // Doble verificación: comprobar que el usuario envió una confirmación en el cuerpo
         const body = await request.json();
         if (body.confirm !== repoName) {
             return new Response(JSON.stringify({ error: "Confirmación incorrecta: debes escribir el nombre exacto del repositorio" }), {
@@ -59,12 +55,7 @@ export async function onRequestDelete(context) {
             });
         }
         
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard"
-        };
+        const headers = getGitHubHeaders(context);
         
         const res = await fetch(`https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}`, {
             method: "DELETE",
@@ -92,14 +83,14 @@ export async function onRequestDelete(context) {
 }
 
 export async function onRequestPatch(context) {
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
     const { env, params, request } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
     try {
@@ -111,12 +102,7 @@ export async function onRequestPatch(context) {
             });
         }
         
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard"
-        };
+        const headers = getGitHubHeaders(context, true);
         
         const res = await fetch(`https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}`, {
             method: "PATCH",

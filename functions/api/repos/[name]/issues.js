@@ -1,20 +1,17 @@
+import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+
 export async function onRequestGet(context) {
     const { env, params, request } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
-    const headers = {
-        "Authorization": `Bearer ${context.data.session.github_token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "GerardOS-Private-Dashboard"
-    };
+    const headers = getGitHubHeaders(context);
     
     try {
         // Fetch open issues
@@ -105,31 +102,26 @@ export async function onRequestPatch(context) {
     const { env, params, request } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
     try {
         const body = await request.json();
         const { issue_number, state, labels } = body;
         
-        if (!issue_number) {
-            return new Response(JSON.stringify({ error: "El issue_number es obligatorio" }), {
+        const num = parseInt(issue_number);
+        if (isNaN(num) || num < 1) {
+            return new Response(JSON.stringify({ error: "El issue_number debe ser un entero positivo" }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" }
             });
         }
         
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard",
-            "Content-Type": "application/json"
-        };
+        const headers = getGitHubHeaders(context, true);
         
         const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/issues/${issue_number}`;
         

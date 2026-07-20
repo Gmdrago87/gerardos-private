@@ -1,3 +1,5 @@
+import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+
 export async function onRequestGet(context) {
     const { env, params } = context;
     const repoName = params.name;

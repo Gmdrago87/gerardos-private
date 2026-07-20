@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v2';
+const CACHE_NAME = 'gerardos-v1784538670045';
 const STATIC_ASSETS = [
     '/',
     '/index.html',

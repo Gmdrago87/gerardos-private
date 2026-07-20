@@ -36,11 +36,10 @@ export function debounce(func, wait) {
     };
 }
 
-export function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+const htmlMap = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"};
+export function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => htmlMap[m]);
 }
 
 export function sanitizeUrl(url) {
@@ -53,7 +52,9 @@ export function escapeRegex(string) {
 }
 
 export function highlightText(text, term) {
-    if (!term) return text;
-    const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
-    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+    if (!term) return escapeHtml(text);
+    const escapedText = escapeHtml(text);
+    const escapedTerm = escapeHtml(term);
+    const regex = new RegExp(`(${escapeRegex(escapedTerm)})`, 'gi');
+    return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
 }

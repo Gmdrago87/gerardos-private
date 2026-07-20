@@ -1,7 +1,7 @@
 import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
-import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches } from './modules/api.js';
-import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus } from './modules/ui.js';
+import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches, saveFileContent, deleteFile, fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
+import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
@@ -329,8 +329,6 @@ function handleCloneClick(url, btn) {
     copyCloneCommand(url, btn);
 }
 
-import { saveFileContent } from './modules/api.js';
-import { getCurrentEditorContent } from './modules/ui.js';
 
 async function handleSaveFile() {
     if (!currentRepoInfo || !currentFilePath) return;
@@ -386,7 +384,6 @@ async function handleSaveFile() {
     }
 }
 
-import { deleteFile } from './modules/api.js';
 
 async function handleNewFile() {
     if (!currentRepoInfo) return;
@@ -447,7 +444,6 @@ async function handleDeleteFile() {
 }
 
 // Kanban Logic
-import { fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
 
 async function loadKanbanIssues() {
     if (!currentRepoInfo) return;
@@ -519,11 +515,18 @@ function setupKanbanDragAndDrop() {
     columns.forEach(col => {
         col.addEventListener('dragover', e => {
             e.preventDefault();
-            const dragging = document.querySelector('.dragging');
-            if (dragging) col.querySelector('.kanban-cards').appendChild(dragging);
+            col.classList.add('drag-over');
+        });
+        col.addEventListener('dragleave', e => {
+            col.classList.remove('drag-over');
         });
         col.addEventListener('drop', async e => {
             e.preventDefault();
+            col.classList.remove('drag-over');
+            
+            const dragging = document.querySelector('.dragging');
+            const originalParent = dragging ? dragging.parentElement : null;
+            if (dragging) col.querySelector('.kanban-cards').appendChild(dragging);
             const number = e.dataTransfer.getData('text/plain');
             const state = col.dataset.state;
             
@@ -538,7 +541,7 @@ function setupKanbanDragAndDrop() {
                 }
             } catch (err) {
                 alert('Error al actualizar la tarea: ' + err.message);
-                loadKanbanIssues(); // revertir si falla
+                if (dragging && originalParent) originalParent.appendChild(dragging); // Revert UI
             }
         });
     });

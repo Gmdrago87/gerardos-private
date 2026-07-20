@@ -11,26 +11,14 @@ const state = {
 const listeners = {};
 
 export function getState() {
-    return state;
+    return structuredClone(state);
 }
 
 export function setState(update) {
     Object.assign(state, update);
-    notify('change', state);
 }
 
-export function subscribe(event, callback) {
-    if (!listeners[event]) {
-        listeners[event] = [];
-    }
-    listeners[event].push(callback);
-}
 
-function notify(event, data) {
-    if (listeners[event]) {
-        listeners[event].forEach(cb => cb(data));
-    }
-}
 
 // Caching con IndexedDB (usando idb-keyval que está disponible globalmente si se cargó desde CDN)
 export async function getCachedTree(key) {

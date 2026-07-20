@@ -41,7 +41,7 @@
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.75);
   --text-muted: rgba(255, 255, 255, 0.55);
-  --text-faint: rgba(255, 255, 255, 0.4);
+  --text-faint: rgba(255, 255, 255, 0.6);
   --text-ghost: rgba(255, 255, 255, 0.2);
 
   /* Backgrounds */
@@ -3592,3 +3592,10 @@ body.web-mode .btn-scroll-top {
   }
 }
 
+
+/* Mobile Performance Optimization */
+@media (max-width: 768px) {
+  .glass-panel, .repo-card, .mac-window {
+    backdrop-filter: none !important;
+  }
+}

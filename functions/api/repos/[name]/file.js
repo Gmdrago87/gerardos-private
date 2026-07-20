@@ -1,3 +1,5 @@
+import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+
 export async function onRequestGet(context) {
     const { env, params, request } = context;
     const repoName = params.name;
@@ -21,19 +23,14 @@ export async function onRequestGet(context) {
         });
     }
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
-    const headers = {
-        "Authorization": `Bearer ${context.data.session.github_token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "GerardOS-Private-Dashboard"
-    };
+    const headers = getGitHubHeaders(context);
     
     try {
         // Escapar adecuadamente la ruta del archivo
@@ -85,11 +82,11 @@ export async function onRequestPut(context) {
     const { env, params, request } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
     try {
@@ -110,12 +107,7 @@ export async function onRequestPut(context) {
             });
         }
         
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard"
-        };
+        const headers = getGitHubHeaders(context);
         
         // Encode content to base64 properly handling UTF-8
         const utf8Bytes = new TextEncoder().encode(content);
@@ -169,11 +161,11 @@ export async function onRequestDelete(context) {
     const { env, params, request } = context;
     const repoName = params.name;
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
     }
     
     try {
@@ -194,12 +186,7 @@ export async function onRequestDelete(context) {
             });
         }
         
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard"
-        };
+        const headers = getGitHubHeaders(context);
         
         const requestBody = {
             message: message,

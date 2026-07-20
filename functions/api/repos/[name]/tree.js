@@ -1,24 +1,21 @@
+import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+
 export async function onRequestGet(context) {
+    const authError = requireAuth(context);
+    if (authError) return authError;
+    
     const { env, params, request } = context;
     const repoName = params.name;
+    
+    if (!validateRepoName(repoName)) {
+        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
+    }
     
     // Obtener la rama de la query string
     const url = new URL(request.url);
     const branch = url.searchParams.get("branch") || "main";
     
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
-    }
-    
-    const headers = {
-        "Authorization": `Bearer ${context.data.session.github_token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "GerardOS-Private-Dashboard"
-    };
+    const headers = getGitHubHeaders(context);
     
     try {
         const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
