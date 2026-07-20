@@ -797,12 +797,17 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
     
     showToast('Actualizando...', `Haciendo repositorio ${actionText.toLowerCase()}...`, 'info');
     try {
-        await updateRepoVisibility(repoName, newPrivateState);
+        const updatedRepo = await updateRepoVisibility(repoName, newPrivateState);
         showToast('Repositorio Actualizado', `El repo '${repoName}' ahora es ${actionText.toLowerCase()}.`, 'success');
         
-        // Forzar actualización de datos
-        clearCache();
-        await fetchFreshOrFallback();
+        // Actualización optimista del estado local para reflejar el cambio de inmediato
+        const state = getState();
+        if (state.allRepos) {
+            const updatedAll = state.allRepos.map(r => r.name === repoName ? updatedRepo : r);
+            setState({ allRepos: updatedAll });
+            saveToCache(updatedAll);
+            runFilterAndSearch();
+        }
     } catch(err) {
         alert(`Error al actualizar: ${err.message}`);
     }

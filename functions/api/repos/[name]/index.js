@@ -107,7 +107,7 @@ export async function onRequestPatch(context) {
         const res = await fetch(`https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}`, {
             method: "PATCH",
             headers,
-            body: JSON.stringify({ private: body.private })
+            body: JSON.stringify({ name: repoName, private: body.private })
         });
         
         if (res.ok) {
