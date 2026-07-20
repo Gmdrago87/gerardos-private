@@ -112,7 +112,7 @@ function handleCriticalError(error) {
 }
 
 function processData(user, repos, source) {
-    setState({ allRepos: repos, filteredRepos: repos });
+    setState({ user: user, allRepos: repos, filteredRepos: repos });
     renderProfile(user);
     calculateStats(repos);
     setupFilters(repos, handleFilterClick);
@@ -747,13 +747,18 @@ async function handleCreateRepoSubmit(e) {
     if (errorEl) errorEl.textContent = '';
     
     try {
-        await createRepo(name, desc, isPrivate);
+        const newRepo = await createRepo(name, desc, isPrivate);
         hideCreateRepoModal();
         showToast('Repositorio Creado', `El repo '${name}' se ha creado correctamente.`, 'success');
         
-        // Forzar actualización de datos
-        clearCache();
-        await fetchFreshOrFallback();
+        // Actualización optimista
+        const state = getState();
+        if (state.allRepos) {
+            const updatedAll = [newRepo, ...state.allRepos];
+            setState({ allRepos: updatedAll });
+            if (state.user) saveToCache(state.user, updatedAll);
+            runFilterAndSearch();
+        }
     } catch(err) {
         if (errorEl) errorEl.textContent = err.message;
     } finally {
@@ -779,9 +784,14 @@ async function triggerDeleteRepo(repoName) {
         await deleteRepo(repoName, confirmName);
         showToast('Repositorio Eliminado', `El repo '${repoName}' ha sido eliminado.`, 'success');
         
-        // Forzar actualización de datos
-        clearCache();
-        await fetchFreshOrFallback();
+        // Actualización optimista
+        const state = getState();
+        if (state.allRepos) {
+            const updatedAll = state.allRepos.filter(r => r.name !== repoName);
+            setState({ allRepos: updatedAll });
+            if (state.user) saveToCache(state.user, updatedAll);
+            runFilterAndSearch();
+        }
     } catch(err) {
         alert(`Error al eliminar: ${err.message}`);
     }
@@ -805,7 +815,7 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
         if (state.allRepos) {
             const updatedAll = state.allRepos.map(r => r.name === repoName ? updatedRepo : r);
             setState({ allRepos: updatedAll });
-            saveToCache(updatedAll);
+            if (state.user) saveToCache(state.user, updatedAll);
             runFilterAndSearch();
         }
     } catch(err) {

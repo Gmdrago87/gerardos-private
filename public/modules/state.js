@@ -1,6 +1,7 @@
 import { ITEMS_PER_PAGE } from './utils.js';
 
 const state = {
+    user: null,
     allRepos: [],
     filteredRepos: [],
     currentLangFilter: 'all',
