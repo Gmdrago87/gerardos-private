@@ -6,4 +6,6 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 GITHUB_USERNAME = "Gmdrago87"
 GITHUB_CLIENT_ID = "Ov23liZt2GrRqM6MBcHa"
+GITHUB_CLIENT_SECRET = "05225febfd12ff3be4787a49b8cb69d1a1b85743"
+JWT_SECRET = "super_secreto_para_probar_localmente"
 NODE_ENV = "development"

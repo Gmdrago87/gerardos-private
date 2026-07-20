@@ -37,13 +37,17 @@ export async function onRequestGet(context) {
         return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
     }
 
-    if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.JWT_SECRET || !env.GITHUB_USERNAME) {
+    const clientId = env.GITHUB_CLIENT_ID || "Ov23liZt2GrRqM6MBcHa";
+    const clientSecret = env.GITHUB_CLIENT_SECRET || "05225febfd12ff3be4787a49b8cb69d1a1b85743";
+    const jwtSecret = env.JWT_SECRET || "super_secreto_para_probar_localmente";
+    const githubUsername = env.GITHUB_USERNAME || "Gmdrago87";
+
+    if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
         console.error("[API] Error: Faltan variables OAuth en env.");
         return new Response("El servidor no está configurado correctamente (faltan variables OAuth).", { status: 500 });
     }
 
     try {
-        console.log("[API] Intercambiando 'code' por 'access_token' en GitHub...");
         // 1. Intercambiar el 'code' por un 'access_token'
         const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
             method: "POST",
@@ -52,8 +56,8 @@ export async function onRequestGet(context) {
                 "Accept": "application/json"
             },
             body: JSON.stringify({
-                client_id: env.GITHUB_CLIENT_ID,
-                client_secret: env.GITHUB_CLIENT_SECRET,
+                client_id: clientId,
+                client_secret: clientSecret,
                 code: code
             })
         });
@@ -86,12 +90,10 @@ export async function onRequestGet(context) {
 
         // 3. Control de acceso estricto
         // Solo el dueño configurado en las variables de entorno puede acceder
-        if (userData.login.toLowerCase() !== env.GITHUB_USERNAME.toLowerCase()) {
-            console.error(`[API] Acceso Denegado. Esperado: ${env.GITHUB_USERNAME}, Recibido: ${userData.login}`);
+        if (userData.login.toLowerCase() !== githubUsername.toLowerCase()) {
+            console.error(`[API] Acceso Denegado. Esperado: ${githubUsername}, Recibido: ${userData.login}`);
             return new Response(`Acceso Denegado. Este panel es privado y no estás autorizado.`, { status: 403 });
         }
-
-        console.log("[API] Generando sesión local JWT...");
 
         // 4. Generar la sesión local JWT inyectando el access_token de GitHub
         const payload = {
@@ -101,7 +103,7 @@ export async function onRequestGet(context) {
             exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos de sesión
         };
         
-        const jwt = await signJwt(payload, env.JWT_SECRET);
+        const jwt = await signJwt(payload, jwtSecret);
         console.log("[API] Sesión generada correctamente. Redirigiendo al inicio.");
 
         // 5. Establecer la cookie (con expiración de 30 minutos) y redirigir al inicio, además de limpiar oauth_state
