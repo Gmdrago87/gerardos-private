@@ -906,12 +906,26 @@ async function triggerDeleteRepo(repoName) {
             runFilterAndSearch();
         }
     } catch(err) {
-        await showCustomAlert({
-            title: 'Error al Eliminar Repositorio',
-            icon: 'alert-circle',
-            message: err.message,
-            type: 'error'
-        });
+        if (err.message.includes('delete_repo') || err.message.includes('403') || err.message.includes('permiso') || err.message.includes('admin')) {
+            const relogin = await showCustomConfirm({
+                title: 'Renovar Permisos en GitHub',
+                icon: 'key',
+                message: `GitHub ha denegado la solicitud de borrado por permisos:\n${err.message}\n\n¿Deseas volver a iniciar sesión con GitHub para otorgar el nuevo permiso 'delete_repo'?`,
+                confirmText: 'Re-iniciar Sesión',
+                cancelText: 'Cerrar'
+            });
+            if (relogin) {
+                login();
+                return;
+            }
+        } else {
+            await showCustomAlert({
+                title: 'Error al Eliminar Repositorio',
+                icon: 'alert-circle',
+                message: err.message,
+                type: 'error'
+            });
+        }
     }
 }
 
