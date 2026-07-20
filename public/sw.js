@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1721468700000';
+const CACHE_NAME = 'gerardos-v1.1.0-fixed';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
 
 // Instalación del Service Worker: precachear recursos estáticos
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('[Service Worker] Pre-cacheando recursos estáticos');
@@ -29,7 +30,7 @@ self.addEventListener('install', (event) => {
                     }).catch(err => console.warn('[Service Worker] Error cacheando', url, err));
                 })
             );
-        }).then(() => self.skipWaiting())
+        })
     );
 });
 
@@ -49,7 +50,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Estrategia de Fetch: Network-first para la API, Cache-first para estáticos
+// Estrategia de Fetch: Network-first (siempre obtiene la versión más reciente, fallback a cache)
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
@@ -71,26 +72,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Cache-first para recursos estáticos del sitio
+    // Network-first para recursos del sitio (garantiza ver siempre el código más reciente)
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                // Actualizar en segundo plano (stale-while-revalidate)
-                fetch(event.request).then((networkResponse) => {
-                    // Evitar cachear redirecciones a páginas de login (común en repositorios privados/Cloudflare Access)
-                    if (networkResponse.ok && !networkResponse.redirected) {
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-                    }
-                }).catch(() => {});
-                return cachedResponse;
+        fetch(event.request).then((networkResponse) => {
+            if (networkResponse.ok && event.request.method === 'GET' && !networkResponse.redirected) {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
             }
-            return fetch(event.request).then((networkResponse) => {
-                if (networkResponse.ok && event.request.method === 'GET' && !networkResponse.redirected) {
-                    const responseClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-                }
-                return networkResponse;
-            });
+            return networkResponse;
+        }).catch(() => {
+            return caches.match(event.request);
         })
     );
 });

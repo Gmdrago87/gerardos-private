@@ -11,14 +11,16 @@ async function loadVersionInfo() {
         const res = await fetch('/api/version');
         if (!res.ok) return;
         const data = await res.json();
-        const el = document.getElementById('footer-version');
-        if (el && data.version) {
-            if (data.fullSha) {
-                el.innerHTML = `<a href="https://github.com/GerardMaestre/gerardos-privado/commit/${data.fullSha}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;" title="Ver commit en GitHub">${data.version}</a>`;
-            } else {
-                el.textContent = data.version;
+        const elements = document.querySelectorAll('#footer-version, .login-version-tag');
+        elements.forEach(el => {
+            if (data.version) {
+                if (data.fullSha) {
+                    el.innerHTML = `<a href="https://github.com/GerardMaestre/gerardos-privado/commit/${data.fullSha}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;" title="Ver commit en GitHub">${data.version}</a>`;
+                } else {
+                    el.textContent = data.version;
+                }
             }
-        }
+        });
     } catch (e) {
         console.warn('No se pudo obtener la versión dinámica:', e);
     }
