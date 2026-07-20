@@ -4,7 +4,7 @@ compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-GITHUB_USERNAME = "Gmdrago87"
+GITHUB_USERNAME = "GerardMaestre"
 GITHUB_CLIENT_ID = "Ov23liZt2GrRqM6MBcHa"
 GITHUB_CLIENT_SECRET = "05225febfd12ff3be4787a49b8cb69d1a1b85743"
 JWT_SECRET = "super_secreto_para_probar_localmente"

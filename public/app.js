@@ -234,7 +234,7 @@ async function loadRepoTreeAndReadme(repo, branch) {
             data = await fetchRepoTree(repo.name, branch);
             await setCachedTree(cacheKey, data);
         }
-        const blobs = renderRepoTree(repo, data, (fileNode) => handleFileClick(fileNode, branch));
+        const blobs = renderRepoTree(repo, data, (fileNode) => handleFileClick(fileNode, branch), branch);
         
         // Cargar commits
         loadCommitsList(repo.name, branch);

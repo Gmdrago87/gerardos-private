@@ -1,4 +1,4 @@
-import { LANG_COLORS, FILTER_BTN_INACTIVE, FILTER_BTN_ACTIVE, FILTER_BTN_ALL_ACTIVE, escapeHtml, sanitizeUrl, highlightText } from './utils.js';
+import { LANG_COLORS, FILTER_BTN_INACTIVE, FILTER_BTN_ACTIVE, FILTER_BTN_ALL_ACTIVE, escapeHtml, sanitizeUrl, highlightText, CACHE_KEY_TIME } from './utils.js';
 import { getState } from './state.js';
 import { sendAIMessage } from './ai_ui.js';
 
@@ -53,7 +53,7 @@ export function renderProfile(user) {
         };
     }
     document.getElementById('name').textContent = user.name || 'GerardMaestre';
-    document.getElementById('username').textContent = `@${user.login || 'Gmdrago87'}`;
+    document.getElementById('username').textContent = `@${user.login || 'GerardMaestre'}`;
     animateCounter(document.getElementById('followers'), user.followers || 0, 1000);
     animateCounter(document.getElementById('following'), user.following || 0, 1000);
     document.getElementById('github-link').href = user.html_url || 'https://github.com/GerardMaestre';
@@ -112,7 +112,7 @@ export function showDataSourceIndicator(source) {
 function updateCacheAgeText(source) {
     const cacheAgeText = document.getElementById('cache-age-text');
     if (!cacheAgeText) return;
-    const timestamp = localStorage.getItem('gh_time_GerardMaestre');
+    const timestamp = localStorage.getItem(CACHE_KEY_TIME);
     if (timestamp && (source === 'cache' || source === 'fallback')) {
         const cacheAge = Math.floor((Date.now() - parseInt(timestamp)) / 60000);
         const displayAge = cacheAge < 60 ? `${cacheAge} min` : `${Math.floor(cacheAge / 60)}h ${cacheAge % 60}min`;
@@ -393,11 +393,11 @@ export function prepareRepoViewer(repoName) {
     if (window.lucide) window.lucide.createIcons();
 }
 
-export function renderRepoTree(repo, treeData, onFileClick) {
+export function renderRepoTree(repo, treeData, onFileClick, branch) {
     const fileTree = document.getElementById('file-tree');
     const blobs = treeData.tree.filter(i => i.type === 'blob');
     const hierarchy = buildHierarchy(blobs);
-    fileTree.innerHTML = generateTreeHTML(hierarchy, repo.name, repo.default_branch);
+    fileTree.innerHTML = generateTreeHTML(hierarchy, repo.name, branch || repo.default_branch || 'main');
     if (window.lucide) window.lucide.createIcons();
     setupFileTreeListeners(onFileClick);
     return blobs;

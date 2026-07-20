@@ -14,7 +14,7 @@ export function jsonResponse(data, status = 200, headers = null) {
     });
 }
 
-export async function readJson(request, maxBytes = 131072) {
+export async function readJson(request, maxBytes = 5242880) {
     const contentType = request.headers.get("Content-Type");
     if (!contentType || !contentType.includes("application/json")) {
         throw new Error("UNSUPPORTED_MEDIA_TYPE");

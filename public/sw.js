@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1784570973584';
+const CACHE_NAME = 'gerardos-v1784572925775';
 const STATIC_ASSETS = new Set([
     '/',
     '/index.html',
@@ -12,7 +12,8 @@ const STATIC_ASSETS = new Set([
     '/modules/ui.js',
     '/modules/utils.js',
     '/modules/ai_ui.js',
-    '/modules/futuristic.js'
+    '/modules/futuristic.js',
+    '/database.json'
 ]);
 
 function isCacheableStaticRequest(request) {
