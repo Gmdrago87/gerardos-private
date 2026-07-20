@@ -6,9 +6,28 @@ import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
 
+async function loadVersionInfo() {
+    try {
+        const res = await fetch('/api/version');
+        if (!res.ok) return;
+        const data = await res.json();
+        const el = document.getElementById('footer-version');
+        if (el && data.version) {
+            if (data.fullSha) {
+                el.innerHTML = `<a href="https://github.com/GerardMaestre/gerardos-privado/commit/${data.fullSha}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;" title="Ver commit en GitHub">${data.version}</a>`;
+            } else {
+                el.textContent = data.version;
+            }
+        }
+    } catch (e) {
+        console.warn('No se pudo obtener la versión dinámica:', e);
+    }
+}
+
 async function initApp() {
     initShortcuts();
     initAI();
+    loadVersionInfo();
     updateLoadingStatus('Verificando sesión...');
     try {
         const session = await checkSession();

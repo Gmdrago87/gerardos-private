@@ -27,7 +27,7 @@ export async function onRequest(context) {
     console.log(`[API Middleware] Interceptando petición a: ${url.pathname}`);
     
     // Rutas públicas que no requieren autenticación
-    const publicPaths = ["/api/session", "/api/logout", "/api/oauth/login", "/api/oauth/callback"];
+    const publicPaths = ["/api/session", "/api/logout", "/api/oauth/login", "/api/oauth/callback", "/api/version"];
     if (publicPaths.includes(url.pathname)) {
         console.log(`[API Middleware] Ruta pública permitida: ${url.pathname}`);
         return await context.next();
