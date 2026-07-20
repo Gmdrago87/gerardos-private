@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('.wrangler/tmp', { recursive: true, force: true })\"",
     "prestart": "npm run clean",
-    "start": "wrangler pages dev public --port 8789",
+    "start": "wrangler pages dev public --port 8789 --env-file .dev.vars",
     "build:db": "node generate.js",
     "deploy": "wrangler pages deploy public"
   },
