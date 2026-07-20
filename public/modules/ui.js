@@ -75,6 +75,39 @@ export function calculateStats(repos) {
     document.getElementById('top-lang').textContent = topLang;
 }
 
+export function renderPortfolioIntelligence(repos) {
+    const now = Date.now();
+    const recentRepos = repos.filter(repo => (repo._pushedTime || new Date(repo.pushed_at).getTime()) > now - 90 * 86400000);
+    const languages = new Set(repos.map(repo => repo.language).filter(Boolean));
+    const launchReadyRepos = repos.filter(repo => Boolean(repo.homepage) || (repo.topics && repo.topics.length >= 3));
+    const activityScore = repos.length ? Math.round((recentRepos.length / repos.length) * 100) : 0;
+    const diversityScore = Math.min(100, languages.size * 14);
+    const launchScore = repos.length ? Math.round((launchReadyRepos.length / repos.length) * 100) : 0;
+    const portfolioScore = Math.round((activityScore * 0.45) + (diversityScore * 0.25) + (launchScore * 0.3));
+
+    const scoreEl = document.getElementById('portfolio-score');
+    const activityEl = document.getElementById('metric-activity');
+    const diversityEl = document.getElementById('metric-diversity');
+    const launchEl = document.getElementById('metric-launch-ready');
+    const nextMoveEl = document.getElementById('portfolio-next-move');
+
+    if (scoreEl) scoreEl.textContent = `${portfolioScore}`;
+    if (activityEl) activityEl.textContent = `${activityScore}%`;
+    if (diversityEl) diversityEl.textContent = `${languages.size} stacks`;
+    if (launchEl) launchEl.textContent = `${launchReadyRepos.length}/${repos.length}`;
+    if (nextMoveEl) {
+        nextMoveEl.textContent = getPortfolioNextMove({ activityScore, languages, launchReadyRepos, repos });
+    }
+}
+
+function getPortfolioNextMove({ activityScore, languages, launchReadyRepos, repos }) {
+    if (!repos.length) return 'Conecta tus repositorios para activar recomendaciones estratégicas.';
+    if (activityScore < 35) return 'Siguiente salto: reactivar proyectos clave con demos, releases y commits de mantenimiento visibles.';
+    if (languages.size < 4) return 'Siguiente salto: sumar variedad tecnológica para proyectar profundidad full-stack y producto.';
+    if (launchReadyRepos.length < Math.ceil(repos.length * 0.35)) return 'Siguiente salto: añadir homepages, topics y README orientados a conversión en los repos con más potencial.';
+    return 'Portfolio en modo élite: prioriza casos de uso, métricas de impacto y demos interactivas para diferenciarte.';
+}
+
 export function setupFilters(repos, onFilterClick) {
     const languages = [...new Set(repos.map(r => r.language).filter(Boolean))];
     const container = document.getElementById('filter-container');
@@ -277,14 +310,16 @@ function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
 
     return `
         <div class="repo-card__header">
-            <div class="repo-card__folder-icon">
-                <i data-lucide="folder"></i>
+            <div class="repo-card__identity">
+                <div class="repo-card__folder-icon">
+                    <i data-lucide="folder"></i>
+                </div>
                 ${privateBadge}
             </div>
             <div class="repo-card__actions" id="actions-${repo.id}">
-                <button class="repo-card__clone-btn" data-clone-url="${cloneUrl}" title="Copiar 'git clone'"><i data-lucide="clipboard-copy"></i></button>
+                <button class="repo-card__clone-btn" data-clone-url="${cloneUrl}" title="Copiar 'git clone'" aria-label="Copiar clone URL"><i data-lucide="clipboard-copy"></i></button>
                 ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link"><i data-lucide="globe"></i> WEB</a>` : ''}
-                <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link"><i data-lucide="external-link"></i></a>
+                <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link" aria-label="Abrir en GitHub"><i data-lucide="external-link"></i></a>
                 <a href="https://vscode.dev/github/GerardMaestre/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
                 <button class="repo-card__toggle-visibility-btn" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}"></i></button>
                 <button class="repo-card__delete-btn" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
