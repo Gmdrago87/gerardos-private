@@ -527,8 +527,18 @@ export function getCurrentEditorContent() {
 export function showViewerError(message, type = 'error') {
     const viewer = document.getElementById('code-viewer');
     const colorClass = type === 'warning' ? 'modal__message--warning' : 'modal__error';
-    const icon = type === 'warning' ? '' : '<i data-lucide="alert-triangle"></i>';
-    viewer.innerHTML = `<div class="${colorClass}">${icon}${message}</div>`;
+    viewer.replaceChildren();
+
+    const container = document.createElement('div');
+    container.className = colorClass;
+    if (type !== 'warning') {
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', 'alert-triangle');
+        container.appendChild(icon);
+    }
+    container.appendChild(document.createTextNode(message));
+    viewer.appendChild(container);
+
     if (window.lucide) window.lucide.createIcons();
 }
 

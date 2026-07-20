@@ -60,8 +60,8 @@ export async function onRequestGet(context) {
 
         const tokenData = await tokenRes.json();
         
-        if (tokenData.error) {
-            console.error(`[API] Error de GitHub OAuth: ${tokenData.error_description}`);
+        if (!tokenRes.ok || tokenData.error || !tokenData.access_token || tokenData.token_type !== "bearer") {
+            console.error(`[API] Error de GitHub OAuth: ${tokenData.error_description || tokenRes.status}`);
             return new Response(`Error al autenticar con GitHub. Por favor, inténtalo de nuevo.`, { status: 400 });
         }
 
@@ -78,6 +78,10 @@ export async function onRequestGet(context) {
         });
 
         const userData = await userRes.json();
+        if (!userRes.ok || typeof userData.login !== "string") {
+            console.error(`[API] Error verificando usuario en GitHub: ${userRes.status}`);
+            return new Response("No se pudo verificar la identidad en GitHub.", { status: 502 });
+        }
         console.log(`[API] Usuario de GitHub detectado: ${userData.login}`);
 
         // 3. Control de acceso estricto

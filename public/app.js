@@ -249,23 +249,25 @@ function renderBranchDropdown(repo, branches) {
     container.id = 'branch-select-container';
     container.className = 'branch-select-wrapper';
     
-    let options = '';
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', 'git-branch');
+    icon.className = 'branch-icon';
+
+    const select = document.createElement('select');
+    select.id = 'branch-select';
     branches.forEach(b => {
-        const isSelected = b.name === currentBranch ? 'selected' : '';
-        options += `<option value="${b.name}" ${isSelected}>${b.name}</option>`;
+        const option = document.createElement('option');
+        option.value = b.name;
+        option.textContent = b.name;
+        option.selected = b.name === currentBranch;
+        select.appendChild(option);
     });
-    
-    container.innerHTML = `
-        <i data-lucide="git-branch" class="branch-icon"></i>
-        <select id="branch-select">
-            ${options}
-        </select>
-    `;
-    
+
+    container.appendChild(icon);
+    container.appendChild(select);
     titleRow.appendChild(container);
     if (window.lucide) window.lucide.createIcons();
     
-    const select = document.getElementById('branch-select');
     select.onchange = async (e) => {
         currentBranch = e.target.value;
         const viewer = document.getElementById('code-viewer');
@@ -638,8 +640,11 @@ async function loadPreview() {
             }
         }
         
+        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.referrerPolicy = 'no-referrer';
+
         if (!htmlContent) {
-            iframe.srcdoc = "<h3 style='font-family:sans-serif;padding:20px'>No se encontró ningún archivo .html en el repositorio.</h3>";
+            iframe.srcdoc = "<h3>No se encontró ningún archivo .html en el repositorio.</h3>";
             return;
         }
         
@@ -652,10 +657,11 @@ async function loadPreview() {
             finalHtml = finalHtml.replace('</body>', `<script>${jsContent}</script></body>`);
         }
         
-        iframe.srcdoc = finalHtml;
+        const previewCsp = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'">`;
+        iframe.srcdoc = finalHtml.includes('<head>') ? finalHtml.replace('<head>', `<head>${previewCsp}`) : `${previewCsp}${finalHtml}`;
         
     } catch (e) {
-        iframe.srcdoc = `<h3 style='color:red;padding:20px'>Error al cargar preview: ${e.message}</h3>`;
+        iframe.srcdoc = '<h3>Error al cargar preview.</h3>';
     }
 }
 

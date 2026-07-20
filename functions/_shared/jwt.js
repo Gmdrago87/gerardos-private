@@ -75,9 +75,18 @@ export async function verifyJwt(token, secret) {
         const payloadJson = new TextDecoder().decode(base64UrlDecode(part2));
         const payload = JSON.parse(payloadJson);
         
-        // Comprobar expiración
+        // Comprobar claims mínimos y expiración obligatoria
         const now = Math.floor(Date.now() / 1000);
-        if (payload.exp && payload.exp < now) {
+        if (!Number.isInteger(payload.exp) || payload.exp <= now) {
+            return null;
+        }
+        if (!Number.isInteger(payload.iat) || payload.iat > now + 60) {
+            return null;
+        }
+        if (payload.nbf && (!Number.isInteger(payload.nbf) || payload.nbf > now + 60)) {
+            return null;
+        }
+        if (typeof payload.sub !== "string" || payload.sub.length === 0) {
             return null;
         }
         

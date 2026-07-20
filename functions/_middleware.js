@@ -14,10 +14,11 @@ export async function onRequest(context) {
     // Configurar cabeceras de seguridad para todas las respuestas
     newResponse.headers.set("X-Content-Type-Options", "nosniff");
     newResponse.headers.set("X-Frame-Options", "DENY");
-    newResponse.headers.set("X-XSS-Protection", "1; mode=block");
+    newResponse.headers.set("X-XSS-Protection", "0");
     newResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     newResponse.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    newResponse.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://avatars.githubusercontent.com https://img.shields.io https://images.unsplash.com; connect-src 'self' https://api.github.com ws: wss: https://cloudflareinsights.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com https://avatars.githubusercontent.com https://img.shields.io https://images.unsplash.com; frame-ancestors 'none';");
+    newResponse.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+    newResponse.headers.set("Content-Security-Policy", "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://d3js.org https://static.cloudflareinsights.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://avatars.githubusercontent.com https://img.shields.io https://images.unsplash.com; connect-src 'self' https://api.github.com ws: wss: https://cloudflareinsights.com; frame-ancestors 'none'; upgrade-insecure-requests;");
     
     return newResponse;
 }
