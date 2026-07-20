@@ -1,4 +1,5 @@
 import { signJwt } from "../../_shared/jwt.js";
+import { isAllowedUser } from "../../_shared/github.js";
 
 export async function onRequestGet(context) {
     const { request, env } = context;
@@ -89,9 +90,9 @@ export async function onRequestGet(context) {
         console.log(`[API] Usuario de GitHub detectado: ${userData.login}`);
 
         // 3. Control de acceso estricto
-        // Solo el dueño configurado en las variables de entorno puede acceder
-        if (userData.login.toLowerCase() !== githubUsername.toLowerCase()) {
-            console.error(`[API] Acceso Denegado. Esperado: ${githubUsername}, Recibido: ${userData.login}`);
+        // Solo los usuarios autorizados configurados en las variables de entorno pueden acceder
+        if (!isAllowedUser(userData.login, env)) {
+            console.error(`[API] Acceso Denegado. Esperado: ${env.GITHUB_USERNAME || 'Gmdrago87,GerardMaestre'}, Recibido: ${userData.login}`);
             return new Response(`Acceso Denegado. Este panel es privado y no estás autorizado.`, { status: 403 });
         }
 

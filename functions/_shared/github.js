@@ -42,13 +42,21 @@ export function encodeGitHubPath(path) {
     return path.replace(/[^/]+/g, encodeURIComponent);
 }
 
+export function getRepoOwner(context) {
+    return context.data?.session?.sub || context.env.GITHUB_USERNAME?.split(",")[0]?.trim() || "Gmdrago87";
+}
+
+export function isAllowedUser(username, env) {
+    if (typeof username !== "string" || !username) return false;
+    const allowed = (env.GITHUB_USERNAME || "Gmdrago87,GerardMaestre").split(",").map(u => u.trim().toLowerCase());
+    return allowed.includes(username.toLowerCase());
+}
+
 export function requireAuth(context) {
     if (!context.data?.session?.github_token) {
         return jsonResponse({ error: "Sesión no válida" }, 401);
     }
-    if (!context.env.GITHUB_USERNAME) {
-        return jsonResponse({ error: "Servidor desconfigurado" }, 500);
-    }
     return null;
 }
+
 

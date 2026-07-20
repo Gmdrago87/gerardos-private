@@ -1,8 +1,8 @@
-import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+import { getGitHubHeaders, getRepoOwner, requireAuth, validateRepoName } from '../../../_shared/github.js';
 import { jsonParseErrorResponse, jsonResponse, readJson } from '../../../_shared/http.js';
 
-function repoUrl(env, repoName, owner) {
-    const user = owner || env.GITHUB_USERNAME;
+function repoUrl(context, repoName) {
+    const user = getRepoOwner(context);
     return `https://api.github.com/repos/${encodeURIComponent(user)}/${encodeURIComponent(repoName)}`;
 }
 
@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
     const authError = requireAuth(context);
     if (authError) return authError;
 
-    const { env, params } = context;
+    const { params } = context;
     const repoName = params.name;
 
     if (!validateRepoName(repoName)) {
@@ -20,7 +20,7 @@ export async function onRequestGet(context) {
     const headers = getGitHubHeaders(context);
 
     try {
-        const res = await fetch(repoUrl(env, repoName), { headers });
+        const res = await fetch(repoUrl(context, repoName), { headers });
         if (!res.ok) {
             return jsonResponse({ error: "Repositorio no encontrado" }, res.status);
         }
@@ -50,9 +50,8 @@ export async function onRequestDelete(context) {
         }
 
         const headers = getGitHubHeaders(context);
-        const owner = context.data.session?.sub || env.GITHUB_USERNAME;
 
-        const res = await fetch(repoUrl(env, repoName, owner), { method: "DELETE", headers });
+        const res = await fetch(repoUrl(context, repoName), { method: "DELETE", headers });
 
         if (res.status === 204) {
             return jsonResponse({ ok: true, message: `Repositorio ${repoName} eliminado con éxito` });
@@ -93,7 +92,7 @@ export async function onRequestPatch(context) {
         }
 
         const headers = getGitHubHeaders(context, true);
-        const res = await fetch(repoUrl(env, repoName), {
+        const res = await fetch(repoUrl(context, repoName), {
             method: "PATCH",
             headers,
             body: JSON.stringify({ name: repoName, private: body.private })

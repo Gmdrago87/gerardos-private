@@ -1,5 +1,6 @@
 import { jsonResponse } from "../_shared/http.js";
 import { verifyJwt } from "../_shared/jwt.js";
+import { isAllowedUser } from "../_shared/github.js";
 
 const PUBLIC_PATHS = new Set([
     "/api/session",
@@ -66,7 +67,7 @@ export async function onRequest(context) {
     }
 
     const payload = await verifyJwt(token, env.JWT_SECRET);
-    if (!payload || !payload.github_token || typeof payload.sub !== "string" || payload.sub.toLowerCase() !== env.GITHUB_USERNAME?.toLowerCase()) {
+    if (!payload || !payload.github_token || typeof payload.sub !== "string" || !isAllowedUser(payload.sub, env)) {
         return jsonResponse({ error: "Sesión expirada o inválida" }, 401);
     }
 

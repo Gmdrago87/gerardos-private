@@ -1,4 +1,4 @@
-import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+import { getGitHubHeaders, getRepoOwner, requireAuth, validateRepoName } from '../../../_shared/github.js';
 import { jsonParseErrorResponse, jsonResponse, readJson } from '../../../_shared/http.js';
 
 function validateLabels(labels) {
@@ -19,7 +19,7 @@ export async function onRequestGet(context) {
     const headers = getGitHubHeaders(context);
 
     try {
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/issues?state=all&per_page=100`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/issues?state=all&per_page=100`;
         const res = await fetch(fetchUrl, { headers });
         if (!res.ok) {
             return jsonResponse({ error: "No se pudieron obtener los issues" }, res.status);
@@ -58,7 +58,7 @@ export async function onRequestPost(context) {
         }
 
         const headers = getGitHubHeaders(context, true);
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/issues`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/issues`;
 
         const res = await fetch(fetchUrl, {
             method: "POST",
@@ -105,7 +105,7 @@ export async function onRequestPatch(context) {
         }
 
         const headers = getGitHubHeaders(context, true);
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/issues/${num}`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/issues/${num}`;
 
         const updateData = {};
         if (state) updateData.state = state;

@@ -1,4 +1,4 @@
-import { encodeGitHubPath, getGitHubHeaders, requireAuth, validateFilePath, validateGitRef, validateRepoName, validateSha } from '../../../_shared/github.js';
+import { encodeGitHubPath, getGitHubHeaders, getRepoOwner, requireAuth, validateFilePath, validateGitRef, validateRepoName, validateSha } from '../../../_shared/github.js';
 import { jsonParseErrorResponse, jsonResponse, readJson } from '../../../_shared/http.js';
 
 function uint8ToBase64(bytes) {
@@ -49,7 +49,7 @@ export async function onRequestGet(context) {
     
     try {
         const safePath = encodeGitHubPath(path);
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/contents/${safePath}?ref=${encodeURIComponent(branch)}`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/contents/${safePath}?ref=${encodeURIComponent(branch)}`;
         
         const res = await fetch(fetchUrl, { headers });
         if (!res.ok) {
@@ -121,7 +121,7 @@ export async function onRequestPut(context) {
         }
         
         const safePath = encodeGitHubPath(path);
-        const putUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/contents/${safePath}`;
+        const putUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/contents/${safePath}`;
         
         const res = await fetch(putUrl, {
             method: "PUT",
@@ -175,7 +175,7 @@ export async function onRequestDelete(context) {
         };
         
         const safePath = encodeGitHubPath(path);
-        const deleteUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/contents/${safePath}`;
+        const deleteUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/contents/${safePath}`;
         
         const res = await fetch(deleteUrl, {
             method: "DELETE",

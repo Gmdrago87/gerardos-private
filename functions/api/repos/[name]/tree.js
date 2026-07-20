@@ -1,11 +1,11 @@
-import { getGitHubHeaders, requireAuth, validateGitRef, validateRepoName } from '../../../_shared/github.js';
+import { getGitHubHeaders, getRepoOwner, requireAuth, validateGitRef, validateRepoName } from '../../../_shared/github.js';
 import { jsonResponse } from '../../../_shared/http.js';
 
 export async function onRequestGet(context) {
     const authError = requireAuth(context);
     if (authError) return authError;
     
-    const { env, params, request } = context;
+    const { params, request } = context;
     const repoName = params.name;
     
     if (!validateRepoName(repoName)) {
@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
     const headers = getGitHubHeaders(context);
     
     try {
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
         const res = await fetch(fetchUrl, { headers });
         
         if (!res.ok) {
