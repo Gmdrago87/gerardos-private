@@ -45,7 +45,7 @@ export function showError(msg) {
 export function renderProfile(user) {
     const avatarImg = document.getElementById('avatar');
     if (avatarImg) {
-        avatarImg.src = user.avatar_url || 'https://avatars.githubusercontent.com/u/232252917?v=4';
+        avatarImg.src = user.avatar_url || 'https://avatars.githubusercontent.com/u/195803064?v=4';
         avatarImg.alt = `${user.name || user.login || 'Gerard'} - Avatar`;
         avatarImg.onerror = () => {
             avatarImg.onerror = null; // Previene el bucle infinito si la imagen de respaldo también falla

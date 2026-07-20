@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1.3.0-force-update';
+const CACHE_NAME = 'gerardos-v1784570973584';
 const STATIC_ASSETS = new Set([
     '/',
     '/index.html',
