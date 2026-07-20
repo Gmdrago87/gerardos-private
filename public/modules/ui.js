@@ -208,7 +208,13 @@ function updateLoadMoreUi(total, visible, btn, append) {
 
 function createCardElement(repo, searchTerm, onCardClick, onCloneClick) {
     const card = document.createElement('div');
-    card.className = 'repo-card';
+    // Simulate Living Ecosystem pulse
+    const randomPulse = Math.random();
+    let pulseClass = '';
+    if (randomPulse > 0.8) pulseClass = ' pulse-success';
+    else if (randomPulse > 0.6) pulseClass = ' pulse-danger';
+    
+    card.className = 'repo-card' + pulseClass;
     const langColor = LANG_COLORS[repo.language] || '#ffffff';
     const repoName = escapeHtml(repo.name);
     const repoDesc = escapeHtml(repo.description) || 'Sin descripción disponible.';

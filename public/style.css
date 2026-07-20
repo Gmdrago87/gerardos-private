@@ -3605,6 +3605,449 @@ body.web-mode .btn-scroll-top {
 /* Mobile Performance Optimization */
 @media (max-width: 768px) {
   .glass-panel, .repo-card, .mac-window {
-    backdrop-filter: none !important;
   }
+}
+
+/* ==========================================================================
+   FUTURISTIC ENGINE STYLES (3D, Graph Canvas)
+   ========================================================================== */
+
+.futuristic-engine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.futuristic-engine.hidden {
+  display: none !important;
+}
+
+.futuristic-canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.futuristic-overlay {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none; /* Let clicks pass through to canvas */
+  height: 100%;
+}
+
+.futuristic-overlay > * {
+  pointer-events: auto;
+}
+
+.futuristic-title {
+  font-family: 'Archivo Black', sans-serif;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 2rem;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+  margin-bottom: 1rem;
+}
+
+.futuristic-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+  background: rgba(17, 24, 39, 0.6);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 20px;
+}
+
+.futuristic-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.futuristic-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.futuristic-tab.active {
+  color: #00f2ea;
+  background: rgba(0, 242, 234, 0.1);
+  box-shadow: 0 0 10px rgba(0, 242, 234, 0.2);
+}
+
+/* 3D Topology specifics */
+.topology-container {
+  perspective: 1500px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topology-layer {
+  position: absolute;
+  width: 600px;
+  height: 400px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.topology-layer:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(139, 92, 246, 0.5);
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+.topology-layer h3 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  transform: translateZ(50px);
+}
+
+.topology-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transform: translateZ(20px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.topology-item:hover {
+  background: rgba(0, 242, 234, 0.15);
+  color: #00f2ea;
+  transform: translateZ(40px);
+}
+
+/* Commits timeline slider */
+.timeline-slider-container {
+  width: 80%;
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timeline-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #c084fc;
+  cursor: pointer;
+  box-shadow: 0 0 15px #c084fc;
+  transition: all 0.2s ease;
+}
+
+.timeline-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 25px #c084fc;
+}
+
+.timeline-info {
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.diff-add {
+  color: #10b981;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.diff-remove {
+  color: #ef4444;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  text-decoration: line-through;
+}
+
+.commit-code-view {
+  width: 80%;
+  height: 60%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.futuristic-overlay {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none; /* Let clicks pass through to canvas */
+  height: 100%;
+}
+
+.futuristic-overlay > * {
+  pointer-events: auto;
+}
+
+.futuristic-title {
+  font-family: 'Archivo Black', sans-serif;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 2rem;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+  margin-bottom: 1rem;
+}
+
+.futuristic-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+  background: rgba(17, 24, 39, 0.6);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 20px;
+}
+
+.futuristic-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.futuristic-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.futuristic-tab.active {
+  color: #00f2ea;
+  background: rgba(0, 242, 234, 0.1);
+  box-shadow: 0 0 10px rgba(0, 242, 234, 0.2);
+}
+
+/* 3D Topology specifics */
+.topology-container {
+  perspective: 1500px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topology-layer {
+  position: absolute;
+  width: 600px;
+  height: 400px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.topology-layer:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(139, 92, 246, 0.5);
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+.topology-layer h3 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  transform: translateZ(50px);
+}
+
+.topology-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transform: translateZ(20px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.topology-item:hover {
+  background: rgba(0, 242, 234, 0.15);
+  color: #00f2ea;
+  transform: translateZ(40px);
+}
+
+/* Commits timeline slider */
+.timeline-slider-container {
+  width: 80%;
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timeline-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #c084fc;
+  cursor: pointer;
+  box-shadow: 0 0 15px #c084fc;
+  transition: all 0.2s ease;
+}
+
+.timeline-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 25px #c084fc;
+}
+
+.timeline-info {
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.diff-add {
+  color: #10b981;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.diff-remove {
+  color: #ef4444;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  text-decoration: line-through;
+}
+
+.commit-code-view {
+  width: 80%;
+  height: 60%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: #e2e8f0;
+  overflow: auto;
+  backdrop-filter: blur(10px);
+  margin-top: 2rem;
+  white-space: pre;
+}
+
+/* Living Ecosystem Pulses */
+@keyframes pulseSuccess {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); border-color: rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); border-color: rgba(16, 185, 129, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); border-color: rgba(16, 185, 129, 0.5); }
+}
+
+@keyframes pulseDanger {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.5); }
+  70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.5); }
+}
+
+.repo-card.pulse-success {
+  animation: pulseSuccess 3s infinite;
+}
+
+.repo-card.pulse-danger {
+  animation: pulseDanger 3s infinite;
 }

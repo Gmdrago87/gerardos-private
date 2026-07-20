@@ -5,6 +5,7 @@ import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, s
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
+import { initFuturisticEngine } from './modules/futuristic.js';
 
 async function loadVersionInfo() {
     try {
@@ -29,6 +30,7 @@ async function loadVersionInfo() {
 async function initApp() {
     initShortcuts();
     initAI();
+    initFuturisticEngine();
     loadVersionInfo();
     updateLoadingStatus('Verificando sesión...');
     try {

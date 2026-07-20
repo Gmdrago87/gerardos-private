@@ -51,6 +51,10 @@
     <!-- Icons - Lucide -->
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
     
+    <!-- Futuristic Engine Libraries -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <!-- Styles -->
     <link rel="stylesheet" href="/style.css">
     
@@ -310,6 +314,10 @@
                                             <i data-lucide="plus-circle"></i>
                                             <span class="btn-refresh__label">Nuevo</span>
                                         </button>
+                                        <button id="btn-futuristic-engine" class="btn-refresh" style="background: rgba(139, 92, 246, 0.2); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.5); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);" title="Activar Motor Futurista">
+                                            <i data-lucide="hexagon"></i>
+                                            <span class="btn-refresh__label">Motor 3D</span>
+                                        </button>
                                     </div>
                                     
                                     <div id="data-source-indicator" class="data-source hidden">
@@ -370,6 +378,23 @@
                             </div>
                         </footer>
                     </main>
+
+                    <!-- Motor Futurista (Oculto por defecto) -->
+                    <div id="futuristic-engine" class="futuristic-engine hidden">
+                        <div id="futuristic-canvas-container" class="futuristic-canvas-container"></div>
+                        <div id="futuristic-overlay" class="futuristic-overlay">
+                            <h2 class="futuristic-title">Visualización Espacial Activa</h2>
+                            <button id="btn-close-futuristic" class="btn-refresh" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">
+                                <i data-lucide="x-circle"></i>
+                                Salir del Motor 3D
+                            </button>
+                            <div class="futuristic-controls">
+                                <button id="btn-view-topology" class="futuristic-tab active">Topología 3D</button>
+                                <button id="btn-view-graph" class="futuristic-tab">Grafo Infinito</button>
+                                <button id="btn-view-commits" class="futuristic-tab">Timeline Commits</button>
+                            </div>
+                        </div>
+                    </div>
 
                 </div><!-- /mac-window__content -->
             </div><!-- /mac-window -->
