@@ -111,6 +111,21 @@ export async function deleteRepo(name, confirm) {
     return res.json();
 }
 
+export async function updateRepoVisibility(name, isPrivate) {
+    const res = await fetch(`/api/repos/${name}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ private: isPrivate }),
+        credentials: "include"
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "No se pudo actualizar la visibilidad del repositorio");
+    }
+    return res.json();
+}
+
+
 export async function fetchCommits(repoName, branch, page = 1) {
     const url = `/api/repos/${repoName}/commits?branch=${encodeURIComponent(branch)}&page=${page}`;
     const res = await fetch(url, { credentials: "include" });

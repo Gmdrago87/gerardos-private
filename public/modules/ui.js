@@ -251,6 +251,7 @@ function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
                 ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link"><i data-lucide="globe"></i> WEB</a>` : ''}
                 <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link"><i data-lucide="external-link"></i></a>
                 <a href="https://vscode.dev/github/GerardMaestre/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
+                <button class="repo-card__toggle-visibility-btn" data-repo-name="${escapeHtml(repo.name).replace(/"/g, '&quot;')}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}"></i></button>
                 <button class="repo-card__delete-btn" data-repo-name="${escapeHtml(repo.name).replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
             </div>
         </div>

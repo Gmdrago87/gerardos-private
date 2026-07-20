@@ -1,6 +1,6 @@
 import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
-import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, fetchCommits, fetchBranches } from './modules/api.js';
+import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches } from './modules/api.js';
 import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
@@ -784,6 +784,27 @@ async function triggerDeleteRepo(repoName) {
     }
 }
 
+async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
+    const newPrivateState = !isCurrentlyPrivate;
+    const actionText = newPrivateState ? 'Privado' : 'Público';
+    
+    if (!confirm(`¿Estás seguro de que quieres hacer el repositorio '${repoName}' ${actionText}?`)) {
+        return;
+    }
+    
+    showToast('Actualizando...', `Haciendo repositorio ${actionText.toLowerCase()}...`, 'info');
+    try {
+        await updateRepoVisibility(repoName, newPrivateState);
+        showToast('Repositorio Actualizado', `El repo '${repoName}' ahora es ${actionText.toLowerCase()}.`, 'success');
+        
+        // Forzar actualización de datos
+        clearCache();
+        await fetchFreshOrFallback();
+    } catch(err) {
+        alert(`Error al actualizar: ${err.message}`);
+    }
+}
+
 function initStaticListeners() {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -950,6 +971,7 @@ function exposeGlobals() {
         location.reload();
     };
     window.deleteRepoGlobal = triggerDeleteRepo;
+    window.toggleRepoVisibilityGlobal = triggerToggleVisibility;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

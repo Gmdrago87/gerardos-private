@@ -90,3 +90,57 @@ export async function onRequestDelete(context) {
         });
     }
 }
+
+export async function onRequestPatch(context) {
+    const { env, params, request } = context;
+    const repoName = params.name;
+    
+    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
+        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+    
+    try {
+        const body = await request.json();
+        if (typeof body.private !== 'boolean') {
+            return new Response(JSON.stringify({ error: "Petición inválida: falta el estado private" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        const headers = {
+            "Authorization": `Bearer ${context.data.session.github_token}`,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "GerardOS-Private-Dashboard"
+        };
+        
+        const res = await fetch(`https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ private: body.private })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            return new Response(JSON.stringify(data), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        } else {
+            const err = await res.text();
+            return new Response(JSON.stringify({ error: "No se pudo actualizar el repositorio", details: err }), {
+                status: res.status,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+    } catch (e) {
+        return new Response(JSON.stringify({ error: "Petición inválida o error en el servidor" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+}

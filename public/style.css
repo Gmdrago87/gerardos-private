@@ -2826,8 +2826,9 @@ body.web-mode .btn-scroll-top {
   height: 0.75rem;
 }
 
-/* 3. Botón de borrado de repo */
-.repo-card__delete-btn {
+/* 3. Botones de acción en tarjeta de repo */
+.repo-card__delete-btn,
+.repo-card__toggle-visibility-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -2845,7 +2846,13 @@ body.web-mode .btn-scroll-top {
   background: rgba(255, 107, 107, 0.15);
 }
 
-.repo-card__delete-btn i {
+.repo-card__toggle-visibility-btn:hover {
+  color: #ffb86c;
+  background: rgba(255, 184, 108, 0.15);
+}
+
+.repo-card__delete-btn i,
+.repo-card__toggle-visibility-btn i {
   width: 1.1rem;
   height: 1.1rem;
 }
