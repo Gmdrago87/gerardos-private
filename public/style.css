@@ -4609,12 +4609,21 @@ body.web-mode .main-content {
 @media (max-width: 900px) {
   :root { --page-gutter: 0.75rem; }
 
+  body.web-mode .main-content {
+    width: 100%;
+  }
+
   .hero-banner {
     min-height: auto;
   }
 
   .hero-title {
     max-width: none;
+  }
+
+  .intelligence-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 
   .search-row > .btn-refresh {
