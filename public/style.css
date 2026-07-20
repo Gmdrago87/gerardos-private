@@ -4215,6 +4215,7 @@ body.web-mode .btn-scroll-top {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+<<<<<<< HEAD
 /* Monaco Editor Container */
 .monaco-editor-container {
   width: 100%;
@@ -4223,6 +4224,8 @@ body.web-mode .btn-scroll-top {
   flex: 1;
   position: relative;
 }
+=======
+>>>>>>> origin/codex/revisar-y-proponer-mejoras-innovadoras-s02lhb
 
 /* ===== NEXT LEVEL PORTFOLIO INTELLIGENCE ===== */
 .portfolio-intelligence {
@@ -4323,4 +4326,126 @@ body.web-mode .btn-scroll-top {
   .intelligence-grid { grid-template-columns: 1fr; }
   .intelligence-header { align-items: center; }
   .intelligence-score { width: 3.75rem; height: 3.75rem; font-size: 1.2rem; }
+}
+/* ===== LAYOUT CORRECTIONS: COCKPIT + REPOSITORY CARDS ===== */
+.header-content > .portfolio-intelligence {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  margin: 0;
+  padding: clamp(1.25rem, 2.5vw, 2rem) !important;
+  border-radius: var(--radius-card);
+}
+
+.header-content > .portfolio-intelligence * {
+  box-sizing: border-box;
+}
+
+.header-content > .portfolio-intelligence .intelligence-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+}
+
+.header-content > .portfolio-intelligence .eyebrow-label,
+.header-content > .portfolio-intelligence h3,
+.header-content > .portfolio-intelligence p {
+  margin-top: 0;
+}
+
+.header-content > .portfolio-intelligence .intelligence-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.header-content > .portfolio-intelligence .intelligence-next-move {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(0, 242, 234, 0.14);
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.repo-card {
+  min-width: 0;
+}
+
+.repo-card__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.repo-card__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.repo-card__folder-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+}
+
+.repo-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-content: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.repo-card__clone-btn,
+.repo-card__github-link,
+.repo-card__delete-btn,
+.repo-card__toggle-visibility-btn {
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: 0 0 2.2rem;
+  padding: 0;
+  justify-content: center;
+}
+
+.repo-card__web-link,
+.repo-card__vscode-link {
+  min-height: 2.2rem;
+  flex: 0 1 auto;
+  max-width: 7rem;
+}
+
+.repo-card__private-badge {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .header-content > .portfolio-intelligence .intelligence-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .header-content > .portfolio-intelligence .intelligence-header {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-card__header {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-card__actions {
+    justify-content: flex-start;
+  }
 }
