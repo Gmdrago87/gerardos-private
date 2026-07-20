@@ -75,6 +75,39 @@ export function calculateStats(repos) {
     document.getElementById('top-lang').textContent = topLang;
 }
 
+export function renderPortfolioIntelligence(repos) {
+    const now = Date.now();
+    const recentRepos = repos.filter(repo => (repo._pushedTime || new Date(repo.pushed_at).getTime()) > now - 90 * 86400000);
+    const languages = new Set(repos.map(repo => repo.language).filter(Boolean));
+    const launchReadyRepos = repos.filter(repo => Boolean(repo.homepage) || (repo.topics && repo.topics.length >= 3));
+    const activityScore = repos.length ? Math.round((recentRepos.length / repos.length) * 100) : 0;
+    const diversityScore = Math.min(100, languages.size * 14);
+    const launchScore = repos.length ? Math.round((launchReadyRepos.length / repos.length) * 100) : 0;
+    const portfolioScore = Math.round((activityScore * 0.45) + (diversityScore * 0.25) + (launchScore * 0.3));
+
+    const scoreEl = document.getElementById('portfolio-score');
+    const activityEl = document.getElementById('metric-activity');
+    const diversityEl = document.getElementById('metric-diversity');
+    const launchEl = document.getElementById('metric-launch-ready');
+    const nextMoveEl = document.getElementById('portfolio-next-move');
+
+    if (scoreEl) scoreEl.textContent = `${portfolioScore}`;
+    if (activityEl) activityEl.textContent = `${activityScore}%`;
+    if (diversityEl) diversityEl.textContent = `${languages.size} stacks`;
+    if (launchEl) launchEl.textContent = `${launchReadyRepos.length}/${repos.length}`;
+    if (nextMoveEl) {
+        nextMoveEl.textContent = getPortfolioNextMove({ activityScore, languages, launchReadyRepos, repos });
+    }
+}
+
+function getPortfolioNextMove({ activityScore, languages, launchReadyRepos, repos }) {
+    if (!repos.length) return 'Conecta tus repositorios para activar recomendaciones estratégicas.';
+    if (activityScore < 35) return 'Siguiente salto: reactivar proyectos clave con demos, releases y commits de mantenimiento visibles.';
+    if (languages.size < 4) return 'Siguiente salto: sumar variedad tecnológica para proyectar profundidad full-stack y producto.';
+    if (launchReadyRepos.length < Math.ceil(repos.length * 0.35)) return 'Siguiente salto: añadir homepages, topics y README orientados a conversión en los repos con más potencial.';
+    return 'Portfolio en modo élite: prioriza casos de uso, métricas de impacto y demos interactivas para diferenciarte.';
+}
+
 export function setupFilters(repos, onFilterClick) {
     const languages = [...new Set(repos.map(r => r.language).filter(Boolean))];
     const container = document.getElementById('filter-container');
