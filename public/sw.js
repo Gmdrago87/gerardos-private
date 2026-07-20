@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1.2.0-pagespeed';
+const CACHE_NAME = 'gerardos-v1.3.0-force-update';
 const STATIC_ASSETS = new Set([
     '/',
     '/index.html',
@@ -38,15 +38,33 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => Promise.all(
             keys.map((key) => key !== CACHE_NAME ? caches.delete(key) : undefined)
-        )).then(() => self.clients.claim())
+        )).then(() => {
+            return self.clients.claim();
+        })
     );
 });
 
-// Estrategia Stale-While-Revalidate para rendimiento inmediato (0ms de latencia) en PageSpeed
+// Network First para HTML principal y Stale-While-Revalidate para assets
 self.addEventListener('fetch', (event) => {
-    if (!event.request.url.startsWith('http') || !isCacheableStaticRequest(event.request)) {
+    if (!event.request.url.startsWith('http')) return;
+
+    const url = new URL(event.request.url);
+    
+    // Si es la página de inicio o HTML, SIEMPRE consultar red primero para obtener updates instantáneos
+    if (url.origin === self.location.origin && (url.pathname === '/' || url.pathname === '/index.html')) {
+        event.respondWith(
+            fetch(event.request).then(networkResponse => {
+                if (networkResponse.ok) {
+                    const clone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                }
+                return networkResponse;
+            }).catch(() => caches.match(event.request))
+        );
         return;
     }
+
+    if (!isCacheableStaticRequest(event.request)) return;
 
     event.respondWith(
         caches.open(CACHE_NAME).then((cache) => {
