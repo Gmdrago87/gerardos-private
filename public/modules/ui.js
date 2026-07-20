@@ -130,7 +130,7 @@ export function showToast(title = 'Modo Caché', message = 'Datos almacenados lo
     const iconElement = toast.querySelector('[data-lucide]');
     if (iconElement) {
         iconElement.setAttribute('data-lucide', iconMap[type] || 'wifi-off');
-        iconElement.className = colorMap[type] || 'toast__icon--info';
+        iconElement.setAttribute('class', colorMap[type] || 'toast__icon--info');
     }
     toast.querySelector('.toast__title').textContent = title;
     toast.querySelector('.toast__message').textContent = message;
