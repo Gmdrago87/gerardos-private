@@ -546,10 +546,14 @@ input[type="text"]:focus {
   grid-template-columns: 1fr;
   gap: 2rem;
   margin-bottom: 3rem;
+  align-items: stretch;
 }
 
 @media (min-width: 1024px) {
-  .header-layout { grid-template-columns: repeat(12, 1fr); }
+  .header-layout { 
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2rem;
+  }
 }
 
 /* ===== 15. SIDEBAR ===== */
@@ -1131,11 +1135,10 @@ input[type="text"]:focus {
 /* ===== 30. REPO CARDS ===== */
 .repos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.75rem;
   margin-bottom: 3rem;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 300px;
+  align-items: stretch;
 }
 
 .repos-grid__empty {
@@ -2220,7 +2223,10 @@ select:focus-visible {
 }
 
 .mac-menubar__right {
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 8px;
 }
 
 .mac-menubar__status-icon {
@@ -2262,8 +2268,9 @@ select:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 20px 8px;
+  padding: 12px 24px 12px;
   overflow: hidden;
+  height: calc(100vh - var(--mac-menubar-height) - var(--mac-dock-total-height, 80px));
 }
 
 /* ------ macOS Window ------ */
@@ -2647,21 +2654,23 @@ body.web-mode .btn-scroll-top {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(8, 11, 16, 0.45);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  background: rgba(5, 7, 14, 0.78);
+  backdrop-filter: blur(45px) brightness(0.4);
+  -webkit-backdrop-filter: blur(45px) brightness(0.4);
 }
 
 .login-card {
   position: relative;
   width: 90%;
-  max-width: 360px;
-  padding: 2.5rem 2rem;
-  background: rgba(25, 28, 41, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  max-width: 400px;
+  padding: 3rem 2.25rem;
+  background: linear-gradient(145deg, rgba(30, 32, 50, 0.7) 0%, rgba(18, 20, 35, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   animation: loginCardAppear 0.5s var(--ease-liquid);
 }
 
