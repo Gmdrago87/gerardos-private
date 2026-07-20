@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1.1.1-security';
+const CACHE_NAME = 'gerardos-v1.2.0-pagespeed';
 const STATIC_ASSETS = new Set([
     '/',
     '/index.html',
@@ -42,19 +42,24 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+// Estrategia Stale-While-Revalidate para rendimiento inmediato (0ms de latencia) en PageSpeed
 self.addEventListener('fetch', (event) => {
     if (!event.request.url.startsWith('http') || !isCacheableStaticRequest(event.request)) {
         return;
     }
 
     event.respondWith(
-        fetch(event.request).then((networkResponse) => {
-            const cacheControl = networkResponse.headers.get('Cache-Control') || '';
-            if (networkResponse.ok && !networkResponse.redirected && !cacheControl.includes('no-store')) {
-                const responseClone = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-            }
-            return networkResponse;
-        }).catch(() => caches.match(event.request))
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.match(event.request).then((cachedResponse) => {
+                const fetchPromise = fetch(event.request).then((networkResponse) => {
+                    if (networkResponse.ok && !networkResponse.redirected) {
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                }).catch(() => cachedResponse);
+
+                return cachedResponse || fetchPromise;
+            });
+        })
     );
 });

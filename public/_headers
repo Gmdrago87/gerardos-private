@@ -4,11 +4,17 @@
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
 
+/style.css
+  Cache-Control: public, max-age=31536000, immutable
+
 /app.js
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: public, max-age=31536000, immutable
 
 /modules/*
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: public, max-age=31536000, immutable
+
+/manifest.json
+  Cache-Control: public, max-age=86400
 
 /api/*
   Cache-Control: no-cache, no-store, must-revalidate

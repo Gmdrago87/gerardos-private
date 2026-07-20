@@ -40,34 +40,33 @@
     
     <title>Gerard Maestre — Portafolio</title>
     
-    <!-- Preload -->
+    <!-- Preload & DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://api.github.com">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Icons - Lucide -->
-    <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
-    
-    <!-- Futuristic Engine Libraries -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Non-blocking External Scripts (defer para desbloquear el renderizado FCP/LCP) -->
+    <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js" defer></script>
+    <script src="https://d3js.org/d3.v7.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
     
     <!-- Styles -->
     <link rel="stylesheet" href="/style.css">
-    
-    <!-- IndexedDB Wrapper -->
-    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
     
     <!-- Service Worker PWA -->
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('[PWA] Service Worker registrado con éxito:', reg.scope))
-                .catch(err => console.log('[PWA] Error registrando Service Worker:', err));
+                .then(reg => console.log('[PWA] Service Worker registrado:', reg.scope))
+                .catch(err => console.log('[PWA] Error Service Worker:', err));
         });
     }
     </script>
@@ -198,7 +197,7 @@
                                 <div class="profile-card glass-panel">
                                     <div class="avatar-container">
                                         <div class="avatar-frame">
-                                            <img id="avatar" src="https://avatars.githubusercontent.com/u/232252917?v=4" alt="Gerard Maestre" loading="lazy" class="avatar-img">
+                                            <img id="avatar" src="https://avatars.githubusercontent.com/u/232252917?v=4" alt="Gerard Maestre" width="80" height="80" loading="lazy" class="avatar-img">
                                         </div>
                                         <div class="avatar-status">
                                             <i data-lucide="zap"></i>
