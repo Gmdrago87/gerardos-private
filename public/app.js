@@ -156,6 +156,7 @@ function sortRepositories(repos, sortBy) {
     if (sortBy === 'stars') return sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
     if (sortBy === 'forks') return sorted.sort((a, b) => b.forks_count - a.forks_count);
     if (sortBy === 'name') return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === 'updated') return sorted.sort((a, b) => new Date(b.updated_at || b.pushed_at) - new Date(a.updated_at || a.pushed_at));
     return sorted.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
 }
 
