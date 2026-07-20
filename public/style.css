@@ -4224,4 +4224,103 @@ body.web-mode .btn-scroll-top {
   position: relative;
 }
 
+/* ===== NEXT LEVEL PORTFOLIO INTELLIGENCE ===== */
+.portfolio-intelligence {
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+  border-color: rgba(0, 242, 234, 0.24);
+  background:
+    linear-gradient(135deg, rgba(0, 242, 234, 0.12), rgba(139, 92, 246, 0.12)),
+    rgba(15, 10, 31, 0.5);
+}
 
+.portfolio-intelligence::before {
+  content: "";
+  position: absolute;
+  inset: -35% 15% auto auto;
+  width: 18rem;
+  height: 18rem;
+  background: radial-gradient(circle, rgba(0, 242, 234, 0.28), transparent 68%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.intelligence-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.eyebrow-label {
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.intelligence-header h3 {
+  font-size: clamp(1.15rem, 3vw, 1.7rem);
+  letter-spacing: -0.03em;
+}
+
+.intelligence-score {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 242, 234, 0.5);
+  background: conic-gradient(from 180deg, rgba(0, 242, 234, 0.95), rgba(139, 92, 246, 0.75), rgba(0, 242, 234, 0.95));
+  color: #041014;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  box-shadow: 0 0 32px rgba(0, 242, 234, 0.22);
+}
+
+.intelligence-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.intelligence-metric {
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.intelligence-metric span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-bottom: 0.35rem;
+}
+
+.intelligence-metric strong {
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+}
+
+.intelligence-next-move {
+  position: relative;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .intelligence-grid { grid-template-columns: 1fr; }
+  .intelligence-header { align-items: center; }
+  .intelligence-score { width: 3.75rem; height: 3.75rem; font-size: 1.2rem; }
+}
