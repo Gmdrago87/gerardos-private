@@ -438,6 +438,9 @@ export function renderFileContent(content, path, element) {
     // Show save button
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'flex';
+
+    // Carga perezosa del motor Monaco si aún no está iniciado
+    if (window.loadMonacoEditor) window.loadMonacoEditor();
     
     if (window.monaco && window.monacoReady) {
         viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';

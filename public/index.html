@@ -673,30 +673,36 @@
         </div>
     </div>
 
-    <!-- Inicializar Iconos -->
+    <!-- Cargador Dinámico de Monaco Editor (Lazy Loading sin colisiones AMD/UMD) -->
     <script>
-        lucide.createIcons();
-    </script>
-
-    <!-- Monaco Editor Scripts -->
-    <script>var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs' } };</script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js"></script>
-    <script>
-        window.MonacoEnvironment = {
-            getWorkerUrl: function(workerId, label) {
-                return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-                    self.MonacoEnvironment = {
-                        baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/'
-                    };
-                    importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/base/worker/workerMain.js');`
-                )}`;
-            }
+        window.loadMonacoEditor = function() {
+            if (window.monacoReady || window.monacoLoading) return;
+            window.monacoLoading = true;
+            
+            window.require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs' } };
+            
+            var loaderScript = document.createElement('script');
+            loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js';
+            loaderScript.onload = function() {
+                window.MonacoEnvironment = {
+                    getWorkerUrl: function(workerId, label) {
+                        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+                            self.MonacoEnvironment = {
+                                baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/'
+                            };
+                            importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/base/worker/workerMain.js');`
+                        )}`;
+                    }
+                };
+                if (window.require) {
+                    window.require(['vs/editor/editor.main'], function () {
+                        window.monacoReady = true;
+                        console.log("[Monaco] Editor cargado dinámicamente.");
+                    });
+                }
+            };
+            document.head.appendChild(loaderScript);
         };
-        // Cargar Monaco Editor de forma asíncrona pero global
-        require(['vs/editor/editor.main'], function () {
-            window.monacoReady = true;
-            console.log("Monaco Editor cargado.");
-        });
     </script>
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal hidden">
