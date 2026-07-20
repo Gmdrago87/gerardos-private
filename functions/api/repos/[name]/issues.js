@@ -1,156 +1,130 @@
 import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+import { jsonParseErrorResponse, jsonResponse, readJson } from '../../../_shared/http.js';
+
+function validateLabels(labels) {
+    return labels === undefined || (Array.isArray(labels) && labels.length <= 20 && labels.every(label => typeof label === "string" && label.length > 0 && label.length <= 50));
+}
 
 export async function onRequestGet(context) {
-    const { env, params, request } = context;
+    const { env, params } = context;
     const repoName = params.name;
-    
+
     const authError = requireAuth(context);
     if (authError) return authError;
-    
+
     if (!validateRepoName(repoName)) {
-        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
+        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
     }
-    
+
     const headers = getGitHubHeaders(context);
-    
+
     try {
-        // Fetch open issues
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/issues?state=all`;
-        
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/issues?state=all&per_page=100`;
         const res = await fetch(fetchUrl, { headers });
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: "No se pudieron obtener los issues" }), {
-                status: res.status,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: "No se pudieron obtener los issues" }, res.status);
         }
-        
+
         const data = await res.json();
-        
-        // Return JSON
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse(data);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error interno al obtener issues" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Error interno al obtener issues" }, 500);
     }
 }
 
 export async function onRequestPost(context) {
     const { env, params, request } = context;
     const repoName = params.name;
-    
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+
+    const authError = requireAuth(context);
+    if (authError) return authError;
+
+    if (!validateRepoName(repoName)) {
+        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
     }
-    
+
     try {
-        const body = await request.json();
+        const body = await readJson(request);
         const { title, body: issueBody, labels } = body;
-        
-        if (!title) {
-            return new Response(JSON.stringify({ error: "El título es obligatorio" }), {
-                status: 400,
-                headers: { "Content-Type": "application/json" }
-            });
+
+        if (typeof title !== "string" || title.trim().length === 0 || title.length > 256) {
+            return jsonResponse({ error: "El título es obligatorio y debe tener 256 caracteres o menos" }, 400);
         }
-        
-        const headers = {
-            "Authorization": `Bearer ${context.data.session.github_token}`,
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "GerardOS-Private-Dashboard",
-            "Content-Type": "application/json"
-        };
-        
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/issues`;
-        
+        if (issueBody !== undefined && (typeof issueBody !== "string" || issueBody.length > 65536)) {
+            return jsonResponse({ error: "El cuerpo del issue es inválido" }, 400);
+        }
+        if (!validateLabels(labels)) {
+            return jsonResponse({ error: "Las etiquetas son inválidas" }, 400);
+        }
+
+        const headers = getGitHubHeaders(context, true);
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/issues`;
+
         const res = await fetch(fetchUrl, {
             method: "POST",
             headers,
-            body: JSON.stringify({ title, body: issueBody, labels: labels || [] })
+            body: JSON.stringify({ title: title.trim(), body: issueBody || "", labels: labels || [] })
         });
-        
+
         const data = await res.json();
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: data.message || "No se pudo crear el issue" }), {
-                status: res.status,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: data.message || "No se pudo crear el issue" }, res.status);
         }
-        
-        return new Response(JSON.stringify(data), {
-            status: 201,
-            headers: { "Content-Type": "application/json" }
-        });
+
+        return jsonResponse(data, 201);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error interno al crear issue" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
+        return jsonResponse({ error: "Error interno al crear issue" }, 500);
     }
 }
 
 export async function onRequestPatch(context) {
     const { env, params, request } = context;
     const repoName = params.name;
-    
+
     const authError = requireAuth(context);
     if (authError) return authError;
-    
+
     if (!validateRepoName(repoName)) {
-        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
+        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
     }
-    
+
     try {
-        const body = await request.json();
+        const body = await readJson(request);
         const { issue_number, state, labels } = body;
-        
-        const num = parseInt(issue_number);
-        if (isNaN(num) || num < 1) {
-            return new Response(JSON.stringify({ error: "El issue_number debe ser un entero positivo" }), {
-                status: 400,
-                headers: { "Content-Type": "application/json" }
-            });
+        const num = Number(issue_number);
+
+        if (!Number.isInteger(num) || num < 1) {
+            return jsonResponse({ error: "El issue_number debe ser un entero positivo" }, 400);
         }
-        
+        if (state !== undefined && !["open", "closed"].includes(state)) {
+            return jsonResponse({ error: "Estado de issue inválido" }, 400);
+        }
+        if (!validateLabels(labels)) {
+            return jsonResponse({ error: "Las etiquetas son inválidas" }, 400);
+        }
+
         const headers = getGitHubHeaders(context, true);
-        
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/issues/${issue_number}`;
-        
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/issues/${num}`;
+
         const updateData = {};
         if (state) updateData.state = state;
         if (labels) updateData.labels = labels;
-        
+
         const res = await fetch(fetchUrl, {
             method: "PATCH",
             headers,
             body: JSON.stringify(updateData)
         });
-        
+
         const data = await res.json();
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: data.message || "No se pudo actualizar el issue" }), {
-                status: res.status,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: data.message || "No se pudo actualizar el issue" }, res.status);
         }
-        
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+
+        return jsonResponse(data);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error interno al actualizar issue" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
+        return jsonResponse({ error: "Error interno al actualizar issue" }, 500);
     }
 }

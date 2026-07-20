@@ -1,3 +1,9 @@
+import { jsonResponse } from './http.js';
+
+const REPO_NAME_REGEX = /^(?!\.)(?!.*\.git$)[A-Za-z0-9._-]{1,100}$/;
+const GIT_REF_REGEX = /^(?!\/)(?!.*\.\.)(?!.*@\{)(?!.*\\)(?!.*\/\/)(?!.*\.$)[A-Za-z0-9._\/-]{1,255}$/;
+const SHA_REGEX = /^[a-f0-9]{40}$/i;
+
 export function getGitHubHeaders(context, withContentType = false) {
     const headers = {
         "Authorization": `Bearer ${context.data.session.github_token}`,
@@ -12,22 +18,34 @@ export function getGitHubHeaders(context, withContentType = false) {
 }
 
 export function validateRepoName(name) {
-    if (!name) return false;
-    return /^[a-zA-Z0-9._-]+$/.test(name);
+    return typeof name === "string" && REPO_NAME_REGEX.test(name) && !name.endsWith(".");
+}
+
+export function validateGitRef(ref) {
+    return typeof ref === "string" && GIT_REF_REGEX.test(ref);
+}
+
+export function validateSha(sha) {
+    return typeof sha === "string" && SHA_REGEX.test(sha);
+}
+
+export function validateFilePath(path) {
+    if (typeof path !== "string" || path.length < 1 || path.length > 4096) return false;
+    if (path.includes("\0") || path.includes("\\") || path.startsWith("/") || path.endsWith("/")) return false;
+    const segments = path.split("/");
+    return segments.every(segment => segment && segment !== "." && segment !== ".." && !segment.includes("\0"));
+}
+
+export function encodeGitHubPath(path) {
+    return path.split("/").map(segment => encodeURIComponent(segment)).join("/");
 }
 
 export function requireAuth(context) {
     if (!context.data.session || !context.data.session.github_token) {
-        return new Response(JSON.stringify({ error: "Falta configurar GITHUB_PAT o sesión no válida" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Sesión no válida" }, 401);
     }
     if (!context.env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Falta configurar GITHUB_USERNAME" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Servidor desconfigurado" }, 500);
     }
     return null;
 }

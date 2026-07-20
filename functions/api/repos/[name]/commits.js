@@ -1,48 +1,46 @@
-import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+import { getGitHubHeaders, requireAuth, validateGitRef, validateRepoName } from '../../../_shared/github.js';
+import { jsonResponse } from '../../../_shared/http.js';
 
 export async function onRequestGet(context) {
     const { env, params, request } = context;
     const repoName = params.name;
-    
+
+    const authError = requireAuth(context);
+    if (authError) return authError;
+
+    if (!validateRepoName(repoName)) {
+        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
+    }
+
     const url = new URL(request.url);
     const branch = url.searchParams.get("branch") || "main";
-    const page = url.searchParams.get("page") || "1";
-    
-    if (!context.data.session.github_token || !env.GITHUB_USERNAME) {
-        return new Response(JSON.stringify({ error: "Servidor desconfigurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+    const page = Number.parseInt(url.searchParams.get("page") || "1", 10);
+
+    if (!validateGitRef(branch)) {
+        return jsonResponse({ error: "Rama o referencia inválida" }, 400);
     }
-    
-    const headers = {
-        "Authorization": `Bearer ${context.data.session.github_token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "GerardOS-Private-Dashboard"
-    };
-    
+    if (!Number.isInteger(page) || page < 1 || page > 100) {
+        return jsonResponse({ error: "Página inválida" }, 400);
+    }
+
+    const headers = getGitHubHeaders(context);
+
     try {
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/commits?sha=${encodeURIComponent(branch)}&page=${encodeURIComponent(page)}&per_page=20`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/commits?sha=${encodeURIComponent(branch)}&page=${page}&per_page=20`;
         const res = await fetch(fetchUrl, { headers });
-        
+
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: "No se pudieron obtener los commits" }), {
-                status: res.status,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: "No se pudieron obtener los commits" }, res.status);
         }
-        
+
         const data = await res.json();
-        
-        // Mapear los commits para devolver solo lo necesario y no sobrecargar la respuesta
         const mappedCommits = data.map(item => ({
             sha: item.sha,
             commit: {
-                message: item.commit.message,
+                message: item.commit?.message || "",
                 author: {
-                    name: item.commit.author.name,
-                    date: item.commit.author.date
+                    name: item.commit?.author?.name || "",
+                    date: item.commit?.author?.date || null
                 }
             },
             author: item.author ? {
@@ -51,15 +49,9 @@ export async function onRequestGet(context) {
                 html_url: item.author.html_url
             } : null
         }));
-        
-        return new Response(JSON.stringify(mappedCommits), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+
+        return jsonResponse(mappedCommits);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error al listar commits en el servidor" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Error al listar commits en el servidor" }, 500);
     }
 }

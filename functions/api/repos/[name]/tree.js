@@ -1,4 +1,5 @@
-import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+import { getGitHubHeaders, requireAuth, validateGitRef, validateRepoName } from '../../../_shared/github.js';
+import { jsonResponse } from '../../../_shared/http.js';
 
 export async function onRequestGet(context) {
     const authError = requireAuth(context);
@@ -8,35 +9,29 @@ export async function onRequestGet(context) {
     const repoName = params.name;
     
     if (!validateRepoName(repoName)) {
-        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
+        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
     }
     
     // Obtener la rama de la query string
     const url = new URL(request.url);
     const branch = url.searchParams.get("branch") || "main";
+    if (!validateGitRef(branch)) {
+        return jsonResponse({ error: "Rama o referencia inválida" }, 400);
+    }
     
     const headers = getGitHubHeaders(context);
     
     try {
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
         const res = await fetch(fetchUrl, { headers });
         
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: "No se pudo obtener el árbol de archivos" }), {
-                status: res.status,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: "No se pudo obtener el árbol de archivos" }, res.status);
         }
         
         const data = await res.json();
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse(data);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error de servidor en el proxy de archivos" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Error de servidor en el proxy de archivos" }, 500);
     }
 }

@@ -71,3 +71,18 @@ export async function setCachedFile(key, val) {
         console.warn("IndexedDB no disponible", e);
     }
 }
+
+
+export async function clearPrivateRepoCache() {
+    try {
+        if (!window.idbKeyval) return;
+        const keys = await window.idbKeyval.keys();
+        await Promise.all(
+            keys
+                .filter(key => typeof key === "string" && (key.startsWith("file_") || key.startsWith("tree_")))
+                .map(key => window.idbKeyval.del(key))
+        );
+    } catch (e) {
+        console.warn("No se pudo limpiar la caché privada", e);
+    }
+}

@@ -69,15 +69,19 @@ export async function fetchFallbackData() {
     return { user: data.user, repos: data.repos };
 }
 
+function repoPath(repoName) {
+    return encodeURIComponent(repoName);
+}
+
 export async function fetchRepoTree(repoName, branch) {
-    const url = `/api/repos/${repoName}/tree?branch=${encodeURIComponent(branch)}`;
+    const url = `/api/repos/${repoPath(repoName)}/tree?branch=${encodeURIComponent(branch)}`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error('Error tree API');
     return res.json();
 }
 
 export async function fetchFileContent(repoName, branch, path) {
-    const url = `/api/repos/${repoName}/file?path=${encodeURIComponent(path)}&branch=${encodeURIComponent(branch)}`;
+    const url = `/api/repos/${repoPath(repoName)}/file?path=${encodeURIComponent(path)}&branch=${encodeURIComponent(branch)}`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error('Error file API');
     return res.text(); // El backend ya lo decodifica y devuelve como texto
@@ -98,7 +102,7 @@ export async function createRepo(name, description, isPrivate) {
 }
 
 export async function deleteRepo(name, confirm) {
-    const res = await fetch(`/api/repos/${name}`, {
+    const res = await fetch(`/api/repos/${repoPath(name)}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirm }),
@@ -112,7 +116,7 @@ export async function deleteRepo(name, confirm) {
 }
 
 export async function updateRepoVisibility(name, isPrivate) {
-    const res = await fetch(`/api/repos/${name}`, {
+    const res = await fetch(`/api/repos/${repoPath(name)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ private: isPrivate }),
@@ -127,21 +131,21 @@ export async function updateRepoVisibility(name, isPrivate) {
 
 
 export async function fetchCommits(repoName, branch, page = 1) {
-    const url = `/api/repos/${repoName}/commits?branch=${encodeURIComponent(branch)}&page=${page}`;
+    const url = `/api/repos/${repoPath(repoName)}/commits?branch=${encodeURIComponent(branch)}&page=${page}`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error('Error commits API');
     return res.json();
 }
 
 export async function fetchBranches(repoName) {
-    const url = `/api/repos/${repoName}/branches`;
+    const url = `/api/repos/${repoPath(repoName)}/branches`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error('Error branches API');
     return res.json();
 }
 
 export async function saveFileContent(repoName, branch, path, content, message, sha) {
-    const res = await fetch(`/api/repos/${repoName}/file`, {
+    const res = await fetch(`/api/repos/${repoPath(repoName)}/file`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, branch, content, message, sha }),
@@ -155,7 +159,7 @@ export async function saveFileContent(repoName, branch, path, content, message, 
 }
 
 export async function deleteFile(repoName, branch, path, message, sha) {
-    const res = await fetch(`/api/repos/${repoName}/file`, {
+    const res = await fetch(`/api/repos/${repoPath(repoName)}/file`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, branch, message, sha }),
@@ -170,14 +174,14 @@ export async function deleteFile(repoName, branch, path, message, sha) {
 
 // Kanban (Issues) Endpoints
 export async function fetchIssues(repoName) {
-    const url = `/api/repos/${repoName}/issues`;
+    const url = `/api/repos/${repoPath(repoName)}/issues`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error('Error al obtener issues');
     return res.json();
 }
 
 export async function createIssue(repoName, title, body, labels) {
-    const res = await fetch(`/api/repos/${repoName}/issues`, {
+    const res = await fetch(`/api/repos/${repoPath(repoName)}/issues`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, body, labels }),
@@ -191,7 +195,7 @@ export async function createIssue(repoName, title, body, labels) {
 }
 
 export async function updateIssue(repoName, issueNumber, state, labels) {
-    const res = await fetch(`/api/repos/${repoName}/issues`, {
+    const res = await fetch(`/api/repos/${repoPath(repoName)}/issues`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ issue_number: issueNumber, state, labels }),
@@ -206,7 +210,7 @@ export async function updateIssue(repoName, issueNumber, state, labels) {
 
 // Actions (Workflows) Endpoint
 export async function fetchActions(repoName) {
-    const url = `/api/repos/${repoName}/actions`;
+    const url = `/api/repos/${repoPath(repoName)}/actions`;
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error('Error al obtener actions');
     return res.json();

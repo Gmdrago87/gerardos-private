@@ -1,4 +1,5 @@
-import { getGitHubHeaders, requireAuth } from '../../_shared/github.js';
+import { getGitHubHeaders, requireAuth, validateRepoName } from '../../_shared/github.js';
+import { jsonParseErrorResponse, jsonResponse, readJson } from '../../_shared/http.js';
 
 export async function onRequestGet(context) {
     const authError = requireAuth(context);
@@ -16,24 +17,15 @@ export async function onRequestGet(context) {
             const userErr = await userRes.text();
             const reposErr = await reposRes.text();
             console.error("Error GitHub:", { userErr, reposErr });
-            return new Response(JSON.stringify({ error: "Error al comunicarse con GitHub" }), {
-                status: 502,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: "Error al comunicarse con GitHub" }, 502);
         }
         
         const user = await userRes.json();
         const repos = await reposRes.json();
         
-        return new Response(JSON.stringify({ user, repos }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ user, repos });
     } catch (err) {
-        return new Response(JSON.stringify({ error: "Error interno en el proxy del backend" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Error interno en el proxy del backend" }, 500);
     }
 }
 
@@ -42,14 +34,11 @@ export async function onRequestPost(context) {
     if (authError) return authError;
     
     try {
-        const body = await context.request.json();
+        const body = await readJson(context.request);
         const { name, description, isPrivate } = body;
         
-        if (!name) {
-            return new Response(JSON.stringify({ error: "Se requiere el nombre del repositorio" }), {
-                status: 400,
-                headers: { "Content-Type": "application/json" }
-            });
+        if (!validateRepoName(name)) {
+            return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
         }
         
         const headers = getGitHubHeaders(context, true);
@@ -70,21 +59,13 @@ export async function onRequestPost(context) {
         if (!res.ok) {
             const errText = await res.text();
             console.error("Error al crear repo en GitHub:", errText);
-            return new Response(JSON.stringify({ error: "No se pudo crear el repositorio en GitHub", details: errText }), {
-                status: 502,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: "No se pudo crear el repositorio en GitHub" }, 502);
         }
         
         const data = await res.json();
-        return new Response(JSON.stringify(data), {
-            status: 201,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse(data, 201);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Formato de petición inválido" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-        });
+        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
+        return jsonResponse({ error: "Formato de petición inválido" }, 400);
     }
 }

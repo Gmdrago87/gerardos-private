@@ -1,4 +1,5 @@
 import { getGitHubHeaders, requireAuth, validateRepoName } from '../../../_shared/github.js';
+import { jsonResponse } from '../../../_shared/http.js';
 
 export async function onRequestGet(context) {
     const { env, params } = context;
@@ -8,32 +9,23 @@ export async function onRequestGet(context) {
     if (authError) return authError;
     
     if (!validateRepoName(repoName)) {
-        return new Response(JSON.stringify({ error: "Nombre de repositorio inválido" }), { status: 400 });
+        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
     }
     
     const headers = getGitHubHeaders(context);
     
     try {
-        const fetchUrl = `https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}/actions/runs?per_page=15`;
+        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(env.GITHUB_USERNAME)}/${encodeURIComponent(repoName)}/actions/runs?per_page=15`;
         
         const res = await fetch(fetchUrl, { headers });
         if (!res.ok) {
-            return new Response(JSON.stringify({ error: "No se pudieron obtener los actions" }), {
-                status: res.status,
-                headers: { "Content-Type": "application/json" }
-            });
+            return jsonResponse({ error: "No se pudieron obtener los actions" }, res.status);
         }
         
         const data = await res.json();
         
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse(data);
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Error interno al obtener actions" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "Error interno al obtener actions" }, 500);
     }
 }
