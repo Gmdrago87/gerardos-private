@@ -729,7 +729,7 @@
                 
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                     <h4 style="color: var(--text-primary); margin-bottom: 10px;">Memoria y Caché</h4>
-                    <button onclick="if(confirm('¿Borrar caché local?')) { indexedDB.deleteDatabase('keyval-store'); location.reload(); }" class="modal__btn" style="width: 100%; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5);">Borrar Caché (IndexedDB)</button>
+                    <button onclick="window.clearAppCache()" class="modal__btn" style="width: 100%; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5);">Borrar Caché (IndexedDB)</button>
                 </div>
                 
             </div>

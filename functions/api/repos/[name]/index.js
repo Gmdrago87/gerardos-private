@@ -56,8 +56,9 @@ export async function onRequestDelete(context) {
         }
         
         const headers = getGitHubHeaders(context);
+        const owner = context.data.session?.sub || env.GITHUB_USERNAME;
         
-        const res = await fetch(`https://api.github.com/repos/${env.GITHUB_USERNAME}/${repoName}`, {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
             method: "DELETE",
             headers
         });
@@ -68,14 +69,22 @@ export async function onRequestDelete(context) {
                 headers: { "Content-Type": "application/json" }
             });
         } else {
-            const err = await res.text();
-            return new Response(JSON.stringify({ error: "No se pudo eliminar el repositorio", details: err }), {
+            const errText = await res.text();
+            let parsedErr;
+            try { parsedErr = JSON.parse(errText); } catch(e) {}
+            
+            let userMsg = parsedErr?.message || "No se pudo eliminar el repositorio en GitHub";
+            if (res.status === 403 || res.status === 404) {
+                userMsg += ". Si iniciaste sesión anteriormente, cierra sesión y vuelve a entrar para actualizar el permiso de borrado en GitHub (delete_repo).";
+            }
+            
+            return new Response(JSON.stringify({ error: userMsg, details: errText }), {
                 status: res.status,
                 headers: { "Content-Type": "application/json" }
             });
         }
     } catch (e) {
-        return new Response(JSON.stringify({ error: "Petición inválida o error en el servidor" }), {
+        return new Response(JSON.stringify({ error: "Petición inválida o error en el servidor", details: e.message }), {
             status: 400,
             headers: { "Content-Type": "application/json" }
         });

@@ -602,6 +602,235 @@ export async function copyCloneCommand(url, btn) {
             if (window.lucide) window.lucide.createIcons();
         }, 2000);
     } catch (err) {
-        alert(`Copia este comando:\n${command}`);
+        showCustomPrompt({
+            title: 'Comando de Clonado',
+            icon: 'terminal',
+            message: 'Copia manualmente el siguiente comando:',
+            fields: [{ name: 'cmd', label: 'Comando', value: command, readOnly: true }],
+            confirmText: 'Copiar',
+            cancelText: 'Cerrar'
+        });
     }
+}
+
+/* ============================================
+   SISTEMA DE PANELES MODALES PERSONALIZADOS (GLASSMORPHISM)
+   ============================================ */
+
+export function showCustomAlert({ title = 'Aviso', icon = 'info', message = '', confirmText = 'Entendido', type = 'info' } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        
+        let iconColorClass = 'modal-icon--info';
+        if (type === 'error') iconColorClass = 'modal-icon--danger';
+        if (type === 'success') iconColorClass = 'modal-icon--success';
+        if (type === 'warning') iconColorClass = 'modal-icon--warning';
+
+        overlay.innerHTML = `
+            <div class="custom-modal-backdrop"></div>
+            <div class="custom-modal-container glass-panel">
+                <div class="custom-modal-header">
+                    <div class="custom-modal-icon ${iconColorClass}">
+                        <i data-lucide="${escapeHtml(icon)}"></i>
+                    </div>
+                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
+                </div>
+                <div class="custom-modal-body">
+                    <p class="custom-modal-message">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
+                </div>
+                <div class="custom-modal-footer">
+                    <button type="button" class="btn-submit custom-modal-btn-confirm">${escapeHtml(confirmText)}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        if (window.lucide) window.lucide.createIcons();
+
+        const close = () => {
+            overlay.classList.add('closing');
+            setTimeout(() => {
+                overlay.remove();
+                resolve();
+            }, 200);
+        };
+
+        const confirmBtn = overlay.querySelector('.custom-modal-btn-confirm');
+        confirmBtn.focus();
+        confirmBtn.addEventListener('click', close);
+        overlay.querySelector('.custom-modal-backdrop').addEventListener('click', close);
+        
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' || e.key === 'Enter') {
+                e.preventDefault();
+                close();
+            }
+        });
+    });
+}
+
+export function showCustomConfirm({ title = 'Confirmar acción', icon = 'help-circle', message = '¿Estás seguro?', confirmText = 'Confirmar', cancelText = 'Cancelar', isDanger = false } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        
+        const iconColorClass = isDanger ? 'modal-icon--danger' : 'modal-icon--info';
+        const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-submit';
+
+        overlay.innerHTML = `
+            <div class="custom-modal-backdrop"></div>
+            <div class="custom-modal-container glass-panel">
+                <div class="custom-modal-header">
+                    <div class="custom-modal-icon ${iconColorClass}">
+                        <i data-lucide="${escapeHtml(icon)}"></i>
+                    </div>
+                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
+                </div>
+                <div class="custom-modal-body">
+                    <p class="custom-modal-message">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
+                </div>
+                <div class="custom-modal-footer">
+                    <button type="button" class="btn-cancel custom-modal-btn-cancel">${escapeHtml(cancelText)}</button>
+                    <button type="button" class="${confirmBtnClass} custom-modal-btn-confirm">${escapeHtml(confirmText)}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        if (window.lucide) window.lucide.createIcons();
+
+        const close = (result) => {
+            overlay.classList.add('closing');
+            setTimeout(() => {
+                overlay.remove();
+                resolve(result);
+            }, 200);
+        };
+
+        overlay.querySelector('.custom-modal-btn-confirm').addEventListener('click', () => close(true));
+        overlay.querySelector('.custom-modal-btn-cancel').addEventListener('click', () => close(false));
+        overlay.querySelector('.custom-modal-backdrop').addEventListener('click', () => close(false));
+
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                close(false);
+            }
+        });
+    });
+}
+
+export function showCustomPrompt({ title = 'Introducir datos', icon = 'edit-3', message = '', fields = [], confirmText = 'Aceptar', cancelText = 'Cancelar', isDanger = false, validate = null } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+
+        const iconColorClass = isDanger ? 'modal-icon--danger' : 'modal-icon--info';
+        const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-submit';
+
+        let fieldsList = fields;
+        if (!fieldsList || fieldsList.length === 0) {
+            fieldsList = [{ name: 'input', label: '', type: 'text', value: '', placeholder: '', required: false }];
+        }
+
+        let fieldsHtml = '';
+        fieldsList.forEach((f, idx) => {
+            const fieldId = `custom-modal-field-${idx}`;
+            const fieldLabel = f.label ? `<label for="${fieldId}" class="form-label">${escapeHtml(f.label)}</label>` : '';
+            const readOnlyAttr = f.readOnly ? 'readonly' : '';
+            if (f.textarea) {
+                fieldsHtml += `
+                    <div class="form-group">
+                        ${fieldLabel}
+                        <textarea id="${fieldId}" name="${escapeHtml(f.name)}" class="form-textarea" placeholder="${escapeHtml(f.placeholder || '')}" ${f.required ? 'required' : ''} ${readOnlyAttr}>${escapeHtml(f.value || '')}</textarea>
+                    </div>
+                `;
+            } else {
+                fieldsHtml += `
+                    <div class="form-group">
+                        ${fieldLabel}
+                        <input type="${escapeHtml(f.type || 'text')}" id="${fieldId}" name="${escapeHtml(f.name)}" class="form-input" value="${escapeHtml(f.value || '')}" placeholder="${escapeHtml(f.placeholder || '')}" ${f.required ? 'required' : ''} ${readOnlyAttr} />
+                    </div>
+                `;
+            }
+        });
+
+        overlay.innerHTML = `
+            <div class="custom-modal-backdrop"></div>
+            <div class="custom-modal-container glass-panel">
+                <div class="custom-modal-header">
+                    <div class="custom-modal-icon ${iconColorClass}">
+                        <i data-lucide="${escapeHtml(icon)}"></i>
+                    </div>
+                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
+                </div>
+                <form class="custom-modal-form">
+                    <div class="custom-modal-body">
+                        ${message ? `<p class="custom-modal-message">${escapeHtml(message).replace(/\n/g, '<br>')}</p>` : ''}
+                        ${fieldsHtml}
+                        <p class="custom-modal-error form-error-msg" style="display:none; color: var(--red-400); margin-top: 0.5rem; font-size: 0.85rem;"></p>
+                    </div>
+                    <div class="custom-modal-footer">
+                        <button type="button" class="btn-cancel custom-modal-btn-cancel">${escapeHtml(cancelText)}</button>
+                        <button type="submit" class="${confirmBtnClass} custom-modal-btn-confirm">${escapeHtml(confirmText)}</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        if (window.lucide) window.lucide.createIcons();
+
+        const form = overlay.querySelector('.custom-modal-form');
+        const errorEl = overlay.querySelector('.custom-modal-error');
+        const firstInput = overlay.querySelector('input:not([readonly]), textarea:not([readonly])') || overlay.querySelector('input, textarea');
+        if (firstInput) {
+            firstInput.focus();
+            if (firstInput.select) firstInput.select();
+        }
+
+        const close = (result) => {
+            overlay.classList.add('closing');
+            setTimeout(() => {
+                overlay.remove();
+                resolve(result);
+            }, 200);
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            let resultData = {};
+            fieldsList.forEach(f => {
+                resultData[f.name] = formData.get(f.name) || '';
+            });
+
+            const finalResult = fieldsList.length === 1 ? resultData[fieldsList[0].name] : resultData;
+
+            if (typeof validate === 'function') {
+                const error = validate(finalResult);
+                if (error) {
+                    errorEl.textContent = error;
+                    errorEl.style.display = 'block';
+                    const container = overlay.querySelector('.custom-modal-container');
+                    container.classList.add('shake-anim');
+                    setTimeout(() => container.classList.remove('shake-anim'), 400);
+                    return;
+                }
+            }
+
+            close(finalResult);
+        });
+
+        overlay.querySelector('.custom-modal-btn-cancel').addEventListener('click', () => close(null));
+        overlay.querySelector('.custom-modal-backdrop').addEventListener('click', () => close(null));
+
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                close(null);
+            }
+        });
+    });
 }

@@ -9,7 +9,7 @@ export async function onRequestGet(context) {
     }
 
     const state = crypto.randomUUID();
-    const scope = "repo workflow";
+    const scope = "repo workflow delete_repo";
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${env.GITHUB_CLIENT_ID}&scope=${encodeURIComponent(scope)}&state=${state}`;
 
     console.log(`[API] Redirigiendo a GitHub Auth: ${githubAuthUrl.substring(0, 50)}...`);

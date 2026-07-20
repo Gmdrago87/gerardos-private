@@ -1,7 +1,7 @@
 import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
 import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches, saveFileContent, deleteFile, fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
-import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent } from './modules/ui.js';
+import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent, showCustomAlert, showCustomConfirm, showCustomPrompt } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
@@ -362,15 +362,20 @@ async function handleSaveFile() {
     
     const btn = document.getElementById('modal-save-btn');
     const originalContent = btn.innerHTML;
+    
+    const message = await showCustomPrompt({
+        title: 'Guardar Cambios (Commit)',
+        icon: 'git-commit',
+        message: `Introduce un mensaje para guardar los cambios en "${currentFilePath}":`,
+        fields: [{ name: 'commitMsg', label: 'Mensaje de commit', value: `Update ${currentFilePath}`, required: true }],
+        confirmText: 'Guardar Commit',
+        cancelText: 'Cancelar'
+    });
+    
+    if (!message) return; // Cancelled
+    
     btn.classList.add('is-saving');
     btn.disabled = true;
-    
-    const message = prompt('Escribe un mensaje para este commit:', `Update ${currentFilePath}`);
-    if (message === null) {
-        btn.classList.remove('is-saving');
-        btn.disabled = false;
-        return; // Cancelled
-    }
     
     try {
         // Necesitamos el SHA actual del archivo para actualizarlo
@@ -398,9 +403,15 @@ async function handleSaveFile() {
         
         // Refrescar el historial de commits
         loadCommitsList(currentRepoInfo.name, currentBranch);
+        showToast('Guardado', `Cambios en '${currentFilePath}' guardados con éxito.`, 'success');
         
     } catch(err) {
-        alert(`Error al guardar: ${err.message}`);
+        await showCustomAlert({
+            title: 'Error al Guardar',
+            icon: 'alert-circle',
+            message: `No se pudo guardar el archivo: ${err.message}`,
+            type: 'error'
+        });
         btn.innerHTML = originalContent;
         btn.classList.remove('is-saving');
         btn.disabled = false;
@@ -411,7 +422,14 @@ async function handleSaveFile() {
 
 async function handleNewFile() {
     if (!currentRepoInfo) return;
-    const path = prompt('Introduce la ruta completa del nuevo archivo (ej: src/utils.js):');
+    const path = await showCustomPrompt({
+        title: 'Crear Nuevo Archivo',
+        icon: 'file-plus',
+        message: 'Introduce la ruta completa y nombre del nuevo archivo:',
+        fields: [{ name: 'filePath', label: 'Ruta del archivo', placeholder: 'ej. src/utils.js', required: true }],
+        confirmText: 'Crear Archivo',
+        cancelText: 'Cancelar'
+    });
     if (!path) return;
     
     try {
@@ -422,19 +440,36 @@ async function handleNewFile() {
         await setCachedTree(cacheKey, null);
         
         await loadRepoTreeAndReadme(currentRepoInfo, currentBranch);
-        alert(`Archivo ${path} creado con éxito.`);
+        showToast('Archivo Creado', `El archivo '${path}' ha sido creado con éxito.`, 'success');
     } catch(err) {
-        alert(`Error al crear archivo: ${err.message}`);
+        await showCustomAlert({
+            title: 'Error al Crear Archivo',
+            icon: 'alert-circle',
+            message: `No se pudo crear el archivo: ${err.message}`,
+            type: 'error'
+        });
     }
 }
 
 async function handleDeleteFile() {
     if (!currentRepoInfo || !currentFilePath) {
-        alert("Selecciona primero un archivo para eliminarlo.");
+        await showCustomAlert({
+            title: 'Archivo no Seleccionado',
+            icon: 'info',
+            message: 'Selecciona primero un archivo para poder eliminarlo.',
+            type: 'warning'
+        });
         return;
     }
     
-    const confirmDelete = confirm(`⚠️ ¿Estás seguro de eliminar PERMANENTEMENTE el archivo '${currentFilePath}'?`);
+    const confirmDelete = await showCustomConfirm({
+        title: 'Eliminar Archivo',
+        icon: 'trash-2',
+        message: `¿Estás seguro de eliminar PERMANENTEMENTE el archivo '${currentFilePath}'?`,
+        confirmText: 'Eliminar Archivo',
+        cancelText: 'Cancelar',
+        isDanger: true
+    });
     if (!confirmDelete) return;
     
     try {
@@ -446,7 +481,12 @@ async function handleDeleteFile() {
         }
         
         if (!sha) {
-            alert("No se pudo obtener el SHA del archivo.");
+            await showCustomAlert({
+                title: 'SHA no Encontrado',
+                icon: 'alert-circle',
+                message: 'No se pudo obtener el hash SHA del archivo para eliminarlo.',
+                type: 'error'
+            });
             return;
         }
         
@@ -461,9 +501,15 @@ async function handleDeleteFile() {
         currentFilePath = null;
         
         await loadRepoTreeAndReadme(currentRepoInfo, currentBranch);
+        showToast('Archivo Eliminado', `El archivo ha sido eliminado.`, 'success');
         
     } catch(err) {
-        alert(`Error al eliminar: ${err.message}`);
+        await showCustomAlert({
+            title: 'Error al Eliminar',
+            icon: 'alert-circle',
+            message: `No se pudo eliminar el archivo: ${err.message}`,
+            type: 'error'
+        });
     }
 }
 
@@ -523,14 +569,31 @@ async function loadKanbanIssues() {
 
 async function handleNewIssue() {
     if (!currentRepoInfo) return;
-    const title = prompt('Título de la nueva tarea:');
-    if (!title) return;
-    const body = prompt('Descripción (opcional):');
+    const taskData = await showCustomPrompt({
+        title: 'Nueva Tarea (Issue)',
+        icon: 'plus-circle',
+        message: 'Introduce los detalles de la nueva tarea para el tablero Kanban:',
+        fields: [
+            { name: 'title', label: 'Título de la tarea', placeholder: 'ej. Implementar autenticación', required: true },
+            { name: 'body', label: 'Descripción (opcional)', placeholder: 'Detalles adicionales...', textarea: true }
+        ],
+        confirmText: 'Crear Tarea',
+        cancelText: 'Cancelar'
+    });
+    
+    if (!taskData || !taskData.title) return;
+    
     try {
-        await createIssue(currentRepoInfo.name, title, body || '');
+        await createIssue(currentRepoInfo.name, taskData.title, taskData.body || '');
         await loadKanbanIssues();
+        showToast('Tarea Creada', `La tarea "${taskData.title}" se ha creado con éxito.`, 'success');
     } catch (e) {
-        alert('Error al crear la tarea: ' + e.message);
+        await showCustomAlert({
+            title: 'Error al Crear Tarea',
+            icon: 'alert-circle',
+            message: `No se pudo crear la tarea: ${e.message}`,
+            type: 'error'
+        });
     }
 }
 
@@ -564,7 +627,12 @@ function setupKanbanDragAndDrop() {
                     await updateIssue(currentRepoInfo.name, number, 'open', []);
                 }
             } catch (err) {
-                alert('Error al actualizar la tarea: ' + err.message);
+                await showCustomAlert({
+                    title: 'Error al Mover Tarea',
+                    icon: 'alert-circle',
+                    message: `No se pudo actualizar el estado de la tarea: ${err.message}`,
+                    type: 'error'
+                });
                 if (dragging && originalParent) originalParent.appendChild(dragging); // Revert UI
             }
         });
@@ -730,7 +798,10 @@ window.openRepoFromPalette = (repoName) => {
 window.runCommandFromPalette = (cmdId) => {
     document.getElementById('command-palette').classList.add('hidden');
     if (cmdId === 'new-repo') showCreateRepoModal();
-    if (cmdId === 'settings') alert('Ajustes en construcción...');
+    if (cmdId === 'settings') {
+        const modal = document.getElementById('settings-modal');
+        if (modal) modal.classList.remove('hidden');
+    }
 };
 
 // Modal Crear Repo
@@ -795,13 +866,25 @@ async function handleCreateRepoSubmit(e) {
 
 // Modal Eliminar Repo (Doble Confirmación)
 async function triggerDeleteRepo(repoName) {
-    const confirmName = prompt(`⚠️ ATENCIÓN: Estás a punto de eliminar permanentemente el repositorio '${repoName}'.\nEsta acción no se puede deshacer.\n\nEscribe el nombre del repositorio para confirmar:`);
-    if (!confirmName) return;
+    const confirmName = await showCustomPrompt({
+        title: 'Eliminar Repositorio',
+        icon: 'trash-2',
+        message: `ATENCIÓN: Estás a punto de eliminar permanentemente el repositorio '${repoName}'. Esta acción no se puede deshacer.`,
+        fields: [
+            { name: 'repoConfirm', label: `Escribe "${repoName}" para confirmar:`, placeholder: repoName, required: true }
+        ],
+        confirmText: 'Eliminar Repositorio',
+        cancelText: 'Cancelar',
+        isDanger: true,
+        validate: (value) => {
+            if (value !== repoName) {
+                return `El nombre introducido ("${value}") no coincide con "${repoName}".`;
+            }
+            return null;
+        }
+    });
     
-    if (confirmName !== repoName) {
-        alert("Confirmación fallida: El nombre introducido no coincide.");
-        return;
-    }
+    if (!confirmName) return;
     
     showToast('Eliminando...', 'Borrando repositorio en GitHub', 'info');
     try {
@@ -817,56 +900,49 @@ async function triggerDeleteRepo(repoName) {
             runFilterAndSearch();
         }
     } catch(err) {
-        alert(`Error al eliminar: ${err.message}`);
+        await showCustomAlert({
+            title: 'Error al Eliminar Repositorio',
+            icon: 'alert-circle',
+            message: err.message,
+            type: 'error'
+        });
     }
 }
 
 async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
     const newPrivateState = !isCurrentlyPrivate;
-    const actionText = newPrivateState ? 'Privado' : 'Público';
+    const actionText = newPrivateState ? 'Privado 🔒' : 'Público 🌐';
     
-    if (!confirm(`¿Estás seguro de que quieres hacer el repositorio '${repoName}' ${actionText}?`)) {
-        return;
-    }
+    const confirmToggle = await showCustomConfirm({
+        title: 'Cambiar Visibilidad',
+        icon: newPrivateState ? 'lock' : 'globe',
+        message: `¿Estás seguro de que quieres hacer el repositorio '${repoName}' ${actionText}?`,
+        confirmText: `Hacer ${newPrivateState ? 'Privado' : 'Público'}`,
+        cancelText: 'Cancelar'
+    });
     
-    console.log(`\n=== DEPURACIÓN: TOGGLE VISIBILITY ===`);
-    console.log(`[1] Repo seleccionado:`, repoName);
-    console.log(`[2] isCurrentlyPrivate local:`, isCurrentlyPrivate);
-    console.log(`[3] Intentando cambiar a:`, newPrivateState);
-
-    showToast('Actualizando...', `Haciendo repositorio ${actionText.toLowerCase()}...`, 'info');
+    if (!confirmToggle) return;
+    
+    showToast('Actualizando...', `Haciendo repositorio ${newPrivateState ? 'privado' : 'público'}...`, 'info');
     try {
         const updatedRepo = await updateRepoVisibility(repoName, newPrivateState);
-        console.log(`[4] Respuesta de la API recibida.`);
-        console.log(`[5] Valor de 'private' devuelto por GitHub:`, updatedRepo.private);
-        console.log(`[6] Objeto devuelto entero:`, updatedRepo);
-        
-        showToast('Repositorio Actualizado', `El repo '${repoName}' ahora es ${actionText.toLowerCase()}.`, 'success');
+        showToast('Repositorio Actualizado', `El repo '${repoName}' ahora es ${newPrivateState ? 'privado' : 'público'}.`, 'success');
         
         // Actualización optimista del estado local para reflejar el cambio de inmediato
         const state = getState();
-        console.log(`[7] Buscando repo en el estado local...`);
-        const localRepo = state.allRepos.find(r => r.name === repoName);
-        console.log(`[8] Estado local antes del cambio:`, localRepo ? localRepo.private : 'No encontrado');
-        
         if (state.allRepos) {
             const updatedAll = state.allRepos.map(r => r.name === repoName ? updatedRepo : r);
             setState({ allRepos: updatedAll });
-            console.log(`[9] Estado actualizado en memoria.`);
-            
-            // Check other repos state
-            const debugList = updatedAll.filter(r => r.private).map(r => r.name);
-            console.log(`[10] Lista de repositorios privados AHORA en memoria:`, debugList);
-
-            if (state.user) {
-                saveToCache(state.user, updatedAll);
-                console.log(`[11] Caché guardada.`);
-            }
+            if (state.user) saveToCache(state.user, updatedAll);
             runFilterAndSearch();
         }
     } catch(err) {
-        console.error(`[ERROR] Toggle Visibility:`, err);
-        alert(`Error al actualizar: ${err.message}`);
+        await showCustomAlert({
+            title: 'Error de Visibilidad',
+            icon: 'alert-circle',
+            message: `No se pudo cambiar la visibilidad: ${err.message}`,
+            type: 'error'
+        });
     }
 }
 
@@ -1037,6 +1113,20 @@ function exposeGlobals() {
     };
     window.deleteRepoGlobal = triggerDeleteRepo;
     window.toggleRepoVisibilityGlobal = triggerToggleVisibility;
+    window.clearAppCache = async () => {
+        const confirmed = await showCustomConfirm({
+            title: 'Borrar Caché Local',
+            icon: 'database',
+            message: '¿Estás seguro de que deseas borrar toda la caché local de IndexedDB? La página se recargará.',
+            confirmText: 'Borrar Caché',
+            cancelText: 'Cancelar',
+            isDanger: true
+        });
+        if (confirmed) {
+            indexedDB.deleteDatabase('keyval-store');
+            location.reload();
+        }
+    };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
