@@ -973,10 +973,17 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
 function initStaticListeners() {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
-    document.getElementById('load-more-btn').onclick = handleLoadMore;
-    document.getElementById('search-input').oninput = debounce((e) => {
-        runFilterAndSearch();
-    }, 300);
+    
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) loadMoreBtn.onclick = handleLoadMore;
+    
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.oninput = debounce((e) => {
+            runFilterAndSearch();
+        }, 300);
+    }
+    
     const toggleBtn = document.getElementById('toggle-filters-btn');
     const filtersRow = document.getElementById('filters-row');
     if (toggleBtn && filtersRow) {
@@ -1056,13 +1063,16 @@ function initStaticListeners() {
     const cancelCreateBtn = document.getElementById('create-repo-cancel-btn');
     if (cancelCreateBtn) cancelCreateBtn.onclick = hideCreateRepoModal;
 
-    document.getElementById('create-repo-form').onsubmit = handleCreateRepoSubmit;
+    const createRepoForm = document.getElementById('create-repo-form');
+    if (createRepoForm) createRepoForm.onsubmit = handleCreateRepoSubmit;
 }
 
 function initScrollBtn() {
     const scrollBtn = document.getElementById('scroll-to-top');
-    scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-    setupScrollTimeout(window, scrollBtn);
+    if (scrollBtn) {
+        scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+        setupScrollTimeout(window, scrollBtn);
+    }
 }
 
 function setupScrollTimeout(target, btn) {

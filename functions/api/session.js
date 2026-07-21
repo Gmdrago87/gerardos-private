@@ -21,36 +21,42 @@ function getCookie(request, name) {
 
 export async function onRequestGet(context) {
     const { request, env } = context;
-    console.log("[API] Verificando sesión actual en /api/session");
     
-    if (!env.JWT_SECRET) {
-        return new Response(JSON.stringify({ authenticated: false, error: "JWT_SECRET no configurado" }), {
-            status: 500,
+    try {
+        if (!env.JWT_SECRET) {
+            return new Response(JSON.stringify({ authenticated: false, message: "JWT_SECRET no configurado" }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        const token = getCookie(request, "session");
+        if (!token) {
+            return new Response(JSON.stringify({ authenticated: false }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        const payload = await verifyJwt(token, env.JWT_SECRET);
+        if (!payload || !payload.github_token) {
+            return new Response(JSON.stringify({ authenticated: false }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        return new Response(JSON.stringify({
+            authenticated: true,
+            username: payload.sub
+        }), {
+            status: 200,
             headers: { "Content-Type": "application/json" }
         });
-    }
-    
-    const token = getCookie(request, "session");
-    if (!token) {
-        return new Response(JSON.stringify({ authenticated: false }), {
+    } catch (e) {
+        return new Response(JSON.stringify({ authenticated: false, error: e.message }), {
             status: 200,
             headers: { "Content-Type": "application/json" }
         });
     }
-    
-    const payload = await verifyJwt(token, env.JWT_SECRET);
-    if (!payload || !payload.github_token) {
-        return new Response(JSON.stringify({ authenticated: false }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
-    }
-    
-    return new Response(JSON.stringify({
-        authenticated: true,
-        username: payload.sub
-    }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-    });
 }
