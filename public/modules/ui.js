@@ -415,6 +415,8 @@ function generateFileHtml(item, repoName, branch) {
             ${escapeHtml(item.name)}
         </div>
     `;
+}
+
 export function prepareRepoViewer(repoName) {
     const modal = document.getElementById('repo-viewer-modal');
     modal.classList.remove('hidden', 'closing');
