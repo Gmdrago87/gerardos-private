@@ -4,12 +4,15 @@ on:
   push:
     branches: [main]
 
+# This workflow only runs on pushes to main branch
+# It does NOT run on pull requests to avoid blocking
+
 # Environment variables for deployment
 env:
   NODE_VERSION: '20'
 
 jobs:
-  # Lint and test job (runs on every push to main)
+  # Lint and test job
   lint-and-test:
     name: Lint and Test
     runs-on: ubuntu-latest
@@ -33,7 +36,7 @@ jobs:
       - name: Run CSS linter
         run: npm run lint:css || echo "::warning:: CSS linting found issues"
 
-  # Build job (runs on every push to main)
+  # Build job
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -64,7 +67,7 @@ jobs:
           name: build-artifacts
           path: public/
 
-  # Deploy job (only if build succeeds and secrets are available)
+  # Deploy job (only if secrets are available)
   deploy:
     name: Deploy to Cloudflare
     runs-on: ubuntu-latest
