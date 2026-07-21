@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 # This workflow ONLY runs on pushes to main branch
-# It does NOT run on pull requests
+# It does NOT run on pull requests or other branches
 
 # Environment variables for deployment
 env:

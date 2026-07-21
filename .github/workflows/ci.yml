@@ -28,12 +28,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Check for secrets in current changes
+      - name: Verify no hardcoded secrets in tracked files
         run: |
-          # Check if any secrets are in the diff
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs grep -l "Ov23liZt2GrRqM6MBcHa\|05225febfd12ff3be4787a49b8cb69d1a1b85743\|super_secreto_para_probar_localmente" || echo "No secrets found in changes"
-        
-      - name: Verify no hardcoded secrets
-        run: |
-          # This should pass since we removed all secrets
-          ! grep -r "Ov23liZt2GrRqM6MBcHa\|05225febfd12ff3be4787a49b8cb69d1a1b85743\|super_secreto_para_probar_localmente" --include="*.js" --include="*.toml" --include="*.json" . || echo "No hardcoded secrets found"
+          # Check for known secrets that were previously in the code
+          # This should pass since we removed them all
+          if grep -r "Ov23liZt2GrRqM6MBcHa\|05225febfd12ff3be4787a49b8cb69d1a1b85743\|super_secreto_para_probar_localmente" --include="*.js" --include="*.toml" --include="*.json" . 2>/dev/null; then
+            echo "::error:: Hardcoded secrets found!"
+            exit 1
+          else
+            echo "✓ No hardcoded secrets found"
+          fi
