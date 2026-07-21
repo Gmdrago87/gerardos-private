@@ -568,12 +568,23 @@ export function renderFileContent(content, path, element) {
             }
         }, 100);
     }
+export function disposeMonacoEditor() {
+    if (monacoCheckInterval) {
+        clearInterval(monacoCheckInterval);
+        monacoCheckInterval = null;
+    }
+    if (currentEditor) {
+        try { currentEditor.dispose(); } catch(e) {}
+        currentEditor = null;
+    }
+    if (window.currentEditor) {
+        try { window.currentEditor.dispose(); } catch(e) {}
+        window.currentEditor = null;
+    }
 }
 
 function initMonaco(content, path) {
-    if (currentEditor) {
-        currentEditor.dispose();
-    }
+    disposeMonacoEditor();
     const container = document.getElementById('monaco-container');
     if (!container) return;
 
@@ -589,6 +600,7 @@ function initMonaco(content, path) {
         roundedSelection: false,
         padding: { top: 16, bottom: 16 }
     });
+    window.currentEditor = currentEditor;
 
     // AI Copilot Actions
     currentEditor.addAction({

@@ -30,8 +30,21 @@ export function initFuturisticEngine() {
     });
 
     btnClose.addEventListener("click", () => {
-        engineContainer.classList.add("hidden");
+        destroyFuturisticEngine();
     });
+}
+
+export function destroyFuturisticEngine() {
+    const container = document.getElementById("futuristic-canvas-container");
+    if (container) container.innerHTML = "";
+    const engineContainer = document.getElementById("futuristic-engine");
+    if (engineContainer) engineContainer.classList.add("hidden");
+    if (window._mousemoveParallaxHandler) {
+        document.removeEventListener("mousemove", window._mousemoveParallaxHandler);
+        window._mousemoveParallaxHandler = null;
+    }
+}
+window.destroyFuturisticEngine = destroyFuturisticEngine;
 
     // Tab switching
     const tabs = {

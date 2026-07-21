@@ -1,11 +1,56 @@
 import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
 import { getCachedData, getCachedDataAsync, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches, saveFileContent, deleteFile, fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
-import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, renderPortfolioIntelligence, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent, showCustomAlert, showCustomConfirm, showCustomPrompt, trapFocusModal, untrapFocusModal } from './modules/ui.js';
+import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, renderPortfolioIntelligence, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent, showCustomAlert, showCustomConfirm, showCustomPrompt, trapFocusModal, untrapFocusModal, disposeMonacoEditor } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
-import { initFuturisticEngine } from './modules/futuristic.js';
+import { initFuturisticEngine, destroyFuturisticEngine } from './modules/futuristic.js';
+import { injectLayout } from './modules/layout.js';
+
+export async function loadWorkspaceDependencies() {
+    if (!window.location.pathname.includes('/workspace')) return;
+    
+    const scriptsToLoad = [];
+    if (!window.d3) {
+        scriptsToLoad.push('https://d3js.org/d3.v7.min.js');
+    }
+    if (!window.THREE) {
+        scriptsToLoad.push('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+    }
+    
+    for (const src of scriptsToLoad) {
+        await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = resolve;
+            document.head.appendChild(script);
+        });
+    }
+
+    if (!window.monaco && !window.monacoLoading) {
+        window.monacoLoading = true;
+        await new Promise((resolve) => {
+            const loaderScript = document.createElement('script');
+            loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js';
+            loaderScript.onload = () => {
+                if (window.require) {
+                    window.require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+                    window.require(['vs/editor/editor.main'], () => {
+                        window.monacoReady = true;
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
+            };
+            loaderScript.onerror = () => resolve();
+            document.head.appendChild(loaderScript);
+        });
+    }
+}
+window.loadMonacoEditor = loadWorkspaceDependencies;
 
 function initScrollAnimations() {
     const observer = new IntersectionObserver(
@@ -17,9 +62,7 @@ function initScrollAnimations() {
                 }
             });
         },
-        {
-            threshold: 0.1,
-        }
+        { threshold: 0.1 }
     );
 
     const animatedElements = document.querySelectorAll('.animate-on-scroll, .animate-on-scroll-left, .animate-on-scroll-right, .animate-on-scroll-scale');
@@ -57,6 +100,10 @@ document.addEventListener('click', (e) => {
             return;
         }
 
+        // Destrucción previa de instancias pesadas para evitar fugas de memoria
+        disposeMonacoEditor();
+        destroyFuturisticEngine();
+
         document.startViewTransition(async () => {
             const response = await fetch(link.href);
             const text = await response.text();
@@ -65,6 +112,9 @@ document.addEventListener('click', (e) => {
             const newDocument = parser.parseFromString(text, 'text/html');
             document.body.innerHTML = newDocument.body.innerHTML;
             window.history.pushState({}, '', link.href);
+            
+            injectLayout();
+            await loadWorkspaceDependencies();
             
             if (window.lucide) window.lucide.createIcons();
             initStaticListeners();
@@ -87,6 +137,8 @@ window.addEventListener('popstate', () => {
 });
 
 async function initApp() {
+    injectLayout();
+    await loadWorkspaceDependencies();
     initShortcuts();
     initAI();
     initFuturisticEngine();
@@ -103,8 +155,9 @@ async function initApp() {
         updateLoadingStatus('Cargando datos desde IndexedDB...');
 
         const cached = await getCachedDataAsync();
-        if (cached) {
+        if (cached && cached.user && cached.repos) {
             handleCachedSuccess(cached);
+            fetchFreshInBackground();
             return;
         }
         await fetchFreshOrFallback();
@@ -114,6 +167,16 @@ async function initApp() {
         } else {
             handleCriticalError(error);
         }
+    }
+}
+
+async function fetchFreshInBackground() {
+    try {
+        const data = await fetchApiData();
+        saveToCache(data.user, data.repos);
+        processData(data.user, data.repos, 'api');
+    } catch (e) {
+        console.warn('Actualización de datos en segundo plano omitida:', e);
     }
 }
 

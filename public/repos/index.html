@@ -19,90 +19,17 @@
         href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js" defer></script>
-    <script src="https://d3js.org/d3.v7.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/app.js"></script>
 </head>
 
 <body>
-    <header class="web-header animate-on-scroll">
-        <div class="web-header__container">
-            <div class="web-header__left">
-                <div class="web-header__logo">
-                    <i data-lucide="git-branch"></i>
-                    <span class="web-header__logo-text">RepoManager</span>
-                </div>
-                <nav class="web-header__nav">
-                    <a href="/index.html" class="web-header__nav-link">Inicio</a>
-                    <a href="/repos/index.html" class="web-header__nav-link web-header__nav-link--active">Repositorios</a>
-                    <a href="/workspace/index.html" class="web-header__nav-link">Entorno de Trabajo</a>
-                </nav>
-            </div>
-            <div class="web-header__right">
-                <a id="github-link-header" href="#" target="_blank" rel="noopener noreferrer"
-                    class="web-header__github-btn">
-                    <i data-lucide="github"></i>
-                    <span id="username-header">Perfil</span>
-                </a>
-                <button id="logout-btn" class="web-header__icon-btn" title="Cerrar Sesión">
-                    <i data-lucide="log-out"></i>
-                </button>
-                <button id="settings-btn" class="web-header__icon-btn" title="Ajustes">
-                    <i data-lucide="settings"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
     <main class="web-main" id="repos-page">
-        <div id="loading" class="loading-screen">
-            <div class="loading-content">
-                <div class="loading-spinner">
-                    <div class="spinner-ring spinner-ring--outer"></div>
-                    <div class="spinner-ring spinner-ring--middle"></div>
-                    <div class="spinner-ring spinner-ring--inner"></div>
-                </div>
-                <div class="loading-info">
-                    <p id="loading-text" class="loading-label">
-                        <span class="loading-gradient-text">Cargando Repositorios</span>
-                    </p>
-                    <p id="loading-status" class="loading-status">Obteniendo datos de IndexedDB...</p>
-                    <div class="loading-dots">
-                        <span class="loading-dot loading-dot--purple"></span>
-                        <span class="loading-dot loading-dot--blue"></span>
-                        <span class="loading-dot loading-dot--cyan"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="toast" class="toast hidden">
-            <div class="toast__panel glass-panel">
-                <div class="toast__content">
-                    <div class="toast__icon-wrapper">
-                        <i data-lucide="wifi-off"></i>
-                    </div>
-                    <div class="toast__text">
-                        <p class="toast__title">Modo Caché</p>
-                        <p class="toast__message">Datos almacenados localmente</p>
-                    </div>
-                    <button class="toast__close" onclick="document.getElementById('toast').classList.add('hidden')">
-                        <i data-lucide="x"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
-            <i data-lucide="arrow-up"></i>
-        </button>
-
         <div class="web-content">
             <div class="web-content__container">
                 <section id="repositorios" class="search-wrapper animate-on-scroll stagger-1">
-                    <div class="glass-search-bar">
+                    <div class="glass-search-bar glass-panel">
                         <div class="search-form">
                             <div class="search-row">
                                 <div class="search-field">
@@ -167,52 +94,6 @@
             </div>
         </div>
     </main>
-
-    <!-- Modal Ajustes -->
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal-backdrop"></div>
-        <div class="modal-container">
-            <div class="modal-header">
-                <h2 class="modal-title">Ajustes</h2>
-                <button class="modal-close"
-                    onclick="document.getElementById('settings-modal').classList.add('hidden');">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="modal-body" style="padding: 2rem;">
-                <div class="form-group">
-                    <label class="form-label">Caché Local</label>
-                    <button onclick="window.clearAppCache();" class="btn-submit"
-                        style="width: 100%; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--error-400);">
-                        <i data-lucide="database"></i> Borrar Caché
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Command Palette -->
-    <div id="command-palette" class="command-palette hidden">
-        <div class="palette-backdrop" onclick="document.getElementById('command-palette').classList.add('hidden');">
-        </div>
-        <div class="palette-container">
-            <div class="search-form" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 1rem;">
-                <div class="search-field" style="width: 100%;">
-                    <i data-lucide="search" class="search-field-icon"></i>
-                    <input type="text" id="cmd-input" placeholder="Buscar repositorios o comandos...">
-                </div>
-            </div>
-            <div id="palette-results" class="palette-results" style="max-height: 400px; overflow-y: auto;"></div>
-        </div>
-    </div>
-
-    <footer class="site-footer">
-        <div class="footer-content">
-            <p class="footer-author">Diseñado y desarrollado por Gerard Maestre</p>
-            <p class="footer-copyright">&copy; <span id="year"></span> RepoManager</p>
-            <p id="footer-version" class="footer-version">v2.0.0</p>
-        </div>
-    </footer>
 </body>
 
 </html>
