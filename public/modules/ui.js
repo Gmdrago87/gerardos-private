@@ -24,22 +24,28 @@ export function updateLoadingStatus(message) {
 
 export function hideLoading() {
     const loader = document.getElementById('loading');
-    loader.style.opacity = '0';
-    setTimeout(() => {
-        loader.style.display = 'none';
-        document.getElementById('main-content').style.opacity = '1';
-    }, 300);
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 300);
+    }
 }
 
 export function showError(msg) {
-    document.getElementById('loading').innerHTML = `
+    const loading = document.getElementById('loading');
+    if (!loading) return;
+    loading.innerHTML = `
         <div class="error-screen">
             <p class="error-title">¡Ups!</p>
             <p class="error-message">${escapeHtml(msg)}</p>
             <button id="retry-btn" class="btn-retry">Reintentar</button>
         </div>
     `;
-    document.getElementById('retry-btn').addEventListener('click', () => location.reload());
+    const retryBtn = document.getElementById('retry-btn');
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => location.reload());
+    }
 }
 
 export function renderProfile(user) {
@@ -66,8 +72,8 @@ export function calculateStats(repos) {
         if (r.language) acc[r.language] = (acc[r.language] || 0) + 1;
         return acc;
     }, {});
-    const topLang = Object.keys(langs).length > 0 
-        ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b) 
+    const topLang = Object.keys(langs).length > 0
+        ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b)
         : 'N/A';
     animateCounter(document.getElementById('total-repos'), repos.length, 1200);
     animateCounter(document.getElementById('total-stars'), totalStars, 1500);
@@ -467,23 +473,23 @@ function getLanguageFromPath(path) {
 export function renderFileContent(content, path, element) {
     document.querySelectorAll('.file-node').forEach(d => d.classList.remove('tree-file--active'));
     if (element) element.classList.add('tree-file--active');
-    
+
     const viewer = document.getElementById('code-viewer');
-    
+
     // Show save button
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'flex';
 
     // Carga perezosa del motor Monaco si aún no está iniciado
     if (window.loadMonacoEditor) window.loadMonacoEditor();
-    
+
     if (window.monaco && window.monacoReady) {
         viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
         initMonaco(content, path);
     } else {
         viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Cargando editor...</p></div>';
         if (window.lucide) window.lucide.createIcons();
-        
+
         let attempts = 0;
         if (monacoCheckInterval) clearInterval(monacoCheckInterval);
         monacoCheckInterval = setInterval(() => {
@@ -496,7 +502,7 @@ export function renderFileContent(content, path, element) {
             } else if (attempts > 150) { // 15 segundos
                 clearInterval(monacoCheckInterval);
                 monacoCheckInterval = null;
-                const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
+                const escaped = content.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', '\'': '&#039;' }[m]));
                 viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
             }
         }, 100);
@@ -509,7 +515,7 @@ function initMonaco(content, path) {
     }
     const container = document.getElementById('monaco-container');
     if (!container) return;
-    
+
     currentEditor = window.monaco.editor.create(container, {
         value: content,
         language: getLanguageFromPath(path),
@@ -522,7 +528,7 @@ function initMonaco(content, path) {
         roundedSelection: false,
         padding: { top: 16, bottom: 16 }
     });
-    
+
     // AI Copilot Actions
     currentEditor.addAction({
         id: 'ai-explain',
@@ -531,7 +537,7 @@ function initMonaco(content, path) {
         contextMenuOrder: 1.5,
         run: (ed) => handleAiAction(ed, 'explain')
     });
-    
+
     currentEditor.addAction({
         id: 'ai-refactor',
         label: '🤖 IA: Refactorizar',
@@ -539,7 +545,7 @@ function initMonaco(content, path) {
         contextMenuOrder: 1.6,
         run: (ed) => handleAiAction(ed, 'refactor')
     });
-    
+
     currentEditor.addAction({
         id: 'ai-find-bugs',
         label: '🤖 IA: Buscar Bugs',
@@ -547,7 +553,7 @@ function initMonaco(content, path) {
         contextMenuOrder: 1.7,
         run: (ed) => handleAiAction(ed, 'find_bugs')
     });
-    
+
     currentEditor.addAction({
         id: 'ai-comment',
         label: '🤖 IA: Añadir Comentarios',
@@ -562,12 +568,12 @@ async function handleAiAction(editor, action) {
     if (!code || code.trim() === '') {
         code = editor.getValue();
     }
-    
+
     const modal = document.getElementById('ai-modal');
     if (modal) {
         modal.classList.remove('hidden');
     }
-    
+
     sendAIMessage(code, action);
 }
 
@@ -626,28 +632,35 @@ function importDynamicDOMPurify() {
 }
 
 export function closeModal() {
-    const modal = document.getElementById('modal');
-    modal.classList.add('closing');
-    
+    const modal = document.getElementById('repo-viewer-modal');
+    if (modal) {
+        modal.classList.add('closing');
+        document.body.style.overflow = 'hidden';
+    }
+
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'none';
-    
+
     if (monacoCheckInterval) {
         clearInterval(monacoCheckInterval);
         monacoCheckInterval = null;
     }
-    
+
     if (currentEditor) {
         currentEditor.dispose();
         currentEditor = null;
     }
-    
+
     setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('closing');
-        document.body.style.overflow = '';
-        document.getElementById('file-tree').innerHTML = '';
-        document.getElementById('code-viewer').innerHTML = '';
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('closing');
+            document.body.style.overflow = '';
+            const fileTree = document.getElementById('file-tree');
+            if (fileTree) fileTree.innerHTML = '';
+            const codeViewer = document.getElementById('code-viewer');
+            if (codeViewer) codeViewer.innerHTML = '';
+        }
     }, 300);
 }
 
@@ -682,7 +695,7 @@ export function showCustomAlert({ title = 'Aviso', icon = 'info', message = '', 
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
         overlay.className = 'custom-modal-overlay';
-        
+
         let iconColorClass = 'modal-icon--info';
         if (type === 'error') iconColorClass = 'modal-icon--danger';
         if (type === 'success') iconColorClass = 'modal-icon--success';
@@ -721,7 +734,7 @@ export function showCustomAlert({ title = 'Aviso', icon = 'info', message = '', 
         confirmBtn.focus();
         confirmBtn.addEventListener('click', close);
         overlay.querySelector('.custom-modal-backdrop').addEventListener('click', close);
-        
+
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' || e.key === 'Enter') {
                 e.preventDefault();
@@ -735,7 +748,7 @@ export function showCustomConfirm({ title = 'Confirmar acción', icon = 'help-ci
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
         overlay.className = 'custom-modal-overlay';
-        
+
         const iconColorClass = isDanger ? 'modal-icon--danger' : 'modal-icon--info';
         const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-submit';
 

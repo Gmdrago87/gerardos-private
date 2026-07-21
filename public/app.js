@@ -7,6 +7,25 @@ import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
 import { initFuturisticEngine } from './modules/futuristic.js';
 
+function initScrollAnimations() {
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        },
+        {
+            threshold: 0.1,
+        }
+    );
+
+    const animatedElements = document.querySelectorAll('.animate-on-scroll, .animate-on-scroll-left, .animate-on-scroll-right, .animate-on-scroll-scale');
+    animatedElements.forEach((el) => observer.observe(el));
+}
+
 async function loadVersionInfo() {
     try {
         const res = await fetch('/api/version');
@@ -143,6 +162,7 @@ function processData(user, repos, source) {
     if (githubLinkHeader && user.html_url) githubLinkHeader.href = user.html_url;
 
     if (window.lucide) window.lucide.createIcons();
+    initScrollAnimations();
 }
 
 function handleFilterClick(lang, btnElement) {
@@ -973,17 +993,17 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
 function initStaticListeners() {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
-    
+
     const loadMoreBtn = document.getElementById('load-more-btn');
     if (loadMoreBtn) loadMoreBtn.onclick = handleLoadMore;
-    
+
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.oninput = debounce((e) => {
             runFilterAndSearch();
         }, 300);
     }
-    
+
     const toggleBtn = document.getElementById('toggle-filters-btn');
     const filtersRow = document.getElementById('filters-row');
     if (toggleBtn && filtersRow) {
@@ -1120,5 +1140,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
     initStaticListeners();
     initScrollBtn();
+    initScrollAnimations();
     exposeGlobals();
 });
