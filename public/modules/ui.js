@@ -24,75 +24,25 @@ export function updateLoadingStatus(message) {
 
 export function hideLoading() {
     const loader = document.getElementById('loading');
-    if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => {
-            loader.style.display = 'none';
-        }, 300);
-    }
+    loader.style.opacity = '0';
+    setTimeout(() => {
+        loader.style.display = 'none';
+        document.getElementById('main-content').style.opacity = '1';
+    }, 300);
 }
 
 export function showError(msg) {
-    const loading = document.getElementById('loading');
-    if (!loading) return;
-    loading.innerHTML = `
+    document.getElementById('loading').innerHTML = `
         <div class="error-screen">
             <p class="error-title">¡Ups!</p>
             <p class="error-message">${escapeHtml(msg)}</p>
             <button id="retry-btn" class="btn-retry">Reintentar</button>
         </div>
     `;
-    const retryBtn = document.getElementById('retry-btn');
-    if (retryBtn) {
-        retryBtn.addEventListener('click', () => location.reload());
-    }
-}
-const focusTrapMap = new WeakMap();
-
-export function trapFocusModal(modalElement) {
-    if (!modalElement || focusTrapMap.has(modalElement)) return;
-    const focusableSelectors = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-    const handleKeyDown = (e) => {
-        if (e.key !== 'Tab') return;
-        const focusables = Array.from(modalElement.querySelectorAll(focusableSelectors))
-            .filter(el => el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0);
-        if (!focusables.length) return;
-
-        const firstEl = focusables[0];
-        const lastEl = focusables[focusables.length - 1];
-
-        if (e.shiftKey) {
-            if (document.activeElement === firstEl || !modalElement.contains(document.activeElement)) {
-                e.preventDefault();
-                lastEl.focus();
-            }
-        } else {
-            if (document.activeElement === lastEl || !modalElement.contains(document.activeElement)) {
-                e.preventDefault();
-                firstEl.focus();
-            }
-        }
-    };
-
-    modalElement.addEventListener('keydown', handleKeyDown);
-    focusTrapMap.set(modalElement, handleKeyDown);
-
-    const firstFocusable = modalElement.querySelector(focusableSelectors);
-    if (firstFocusable) firstFocusable.focus();
-}
-
-export function untrapFocusModal(modalElement) {
-    if (!modalElement) return;
-    const handler = focusTrapMap.get(modalElement);
-    if (handler) {
-        modalElement.removeEventListener('keydown', handler);
-        focusTrapMap.delete(modalElement);
-    }
+    document.getElementById('retry-btn').addEventListener('click', () => location.reload());
 }
 
 export function renderProfile(user) {
-    if (!user) return;
     const avatarImg = document.getElementById('avatar');
     if (avatarImg) {
         avatarImg.src = user.avatar_url || 'https://avatars.githubusercontent.com/u/195803064?v=4';
@@ -102,46 +52,30 @@ export function renderProfile(user) {
             avatarImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%238b5cf6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
         };
     }
-    const nameEl = document.getElementById('name');
-    if (nameEl) nameEl.textContent = user.name || 'GerardMaestre';
-    const usernameEl = document.getElementById('username');
-    if (usernameEl) usernameEl.textContent = `@${user.login || 'GerardMaestre'}`;
-    const followersEl = document.getElementById('followers');
-    if (followersEl) animateCounter(followersEl, user.followers || 0, 1000);
-    const followingEl = document.getElementById('following');
-    if (followingEl) animateCounter(followingEl, user.following || 0, 1000);
-    const githubLinkEl = document.getElementById('github-link');
-    if (githubLinkEl) githubLinkEl.href = user.html_url || 'https://github.com/GerardMaestre';
-    const githubLinkHeaderEl = document.getElementById('github-link-header');
-    if (githubLinkHeaderEl) githubLinkHeaderEl.href = user.html_url || 'https://github.com/GerardMaestre';
-    const usernameHeaderEl = document.getElementById('username-header');
-    if (usernameHeaderEl) usernameHeaderEl.textContent = user.login || 'Perfil';
+    document.getElementById('name').textContent = user.name || 'GerardMaestre';
+    document.getElementById('username').textContent = `@${user.login || 'GerardMaestre'}`;
+    animateCounter(document.getElementById('followers'), user.followers || 0, 1000);
+    animateCounter(document.getElementById('following'), user.following || 0, 1000);
+    document.getElementById('github-link').href = user.html_url || 'https://github.com/GerardMaestre';
 }
 
 export function calculateStats(repos) {
-    if (!repos) return;
     const totalStars = repos.reduce((acc, repo) => acc + repo.stargazers_count, 0);
     const totalForks = repos.reduce((acc, repo) => acc + repo.forks_count, 0);
     const langs = repos.reduce((acc, r) => {
         if (r.language) acc[r.language] = (acc[r.language] || 0) + 1;
         return acc;
     }, {});
-    const topLang = Object.keys(langs).length > 0
-        ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b)
+    const topLang = Object.keys(langs).length > 0 
+        ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b) 
         : 'N/A';
-    
-    const totalReposEl = document.getElementById('total-repos');
-    if (totalReposEl) animateCounter(totalReposEl, repos.length, 1200);
-    const totalStarsEl = document.getElementById('total-stars');
-    if (totalStarsEl) animateCounter(totalStarsEl, totalStars, 1500);
-    const totalForksEl = document.getElementById('total-forks');
-    if (totalForksEl) animateCounter(totalForksEl, totalForks, 1500);
-    const topLangEl = document.getElementById('top-lang');
-    if (topLangEl) topLangEl.textContent = topLang;
+    animateCounter(document.getElementById('total-repos'), repos.length, 1200);
+    animateCounter(document.getElementById('total-stars'), totalStars, 1500);
+    animateCounter(document.getElementById('total-forks'), totalForks, 1500);
+    document.getElementById('top-lang').textContent = topLang;
 }
 
 export function renderPortfolioIntelligence(repos) {
-    if (!repos) return;
     const now = Date.now();
     const recentRepos = repos.filter(repo => (repo._pushedTime || new Date(repo.pushed_at).getTime()) > now - 90 * 86400000);
     const languages = new Set(repos.map(repo => repo.language).filter(Boolean));
@@ -175,9 +109,8 @@ function getPortfolioNextMove({ activityScore, languages, launchReadyRepos, repo
 }
 
 export function setupFilters(repos, onFilterClick) {
-    const container = document.getElementById('filter-container');
-    if (!container || !repos) return;
     const languages = [...new Set(repos.map(r => r.language).filter(Boolean))];
+    const container = document.getElementById('filter-container');
     container.innerHTML = '';
     const allBtn = document.createElement('button');
     allBtn.className = FILTER_BTN_ALL_ACTIVE;
@@ -485,10 +418,10 @@ function generateFileHtml(item, repoName, branch) {
 }
 
 export function prepareRepoViewer(repoName) {
-    const modal = document.getElementById('repo-viewer-modal');
+    const modal = document.getElementById('modal');
     modal.classList.remove('hidden', 'closing');
     document.body.style.overflow = 'hidden';
-    document.getElementById('repo-viewer-title').textContent = repoName;
+    document.getElementById('modal-title').textContent = repoName;
     document.getElementById('file-tree').innerHTML = '<div class="modal__loading--pulse">Cargando estructura...</div>';
     const viewer = document.getElementById('code-viewer');
     viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Buscando README...</p></div>';
@@ -534,23 +467,23 @@ function getLanguageFromPath(path) {
 export function renderFileContent(content, path, element) {
     document.querySelectorAll('.file-node').forEach(d => d.classList.remove('tree-file--active'));
     if (element) element.classList.add('tree-file--active');
-
+    
     const viewer = document.getElementById('code-viewer');
-
+    
     // Show save button
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'flex';
 
     // Carga perezosa del motor Monaco si aún no está iniciado
     if (window.loadMonacoEditor) window.loadMonacoEditor();
-
+    
     if (window.monaco && window.monacoReady) {
         viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
         initMonaco(content, path);
     } else {
         viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Cargando editor...</p></div>';
         if (window.lucide) window.lucide.createIcons();
-
+        
         let attempts = 0;
         if (monacoCheckInterval) clearInterval(monacoCheckInterval);
         monacoCheckInterval = setInterval(() => {
@@ -563,31 +496,20 @@ export function renderFileContent(content, path, element) {
             } else if (attempts > 150) { // 15 segundos
                 clearInterval(monacoCheckInterval);
                 monacoCheckInterval = null;
-                const escaped = content.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', '\'': '&#039;' }[m]));
+                const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
                 viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
             }
         }, 100);
     }
-export function disposeMonacoEditor() {
-    if (monacoCheckInterval) {
-        clearInterval(monacoCheckInterval);
-        monacoCheckInterval = null;
-    }
-    if (currentEditor) {
-        try { currentEditor.dispose(); } catch(e) {}
-        currentEditor = null;
-    }
-    if (window.currentEditor) {
-        try { window.currentEditor.dispose(); } catch(e) {}
-        window.currentEditor = null;
-    }
 }
 
 function initMonaco(content, path) {
-    disposeMonacoEditor();
+    if (currentEditor) {
+        currentEditor.dispose();
+    }
     const container = document.getElementById('monaco-container');
     if (!container) return;
-
+    
     currentEditor = window.monaco.editor.create(container, {
         value: content,
         language: getLanguageFromPath(path),
@@ -600,8 +522,7 @@ function initMonaco(content, path) {
         roundedSelection: false,
         padding: { top: 16, bottom: 16 }
     });
-    window.currentEditor = currentEditor;
-
+    
     // AI Copilot Actions
     currentEditor.addAction({
         id: 'ai-explain',
@@ -610,7 +531,7 @@ function initMonaco(content, path) {
         contextMenuOrder: 1.5,
         run: (ed) => handleAiAction(ed, 'explain')
     });
-
+    
     currentEditor.addAction({
         id: 'ai-refactor',
         label: '🤖 IA: Refactorizar',
@@ -618,7 +539,7 @@ function initMonaco(content, path) {
         contextMenuOrder: 1.6,
         run: (ed) => handleAiAction(ed, 'refactor')
     });
-
+    
     currentEditor.addAction({
         id: 'ai-find-bugs',
         label: '🤖 IA: Buscar Bugs',
@@ -626,7 +547,7 @@ function initMonaco(content, path) {
         contextMenuOrder: 1.7,
         run: (ed) => handleAiAction(ed, 'find_bugs')
     });
-
+    
     currentEditor.addAction({
         id: 'ai-comment',
         label: '🤖 IA: Añadir Comentarios',
@@ -641,12 +562,12 @@ async function handleAiAction(editor, action) {
     if (!code || code.trim() === '') {
         code = editor.getValue();
     }
-
+    
     const modal = document.getElementById('ai-modal');
     if (modal) {
         modal.classList.remove('hidden');
     }
-
+    
     sendAIMessage(code, action);
 }
 
@@ -705,35 +626,28 @@ function importDynamicDOMPurify() {
 }
 
 export function closeModal() {
-    const modal = document.getElementById('repo-viewer-modal');
-    if (modal) {
-        modal.classList.add('closing');
-        document.body.style.overflow = 'hidden';
-    }
-
+    const modal = document.getElementById('modal');
+    modal.classList.add('closing');
+    
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'none';
-
+    
     if (monacoCheckInterval) {
         clearInterval(monacoCheckInterval);
         monacoCheckInterval = null;
     }
-
+    
     if (currentEditor) {
         currentEditor.dispose();
         currentEditor = null;
     }
-
+    
     setTimeout(() => {
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('closing');
-            document.body.style.overflow = '';
-            const fileTree = document.getElementById('file-tree');
-            if (fileTree) fileTree.innerHTML = '';
-            const codeViewer = document.getElementById('code-viewer');
-            if (codeViewer) codeViewer.innerHTML = '';
-        }
+        modal.classList.add('hidden');
+        modal.classList.remove('closing');
+        document.body.style.overflow = '';
+        document.getElementById('file-tree').innerHTML = '';
+        document.getElementById('code-viewer').innerHTML = '';
     }, 300);
 }
 
@@ -768,7 +682,7 @@ export function showCustomAlert({ title = 'Aviso', icon = 'info', message = '', 
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
         overlay.className = 'custom-modal-overlay';
-
+        
         let iconColorClass = 'modal-icon--info';
         if (type === 'error') iconColorClass = 'modal-icon--danger';
         if (type === 'success') iconColorClass = 'modal-icon--success';
@@ -807,7 +721,7 @@ export function showCustomAlert({ title = 'Aviso', icon = 'info', message = '', 
         confirmBtn.focus();
         confirmBtn.addEventListener('click', close);
         overlay.querySelector('.custom-modal-backdrop').addEventListener('click', close);
-
+        
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' || e.key === 'Enter') {
                 e.preventDefault();
@@ -821,7 +735,7 @@ export function showCustomConfirm({ title = 'Confirmar acción', icon = 'help-ci
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
         overlay.className = 'custom-modal-overlay';
-
+        
         const iconColorClass = isDanger ? 'modal-icon--danger' : 'modal-icon--info';
         const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-submit';
 

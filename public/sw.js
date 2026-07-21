@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gerardos-v1784629500000';
+const CACHE_NAME = 'gerardos-v1784577337293';
 const STATIC_ASSETS = new Set([
     '/',
     '/index.html',

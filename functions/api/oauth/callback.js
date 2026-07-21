@@ -38,10 +38,10 @@ export async function onRequestGet(context) {
         return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
     }
 
-    const clientId = env.GITHUB_CLIENT_ID
-    const clientSecret = env.GITHUB_CLIENT_SECRET
-    const jwtSecret = env.JWT_SECRET
-    const githubUsername = env.GITHUB_USERNAME;
+    const clientId = env.GITHUB_CLIENT_ID || "Ov23liZt2GrRqM6MBcHa";
+    const clientSecret = env.GITHUB_CLIENT_SECRET || "05225febfd12ff3be4787a49b8cb69d1a1b85743";
+    const jwtSecret = env.JWT_SECRET || "super_secreto_para_probar_localmente";
+    const githubUsername = env.GITHUB_USERNAME || "GerardMaestre";
 
     if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
         console.error("[API] Error: Faltan variables OAuth en env.");

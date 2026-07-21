@@ -1,6 +1,6 @@
 export async function onRequestGet(context) {
     const { env, request } = context;
-    const clientId = env.GITHUB_CLIENT_ID;
+    const clientId = env.GITHUB_CLIENT_ID || "Ov23liZt2GrRqM6MBcHa";
     
     if (!clientId) {
         console.error("[API] Error: Falta GITHUB_CLIENT_ID en la configuración.");
