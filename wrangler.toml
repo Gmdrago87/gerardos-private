@@ -5,4 +5,4 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 GITHUB_USERNAME = "Gmdrago87,GerardMaestre"
-NODE_ENV = "development"
+NODE_ENV = "production"
