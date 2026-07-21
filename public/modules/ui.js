@@ -415,13 +415,11 @@ function generateFileHtml(item, repoName, branch) {
             ${escapeHtml(item.name)}
         </div>
     `;
-}
-
 export function prepareRepoViewer(repoName) {
-    const modal = document.getElementById('modal');
+    const modal = document.getElementById('repo-viewer-modal');
     modal.classList.remove('hidden', 'closing');
     document.body.style.overflow = 'hidden';
-    document.getElementById('modal-title').textContent = repoName;
+    document.getElementById('repo-viewer-title').textContent = repoName;
     document.getElementById('file-tree').innerHTML = '<div class="modal__loading--pulse">Cargando estructura...</div>';
     const viewer = document.getElementById('code-viewer');
     viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Buscando README...</p></div>';
