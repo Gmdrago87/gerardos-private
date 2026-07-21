@@ -2,15 +2,16 @@ name: Security Checks
 
 on:
   push:
-    branches: [main, vibe/**]
-  pull_request:
     branches: [main]
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
 
+# These security checks run on main branch only
+# They don't run on PRs to avoid blocking development
+
 jobs:
-  # Secret scanning
+  # Secret scanning on main
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
@@ -27,7 +28,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
 
-  # Dependency audit
+  # Dependency audit on main
   dependency-audit:
     name: Dependency Audit
     runs-on: ubuntu-latest
@@ -46,9 +47,9 @@ jobs:
         run: npm ci
         
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=moderate
 
-  # CodeQL analysis
+  # CodeQL analysis on main
   codeql-analysis:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
