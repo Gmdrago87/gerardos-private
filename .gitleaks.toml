@@ -1,0 +1,54 @@
+[extend]
+useDefault = true
+
+# Custom rules for this project
+[[rules]]
+id = "github-client-id"
+description = "GitHub Client ID"
+regex = """(?:github|GITHUB)_(?:client|CLIENT)_(?:id|ID)[\s]*[=:]\s*['\"]?([a-zA-Z0-9]{20})['\"]?"""
+tags = ["github", "client-id"]
+
+[[rules]]
+id = "github-client-secret"
+description = "GitHub Client Secret"
+regex = """(?:github|GITHUB)_(?:client|CLIENT)_(?:secret|SECRET)[\s]*[=:]\s*['\"]?([a-zA-Z0-9]{40})['\"]?"""
+tags = ["github", "client-secret"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret"
+regex = """(?:jwt|JWT)_(?:secret|SECRET)[\s]*[=:]\s*['\"]?([a-zA-Z0-9_\-]{20,})['\"]?"""
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "github-username-in-code"
+description = "GitHub Username in code"
+regex = """(?:github|GITHUB)_(?:username|USERNAME|user|USER)[\s]*[=:]\s*['\"]?([a-zA-Z0-9\-]{1,39})['\"]?"""
+tags = ["github", "username"]
+
+# Allow list - paths to ignore
+[allowlist]
+paths = [
+    "node_modules/",
+    "public/",
+    "\.git/",
+    "\.vscode/",
+    "\.idea/",
+    "dist/",
+    "build/",
+    "\.min\.js$",
+    "\.min\.css$",
+    "bundle\.js$",
+    "sw\.js$"
+]
+
+# Regex patterns to ignore
+[allowlist.regexes]
+# Allow example values in documentation
+examples = """(?:example|EXAMPLE|placeholder|PLACEHOLDER|tu_|mi_|your_|YOUR_)[a-zA-Z0-9_\-]*"""
+
+# Allow test values
+testValues = """(?:test|TEST|mock|MOCK|dummy|DUMMY)[a-zA-Z0-9_\-]*"""
+
+# Allow common placeholder patterns
+placeholders = """(?:XXX|YYY|ZZZ|TODO|FIXME|HACK)[a-zA-Z0-9_\-]*"""

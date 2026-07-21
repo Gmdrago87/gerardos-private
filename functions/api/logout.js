@@ -1,21 +1,38 @@
-export async function onRequestPost(context) {
-    const { env, request } = context;
-    const isProduction = env.NODE_ENV === "production";
-    const expires = "Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    let cookieString = `session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; ${expires}`;
-    let oauthStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${expires}`;
+/**
+ * Logout Handler
+ * Clears the session cookie
+ */
 
-    if (isProduction || request.url.startsWith("https://")) {
-        cookieString += "; Secure";
-        oauthStateCookie += "; Secure";
-    }
+import { jsonResponse } from "../_shared/http.js";
+import { clearCookie } from "../_shared/cookies.js";
 
-    const headers = new Headers({
-        "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store"
+export async function onRequestGet(context) {
+    const { request } = context;
+    const url = new URL(request.url);
+    
+    const isProduction = context.env.NODE_ENV === "production";
+    const responseHeaders = new Headers();
+    
+    // Clear session cookie
+    clearCookie(responseHeaders, "session", {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Strict',
+        secure: isProduction || url.protocol === 'https:'
     });
-    headers.append("Set-Cookie", cookieString);
-    headers.append("Set-Cookie", oauthStateCookie);
-
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+    
+    // Clear state cookie
+    clearCookie(responseHeaders, "oauth_state", {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+        secure: isProduction || url.protocol === 'https:'
+    });
+    
+    responseHeaders.set("Location", "/");
+    
+    return new Response(null, {
+        status: 302,
+        headers: responseHeaders
+    });
 }

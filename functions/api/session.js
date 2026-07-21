@@ -1,56 +1,64 @@
-import { verifyJwt } from "../_shared/jwt.js";
+/**
+ * Session Handler
+ * Returns current session information
+ */
 
-function getCookie(request, name) {
-    const cookieHeader = request.headers.get("Cookie");
-    if (!cookieHeader) return null;
-    
-    const cookies = cookieHeader.split(";");
-    for (let cookie of cookies) {
-        const trimmed = cookie.trim();
-        const eqIdx = trimmed.indexOf("=");
-        if (eqIdx !== -1) {
-            const key = trimmed.substring(0, eqIdx);
-            const val = trimmed.substring(eqIdx + 1);
-            if (key === name) {
-                return decodeURIComponent(val);
-            }
-        }
-    }
-    return null;
-}
+import { jsonResponse } from "../_shared/http.js";
+import { getCookie } from "../_shared/cookies.js";
+import { verifyJwt } from "../_shared/jwt.js";
+import { isAllowedUser } from "../_shared/github.js";
 
 export async function onRequestGet(context) {
     const { request, env } = context;
-    console.log("[API] Verificando sesión actual en /api/session");
     
-    if (!env.JWT_SECRET) {
-        return new Response(JSON.stringify({ authenticated: false, error: "JWT_SECRET no configurado" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
-    }
-    
+    // Get session cookie
     const token = getCookie(request, "session");
+    
     if (!token) {
-        return new Response(JSON.stringify({ authenticated: false }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
+        return jsonResponse({
+            authenticated: false,
+            error: "No session"
         });
     }
-    
-    const payload = await verifyJwt(token, env.JWT_SECRET);
-    if (!payload || !payload.github_token) {
-        return new Response(JSON.stringify({ authenticated: false }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
+
+    if (!env.JWT_SECRET) {
+        return jsonResponse({
+            authenticated: false,
+            error: "Server misconfigured"
+        }, 500);
     }
-    
-    return new Response(JSON.stringify({
-        authenticated: true,
-        username: payload.sub
-    }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-    });
+
+    try {
+        const payload = await verifyJwt(token, env.JWT_SECRET);
+        
+        if (!payload || !payload.github_token || typeof payload.sub !== "string") {
+            return jsonResponse({
+                authenticated: false,
+                error: "Invalid session"
+            });
+        }
+
+        // Check if user is allowed
+        if (!isAllowedUser(payload.sub, env)) {
+            return jsonResponse({
+                authenticated: false,
+                error: "User not allowed"
+            }, 403);
+        }
+
+        return jsonResponse({
+            authenticated: true,
+            user: {
+                username: payload.sub,
+                expiresAt: payload.exp * 1000 // Convert to milliseconds
+            }
+        });
+
+    } catch (e) {
+        console.error('Session verification error:', e.message);
+        return jsonResponse({
+            authenticated: false,
+            error: "Session verification failed"
+        }, 401);
+    }
 }

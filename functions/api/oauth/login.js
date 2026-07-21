@@ -1,28 +1,66 @@
+/**
+ * OAuth Login Handler
+ * Initiates GitHub OAuth flow
+ */
+
+import { getCookie, setCookie } from "../../_shared/cookies.js";
+import { ValidationError } from "../../_shared/errors.js";
+
+const STATE_COOKIE_NAME = "oauth_state";
+const STATE_DURATION = 60 * 10; // 10 minutes in seconds
+
 export async function onRequestGet(context) {
-    const { env, request } = context;
-    const clientId = env.GITHUB_CLIENT_ID || "Ov23liZt2GrRqM6MBcHa";
+    const { request, env } = context;
+    const url = new URL(request.url);
     
-    if (!clientId) {
-        console.error("[API] Error: Falta GITHUB_CLIENT_ID en la configuración.");
-        return new Response("Falta GITHUB_CLIENT_ID en la configuración.", { status: 500 });
+    console.log(`[API] OAuth Login iniciado desde: ${url.pathname}`);
+
+    // Get configuration from environment
+    const clientId = env.GITHUB_CLIENT_ID;
+    const githubUsername = env.GITHUB_USERNAME;
+
+    if (!clientId || !githubUsername) {
+        console.error("[API] Error: Faltan variables de configuración para OAuth.");
+        return new Response("El servidor no está configurado correctamente.", { status: 500 });
     }
 
-    const state = crypto.randomUUID();
-    const scope = "repo workflow delete_repo";
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scope)}&state=${state}`;
+    try {
+        // Generate a secure random state token for CSRF protection
+        const state = crypto.randomUUID();
+        
+        // Get the callback URL
+        const callbackUrl = new URL('/api/oauth/callback', url.origin).toString();
+        
+        // Build GitHub OAuth URL
+        const githubAuthUrl = new URL('https://github.com/login/oauth/authorize');
+        githubAuthUrl.searchParams.set('client_id', clientId);
+        githubAuthUrl.searchParams.set('redirect_uri', callbackUrl);
+        githubAuthUrl.searchParams.set('state', state);
+        githubAuthUrl.searchParams.set('scope', 'repo user');
+        
+        // Set state cookie
+        const isProduction = env.NODE_ENV === "production";
+        const responseHeaders = new Headers();
+        
+        setCookie(responseHeaders, STATE_COOKIE_NAME, state, {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'Lax',
+            maxAge: STATE_DURATION,
+            secure: isProduction || url.protocol === 'https:'
+        });
+        
+        responseHeaders.set("Location", githubAuthUrl.toString());
+        
+        console.log(`[API] Redirigiendo a GitHub OAuth: ${githubAuthUrl.toString()}`);
+        
+        return new Response(null, {
+            status: 302,
+            headers: responseHeaders
+        });
 
-    const isProduction = env.NODE_ENV === "production";
-    let cookieString = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
-    if (isProduction || request.url.startsWith("https://")) {
-        cookieString += "; Secure";
+    } catch (e) {
+        console.error(`[API] Error iniciando OAuth: ${e.message}`);
+        return new Response("Error al iniciar el proceso de autenticación.", { status: 500 });
     }
-
-    return new Response(null, {
-        status: 302,
-        headers: {
-            "Location": githubAuthUrl,
-            "Set-Cookie": cookieString
-        }
-    });
 }
-

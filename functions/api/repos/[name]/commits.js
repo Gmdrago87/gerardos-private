@@ -1,57 +1,71 @@
-import { getGitHubHeaders, getRepoOwner, requireAuth, validateGitRef, validateRepoName } from '../../../_shared/github.js';
-import { jsonResponse } from '../../../_shared/http.js';
+/**
+ * Repository Commits Handler
+ * Fetches commit history for a repository
+ */
+
+import { jsonResponse } from "../../../_shared/http.js";
+import { getGitHubHeaders, getRepoOwner, validateRepoName, validateGitRef } from "../../../_shared/github.js";
+import { requireAuth } from "../../../_shared/github.js";
+import { AuthError, ValidationError, NotFoundError, handleError } from "../../../_shared/errors.js";
 
 export async function onRequestGet(context) {
-    const { params, request } = context;
-    const repoName = params.name;
-
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
-    const url = new URL(request.url);
-    const branch = url.searchParams.get("branch") || "main";
-    const page = Number.parseInt(url.searchParams.get("page") || "1", 10);
-
-    if (!validateGitRef(branch)) {
-        return jsonResponse({ error: "Rama o referencia inválida" }, 400);
-    }
-    if (!Number.isInteger(page) || page < 1 || page > 100) {
-        return jsonResponse({ error: "Página inválida" }, 400);
-    }
-
-    const headers = getGitHubHeaders(context);
-
     try {
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/commits?sha=${encodeURIComponent(branch)}&page=${page}&per_page=20`;
-        const res = await fetch(fetchUrl, { headers });
-
-        if (!res.ok) {
-            return jsonResponse({ error: "No se pudieron obtener los commits" }, res.status);
+        requireAuth(context);
+        
+        const { params, request } = context;
+        const repoName = params.name;
+        const url = new URL(request.url);
+        const branch = url.searchParams.get('branch') || 'main';
+        const perPage = parseInt(url.searchParams.get('per_page')) || 30;
+        const page = parseInt(url.searchParams.get('page')) || 1;
+        
+        if (!validateRepoName(repoName)) {
+            throw new ValidationError('Nombre de repositorio inválido');
         }
-
-        const data = await res.json();
-        const mappedCommits = data.map(item => ({
-            sha: item.sha,
-            commit: {
-                message: item.commit?.message || "",
-                author: {
-                    name: item.commit?.author?.name || "",
-                    date: item.commit?.author?.date || null
-                }
-            },
-            author: item.author ? {
-                login: item.author.login,
-                avatar_url: item.author.avatar_url,
-                html_url: item.author.html_url
-            } : null
+        
+        if (!validateGitRef(branch)) {
+            throw new ValidationError('Rama inválida');
+        }
+        
+        const owner = getRepoOwner(context);
+        const headers = getGitHubHeaders(context);
+        
+        // Build the API URL
+        const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/commits?sha=${encodeURIComponent(branch)}&per_page=${perPage}&page=${page}`;
+        
+        const res = await fetch(apiUrl, {
+            headers
+        });
+        
+        if (!res.ok) {
+            if (res.status === 404) {
+                throw new NotFoundError('Repositorio no encontrado');
+            }
+            throw new Error(`Error al obtener commits: ${res.status}`);
+        }
+        
+        const commits = await res.json();
+        
+        // Process commits
+        const processedCommits = commits.map(commit => ({
+            sha: commit.sha,
+            message: commit.commit.message,
+            author: commit.commit.author?.name || 'Unknown',
+            authorEmail: commit.commit.author?.email || '',
+            date: commit.commit.author?.date || commit.commit.committer?.date || '',
+            url: commit.html_url,
+            avatar: commit.author?.avatar_url || commit.committer?.avatar_url || null
         }));
-
-        return jsonResponse(mappedCommits);
-    } catch (e) {
-        return jsonResponse({ error: "Error al listar commits en el servidor" }, 500);
+        
+        return jsonResponse({
+            repo: repoName,
+            branch,
+            commits: processedCommits,
+            page,
+            perPage
+        });
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }

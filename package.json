@@ -1,15 +1,44 @@
 {
   "name": "gerardos-private",
-  "version": "1.1.0",
-  "description": "GerardOS Private Dashboard",
+  "version": "1.2.0",
+  "description": "GerardOS Private Dashboard - Versión privada y segura del explorador de proyectos GitHub",
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('.wrangler/tmp', { recursive: true, force: true })\"",
+    "clean:all": "rm -rf .wrangler node_modules public/bundle.js public/bundle.js.map",
     "prestart": "npm run clean",
     "start": "wrangler pages dev public --port 8789 --env-file .dev.vars",
-    "build:db": "node generate.js",
-    "deploy": "wrangler pages deploy public"
+    "build": "node scripts/build.js",
+    "build:css": "node scripts/build-css.js",
+    "build:js": "node scripts/build-js.js",
+    "build:all": "npm run build:js && npm run build:css",
+    "deploy": "wrangler pages deploy public",
+    "deploy:prod": "npm run build:all && wrangler pages deploy public",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "node scripts/lint-js.js",
+    "lint:css": "node scripts/lint-css.js",
+    "test": "node scripts/test.js",
+    "audit": "npm audit",
+    "prepare": "npm run build:all"
   },
   "devDependencies": {
+    "esbuild": "^0.23.0",
     "wrangler": "^4.112.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "github",
+    "portfolio",
+    "dashboard",
+    "cloudflare",
+    "pages",
+    "workers"
+  ],
+  "author": "GerardMaestre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gmdrago87/gerardos-private.git"
   }
 }

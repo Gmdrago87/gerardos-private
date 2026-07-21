@@ -1,33 +1,31 @@
+/**
+ * OAuth Callback Handler
+ * Exchanges GitHub authorization code for access token and creates session
+ */
+
 import { signJwt } from "../../_shared/jwt.js";
 import { isAllowedUser } from "../../_shared/github.js";
+import { getCookie, setCookie, clearCookie } from "../../_shared/cookies.js";
+import { ForbiddenError, ValidationError, handleError } from "../../_shared/errors.js";
+
+const STATE_COOKIE_NAME = "oauth_state";
+const SESSION_COOKIE_NAME = "session";
+const SESSION_DURATION = 60 * 30; // 30 minutes in seconds
 
 export async function onRequestGet(context) {
     const { request, env } = context;
     const url = new URL(request.url);
-    console.log(`[API] OAuth Callback recibido en: ${url.pathname}`);
     
-    // Función auxiliar para obtener cookies
-    function getCookie(request, name) {
-        const cookieHeader = request.headers.get("Cookie");
-        if (!cookieHeader) return null;
-        const cookies = cookieHeader.split(";");
-        for (let cookie of cookies) {
-            const trimmed = cookie.trim();
-            const eqIdx = trimmed.indexOf("=");
-            if (eqIdx !== -1) {
-                const key = trimmed.substring(0, eqIdx);
-                const val = trimmed.substring(eqIdx + 1);
-                if (key === name) return decodeURIComponent(val);
-            }
-        }
-        return null;
-    }
+    console.log(`[API] OAuth Callback recibido en: ${url.pathname}`);
 
+    // Get code and state from query params
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
-    const storedState = getCookie(request, "oauth_state");
-    console.log(`[API] Código extraído: ${code ? "SÍ (oculto)" : "NO"}`);
+    const storedState = getCookie(request, STATE_COOKIE_NAME);
+    
+    console.log(`[API] Código extraído: ${code ? "Sí (oculto)" : "NO"}`);
 
+    // Validate required parameters
     if (!code) {
         console.error("[API] Error: Falta el código de autorización.");
         return new Response("Falta el código de autorización.", { status: 400 });
@@ -38,10 +36,11 @@ export async function onRequestGet(context) {
         return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
     }
 
-    const clientId = env.GITHUB_CLIENT_ID || "Ov23liZt2GrRqM6MBcHa";
-    const clientSecret = env.GITHUB_CLIENT_SECRET || "05225febfd12ff3be4787a49b8cb69d1a1b85743";
-    const jwtSecret = env.JWT_SECRET || "super_secreto_para_probar_localmente";
-    const githubUsername = env.GITHUB_USERNAME || "GerardMaestre";
+    // Get configuration from environment (NO DEFAULT VALUES - must be configured)
+    const clientId = env.GITHUB_CLIENT_ID;
+    const clientSecret = env.GITHUB_CLIENT_SECRET;
+    const jwtSecret = env.JWT_SECRET;
+    const githubUsername = env.GITHUB_USERNAME;
 
     if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
         console.error("[API] Error: Faltan variables OAuth en env.");
@@ -49,7 +48,8 @@ export async function onRequestGet(context) {
     }
 
     try {
-        // 1. Intercambiar el 'code' por un 'access_token'
+        // 1. Exchange code for access token
+        console.log("[API] Intercambiando código por token de acceso...");
         const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
             method: "POST",
             headers: {
@@ -73,8 +73,8 @@ export async function onRequestGet(context) {
         const accessToken = tokenData.access_token;
         console.log("[API] Access token recibido correctamente.");
 
+        // 2. Verify user identity
         console.log("[API] Verificando identidad del usuario en GitHub...");
-        // 2. Verificar la identidad del usuario en GitHub
         const userRes = await fetch("https://api.github.com/user", {
             headers: {
                 "Authorization": `Bearer ${accessToken}`,
@@ -89,38 +89,45 @@ export async function onRequestGet(context) {
         }
         console.log(`[API] Usuario de GitHub detectado: ${userData.login}`);
 
-        // 3. Control de acceso estricto
-        // Solo los usuarios autorizados configurados en las variables de entorno pueden acceder
+        // 3. Access control - only allowed users can access
         if (!isAllowedUser(userData.login, env)) {
-            console.error(`[API] Acceso Denegado. Esperado: ${env.GITHUB_USERNAME || 'Gmdrago87,GerardMaestre'}, Recibido: ${userData.login}`);
+            console.error(`[API] Acceso Denegado. Esperado: ${env.GITHUB_USERNAME}, Recibido: ${userData.login}`);
             return new Response(`Acceso Denegado. Este panel es privado y no estás autorizado.`, { status: 403 });
         }
 
-        // 4. Generar la sesión local JWT inyectando el access_token de GitHub
+        // 4. Generate JWT session
         const payload = {
             sub: userData.login,
             github_token: accessToken,
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos de sesión
+            exp: Math.floor(Date.now() / 1000) + SESSION_DURATION
         };
         
-        const jwt = await signJwt(payload, jwtSecret);
+        const jwt = await signJwt(payload, jwtSecret, SESSION_DURATION);
         console.log("[API] Sesión generada correctamente. Redirigiendo al inicio.");
 
-        // 5. Establecer la cookie (con expiración de 30 minutos) y redirigir al inicio, además de limpiar oauth_state
+        // 5. Set cookies and redirect
         const isProduction = env.NODE_ENV === "production";
-        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 30}`;
-        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
-        
-        if (isProduction || request.url.startsWith("https://")) {
-            cookieString += "; Secure";
-            clearStateCookie += "; Secure";
-        }
-
         const responseHeaders = new Headers();
+        
+        // Set session cookie
+        setCookie(responseHeaders, SESSION_COOKIE_NAME, jwt, {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'Strict',
+            maxAge: SESSION_DURATION,
+            secure: isProduction || url.protocol === 'https:'
+        });
+        
+        // Clear state cookie
+        clearCookie(responseHeaders, STATE_COOKIE_NAME, {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'Lax',
+            secure: isProduction || url.protocol === 'https:'
+        });
+
         responseHeaders.set("Location", "/");
-        responseHeaders.append("Set-Cookie", cookieString);
-        responseHeaders.append("Set-Cookie", clearStateCookie);
 
         return new Response(null, {
             status: 302,
@@ -129,6 +136,7 @@ export async function onRequestGet(context) {
 
     } catch (e) {
         console.error(`[API] Excepción procesando el login con GitHub: ${e.message}`);
+        console.error(e.stack);
         return new Response("Error interno del servidor durante el login.", { status: 500 });
     }
 }

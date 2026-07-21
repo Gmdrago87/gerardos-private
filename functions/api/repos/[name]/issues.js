@@ -1,130 +1,128 @@
-import { getGitHubHeaders, getRepoOwner, requireAuth, validateRepoName } from '../../../_shared/github.js';
-import { jsonParseErrorResponse, jsonResponse, readJson } from '../../../_shared/http.js';
+/**
+ * Repository Issues Handler
+ * Fetches issues for a repository
+ */
 
-function validateLabels(labels) {
-    return labels === undefined || (Array.isArray(labels) && labels.length <= 20 && labels.every(label => typeof label === "string" && label.length > 0 && label.length <= 50));
-}
+import { jsonResponse } from "../../../_shared/http.js";
+import { getGitHubHeaders, getRepoOwner, validateRepoName } from "../../../_shared/github.js";
+import { requireAuth } from "../../../_shared/github.js";
+import { AuthError, ValidationError, NotFoundError, handleError } from "../../../_shared/errors.js";
 
 export async function onRequestGet(context) {
-    const { env, params } = context;
-    const repoName = params.name;
-
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
-    const headers = getGitHubHeaders(context);
-
     try {
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/issues?state=all&per_page=100`;
-        const res = await fetch(fetchUrl, { headers });
-        if (!res.ok) {
-            return jsonResponse({ error: "No se pudieron obtener los issues" }, res.status);
+        requireAuth(context);
+        
+        const { params, request } = context;
+        const repoName = params.name;
+        const url = new URL(request.url);
+        const state = url.searchParams.get('state') || 'all';
+        const perPage = parseInt(url.searchParams.get('per_page')) || 30;
+        const page = parseInt(url.searchParams.get('page')) || 1;
+        
+        if (!validateRepoName(repoName)) {
+            throw new ValidationError('Nombre de repositorio inválido');
         }
-
-        const data = await res.json();
-        return jsonResponse(data);
-    } catch (e) {
-        return jsonResponse({ error: "Error interno al obtener issues" }, 500);
+        
+        const owner = getRepoOwner(context);
+        const headers = getGitHubHeaders(context);
+        
+        // Build the API URL
+        const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/issues?state=${state}&per_page=${perPage}&page=${page}`;
+        
+        const res = await fetch(apiUrl, {
+            headers
+        });
+        
+        if (!res.ok) {
+            if (res.status === 404) {
+                throw new NotFoundError('Repositorio no encontrado');
+            }
+            throw new Error(`Error al obtener issues: ${res.status}`);
+        }
+        
+        const issues = await res.json();
+        
+        // Process issues
+        const processedIssues = issues.map(issue => ({
+            id: issue.id,
+            number: issue.number,
+            title: issue.title,
+            body: issue.body,
+            state: issue.state,
+            labels: issue.labels.map(l => l.name),
+            author: issue.user?.login || 'Unknown',
+            authorAvatar: issue.user?.avatar_url || null,
+            createdAt: issue.created_at,
+            updatedAt: issue.updated_at,
+            comments: issue.comments,
+            htmlUrl: issue.html_url,
+            isPullRequest: !!issue.pull_request
+        }));
+        
+        return jsonResponse({
+            repo: repoName,
+            issues: processedIssues,
+            page,
+            perPage
+        });
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }
 
 export async function onRequestPost(context) {
-    const { env, params, request } = context;
-    const repoName = params.name;
-
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
     try {
-        const body = await readJson(request);
-        const { title, body: issueBody, labels } = body;
-
-        if (typeof title !== "string" || title.trim().length === 0 || title.length > 256) {
-            return jsonResponse({ error: "El título es obligatorio y debe tener 256 caracteres o menos" }, 400);
+        requireAuth(context);
+        
+        const { params, request } = context;
+        const repoName = params.name;
+        
+        if (!validateRepoName(repoName)) {
+            throw new ValidationError('Nombre de repositorio inválido');
         }
-        if (issueBody !== undefined && (typeof issueBody !== "string" || issueBody.length > 65536)) {
-            return jsonResponse({ error: "El cuerpo del issue es inválido" }, 400);
+        
+        const owner = getRepoOwner(context);
+        const headers = getGitHubHeaders(context);
+        headers['Content-Type'] = 'application/json';
+        
+        const { title, body, labels = [], assignees = [] } = await request.json();
+        
+        if (!title) {
+            throw new ValidationError('El título es obligatorio');
         }
-        if (!validateLabels(labels)) {
-            return jsonResponse({ error: "Las etiquetas son inválidas" }, 400);
-        }
-
-        const headers = getGitHubHeaders(context, true);
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/issues`;
-
-        const res = await fetch(fetchUrl, {
-            method: "POST",
+        
+        const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/issues`;
+        
+        const res = await fetch(apiUrl, {
+            method: 'POST',
             headers,
-            body: JSON.stringify({ title: title.trim(), body: issueBody || "", labels: labels || [] })
+            body: JSON.stringify({
+                title,
+                body,
+                labels,
+                assignees
+            })
         });
-
-        const data = await res.json();
+        
         if (!res.ok) {
-            return jsonResponse({ error: data.message || "No se pudo crear el issue" }, res.status);
+            const error = await res.json();
+            throw new Error(error.message || 'Error al crear issue');
         }
-
-        return jsonResponse(data, 201);
-    } catch (e) {
-        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
-        return jsonResponse({ error: "Error interno al crear issue" }, 500);
-    }
-}
-
-export async function onRequestPatch(context) {
-    const { env, params, request } = context;
-    const repoName = params.name;
-
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
-    try {
-        const body = await readJson(request);
-        const { issue_number, state, labels } = body;
-        const num = Number(issue_number);
-
-        if (!Number.isInteger(num) || num < 1) {
-            return jsonResponse({ error: "El issue_number debe ser un entero positivo" }, 400);
-        }
-        if (state !== undefined && !["open", "closed"].includes(state)) {
-            return jsonResponse({ error: "Estado de issue inválido" }, 400);
-        }
-        if (!validateLabels(labels)) {
-            return jsonResponse({ error: "Las etiquetas son inválidas" }, 400);
-        }
-
-        const headers = getGitHubHeaders(context, true);
-        const fetchUrl = `https://api.github.com/repos/${encodeURIComponent(getRepoOwner(context))}/${encodeURIComponent(repoName)}/issues/${num}`;
-
-        const updateData = {};
-        if (state) updateData.state = state;
-        if (labels) updateData.labels = labels;
-
-        const res = await fetch(fetchUrl, {
-            method: "PATCH",
-            headers,
-            body: JSON.stringify(updateData)
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-            return jsonResponse({ error: data.message || "No se pudo actualizar el issue" }, res.status);
-        }
-
-        return jsonResponse(data);
-    } catch (e) {
-        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
-        return jsonResponse({ error: "Error interno al actualizar issue" }, 500);
+        
+        const newIssue = await res.json();
+        
+        return jsonResponse({
+            success: true,
+            issue: {
+                id: newIssue.id,
+                number: newIssue.number,
+                title: newIssue.title,
+                htmlUrl: newIssue.html_url
+            }
+        }, 201);
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }

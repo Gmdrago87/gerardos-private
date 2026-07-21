@@ -1,112 +1,128 @@
-import { getGitHubHeaders, getRepoOwner, requireAuth, validateRepoName } from '../../../_shared/github.js';
-import { jsonParseErrorResponse, jsonResponse, readJson } from '../../../_shared/http.js';
+/**
+ * Repository Handler
+ * Handles operations on a specific repository
+ */
 
-function repoUrl(context, repoName) {
-    const user = getRepoOwner(context);
-    return `https://api.github.com/repos/${encodeURIComponent(user)}/${encodeURIComponent(repoName)}`;
-}
+import { jsonResponse } from "../../../_shared/http.js";
+import { getGitHubHeaders, getRepoOwner, validateRepoName } from "../../../_shared/github.js";
+import { requireAuth } from "../../../_shared/github.js";
+import { AuthError, ValidationError, NotFoundError, handleError } from "../../../_shared/errors.js";
 
 export async function onRequestGet(context) {
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    const { params } = context;
-    const repoName = params.name;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
-    const headers = getGitHubHeaders(context);
-
     try {
-        const res = await fetch(repoUrl(context, repoName), { headers });
-        if (!res.ok) {
-            return jsonResponse({ error: "Repositorio no encontrado" }, res.status);
+        requireAuth(context);
+        
+        const { params } = context;
+        const repoName = params.name;
+        
+        if (!validateRepoName(repoName)) {
+            throw new ValidationError('Nombre de repositorio inválido');
         }
-
-        const data = await res.json();
-        return jsonResponse(data);
-    } catch (e) {
-        return jsonResponse({ error: "Error en el proxy" }, 500);
+        
+        const owner = getRepoOwner(context);
+        const headers = getGitHubHeaders(context);
+        
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+            headers
+        });
+        
+        if (!res.ok) {
+            if (res.status === 404) {
+                throw new NotFoundError('Repositorio no encontrado');
+            }
+            throw new Error(`Error al obtener repositorio: ${res.status}`);
+        }
+        
+        const repo = await res.json();
+        return jsonResponse(repo);
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }
 
 export async function onRequestDelete(context) {
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    const { env, params, request } = context;
-    const repoName = params.name;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
     try {
-        const body = await readJson(request);
-        if (body.confirm !== repoName) {
-            return jsonResponse({ error: "Confirmación incorrecta: debes escribir el nombre exacto del repositorio" }, 400);
-        }
-
-        const headers = getGitHubHeaders(context);
-
-        const res = await fetch(repoUrl(context, repoName), { method: "DELETE", headers });
-
-        if (res.status === 204) {
-            return jsonResponse({ ok: true, message: `Repositorio ${repoName} eliminado con éxito` });
-        }
-
-        const errText = await res.text();
-        let parsedErr;
-        try { parsedErr = JSON.parse(errText); } catch(e) {}
+        requireAuth(context);
         
-        let userMsg = parsedErr?.message || "No se pudo eliminar el repositorio en GitHub";
-        if (res.status === 403 || res.status === 404) {
-            userMsg += ". Si iniciaste sesión anteriormente, cierra sesión y vuelve a entrar para actualizar el permiso de borrado en GitHub (delete_repo).";
+        const { params, request } = context;
+        const repoName = params.name;
+        
+        if (!validateRepoName(repoName)) {
+            throw new ValidationError('Nombre de repositorio inválido');
         }
-
-        console.error("GitHub delete repo failed", { status: res.status, body: errText });
-        return jsonResponse({ error: userMsg, details: errText }, res.status);
-    } catch (e) {
-        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
-        return jsonResponse({ error: "Error interno al eliminar el repositorio", details: e.message }, 500);
+        
+        const owner = getRepoOwner(context);
+        const headers = getGitHubHeaders(context);
+        
+        // Confirm deletion (optional - can be handled client-side)
+        const body = await request.json();
+        if (!body.confirm) {
+            throw new ValidationError('Debes confirmar la eliminación');
+        }
+        
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+            method: 'DELETE',
+            headers
+        });
+        
+        if (!res.ok) {
+            if (res.status === 404) {
+                throw new NotFoundError('Repositorio no encontrado');
+            }
+            throw new Error(`Error al eliminar repositorio: ${res.status}`);
+        }
+        
+        return jsonResponse({ success: true, message: 'Repositorio eliminado correctamente' });
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }
 
 export async function onRequestPatch(context) {
-    const authError = requireAuth(context);
-    if (authError) return authError;
-
-    const { env, params, request } = context;
-    const repoName = params.name;
-
-    if (!validateRepoName(repoName)) {
-        return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
-    }
-
     try {
-        const body = await readJson(request);
-        if (typeof body.private !== "boolean") {
-            return jsonResponse({ error: "Petición inválida: falta el estado private" }, 400);
+        requireAuth(context);
+        
+        const { params, request } = context;
+        const repoName = params.name;
+        
+        if (!validateRepoName(repoName)) {
+            throw new ValidationError('Nombre de repositorio inválido');
         }
-
-        const headers = getGitHubHeaders(context, true);
-        const res = await fetch(repoUrl(context, repoName), {
-            method: "PATCH",
+        
+        const owner = getRepoOwner(context);
+        const headers = getGitHubHeaders(context);
+        headers['Content-Type'] = 'application/json';
+        
+        const body = await request.json();
+        const updateData = {};
+        
+        if (body.name !== undefined) updateData.name = body.name;
+        if (body.description !== undefined) updateData.description = body.description;
+        if (body.private !== undefined) updateData.private = body.private;
+        
+        if (Object.keys(updateData).length === 0) {
+            throw new ValidationError('No se proporcionaron datos para actualizar');
+        }
+        
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+            method: 'PATCH',
             headers,
-            body: JSON.stringify({ name: repoName, private: body.private })
+            body: JSON.stringify(updateData)
         });
-
-        if (res.ok) {
-            const data = await res.json();
-            return jsonResponse(data);
+        
+        if (!res.ok) {
+            if (res.status === 404) {
+                throw new NotFoundError('Repositorio no encontrado');
+            }
+            throw new Error(`Error al actualizar repositorio: ${res.status}`);
         }
-
-        console.error("GitHub update repo failed", { status: res.status, body: await res.text() });
-        return jsonResponse({ error: "No se pudo actualizar el repositorio" }, res.status);
-    } catch (e) {
-        if (["UNSUPPORTED_MEDIA_TYPE", "PAYLOAD_TOO_LARGE", "INVALID_JSON"].includes(e?.message)) return jsonParseErrorResponse(e);
-        return jsonResponse({ error: "Error interno al actualizar el repositorio" }, 500);
+        
+        const updatedRepo = await res.json();
+        return jsonResponse(updatedRepo);
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }

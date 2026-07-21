@@ -1,61 +1,60 @@
+/**
+ * AI Handler
+ * Placeholder for AI-related endpoints
+ */
+
+import { jsonResponse } from "../_shared/http.js";
+import { requireAuth } from "../_shared/github.js";
+import { AuthError, ValidationError, handleError } from "../_shared/errors.js";
+
 export async function onRequestPost(context) {
-    const { env, request } = context;
-    
-    // Check if AI binding exists
-    if (!env.AI) {
-        return new Response(JSON.stringify({ 
-            error: "La Inteligencia Artificial no está activada. Debes ir al panel de Cloudflare > Pages > Ajustes > Functions > Enlaces de AI, y añadir una variable llamada 'AI'." 
-        }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
-    }
-
     try {
-        const body = await request.json();
-        const { code, action } = body;
+        requireAuth(context);
         
-        if (!code || !action) {
-            return new Response(JSON.stringify({ error: "Faltan parámetros (code, action)" }), {
-                status: 400,
-                headers: { "Content-Type": "application/json" }
-            });
+        const { request } = context;
+        const { prompt, action, repo, path, branch } = await request.json();
+        
+        if (!prompt) {
+            throw new ValidationError('El prompt es obligatorio');
         }
         
-        let systemPrompt = "Eres un asistente experto en programación (GerardOS AI). Tu objetivo es ayudar al usuario de forma muy concisa y clara. Responde en español.";
-        let userPrompt = "";
+        // This is a placeholder - implement actual AI integration
+        // For now, return a mock response
+        const mockResponse = {
+            action,
+            repo,
+            path,
+            branch,
+            response: `He recibido tu solicitud: "${prompt}". Esta es una respuesta de demostración.`,
+            suggestions: [
+                "Revisar la documentación del proyecto",
+                "Analizar el código fuente",
+                "Generar un resumen de cambios"
+            ]
+        };
         
-        if (action === "explain") {
-            userPrompt = `Explícame de forma breve y clara qué hace este código:\n\n\`\`\`\n${code}\n\`\`\``;
-        } else if (action === "refactor") {
-            userPrompt = `Refactoriza este código para que sea más limpio y eficiente. Devuelve solo el código mejorado y una pequeñísima explicación:\n\n\`\`\`\n${code}\n\`\`\``;
-        } else if (action === "find_bugs") {
-            userPrompt = `Encuentra posibles bugs o errores de seguridad en este código:\n\n\`\`\`\n${code}\n\`\`\``;
-        } else if (action === "comment") {
-            userPrompt = `Añade comentarios profesionales (JSDoc o similar) a este código para documentarlo bien:\n\n\`\`\`\n${code}\n\`\`\``;
-        } else {
-            userPrompt = action + `\n\n\`\`\`\n${code}\n\`\`\``;
-        }
+        return jsonResponse(mockResponse);
+        
+    } catch (error) {
+        return handleError(error, context);
+    }
+}
 
-        const messages = [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt }
-        ];
-
-        // Usamos Llama 3 8B Instruct (es rápido y excelente para código)
-        const response = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-            messages
+export async function onRequestGet(context) {
+    try {
+        requireAuth(context);
+        
+        return jsonResponse({
+            available: true,
+            features: [
+                "code_analysis",
+                "documentation",
+                "summarization",
+                "suggestions"
+            ]
         });
-
-        return new Response(JSON.stringify({ result: response.response }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-        });
-
-    } catch (e) {
-        return new Response(JSON.stringify({ error: "Error en la IA: " + e.message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" }
-        });
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }

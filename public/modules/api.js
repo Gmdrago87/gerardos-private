@@ -1,31 +1,52 @@
-import { USERNAME, CACHE_KEY_USER, CACHE_KEY_REPOS, CACHE_KEY_TIME, CACHE_DURATION } from './utils.js';
+/**
+ * API Client for GerardOS Private Dashboard
+ * Handles all API requests to the backend
+ */
 
+import { USERNAME, CACHE_KEY_USER, CACHE_KEY_REPOS, CACHE_KEY_TIME, CACHE_DURATION, ERROR_MESSAGES } from './utils.js';
+
+/**
+ * Get cached data from localStorage
+ * @returns {Object|null} Cached data or null
+ */
 export function getCachedData() {
     try {
         const timestamp = localStorage.getItem(CACHE_KEY_TIME);
         const user = localStorage.getItem(CACHE_KEY_USER);
         const repos = localStorage.getItem(CACHE_KEY_REPOS);
+        
         if (!timestamp || !user || !repos) return null;
+        
         const now = Date.now();
         if (now - parseInt(timestamp) < CACHE_DURATION) {
             return { user: JSON.parse(user), repos: JSON.parse(repos) };
         }
     } catch (e) {
+        console.warn('Error reading cache:', e);
         clearCache();
     }
     return null;
 }
 
+/**
+ * Save data to cache
+ * @param {Object} user - User data
+ * @param {Array} repos - Repositories data
+ */
 export function saveToCache(user, repos) {
     try {
         localStorage.setItem(CACHE_KEY_USER, JSON.stringify(user));
         localStorage.setItem(CACHE_KEY_REPOS, JSON.stringify(repos));
         localStorage.setItem(CACHE_KEY_TIME, Date.now().toString());
     } catch (e) {
-        console.warn('Storage lleno', e);
+        console.warn('Storage full or quota exceeded:', e);
     }
 }
 
+/**
+ * Get expired cache data
+ * @returns {Object|null} Expired cache data or null
+ */
 export function getExpiredCache() {
     try {
         const user = localStorage.getItem(CACHE_KEY_USER);
@@ -39,179 +60,340 @@ export function getExpiredCache() {
     return null;
 }
 
+/**
+ * Clear cache
+ */
 export function clearCache() {
     try {
         localStorage.removeItem(CACHE_KEY_USER);
         localStorage.removeItem(CACHE_KEY_REPOS);
         localStorage.removeItem(CACHE_KEY_TIME);
     } catch (e) {
-        console.warn('Error al limpiar caché:', e);
+        console.warn('Error clearing cache:', e);
     }
 }
 
-// Llama a nuestro backend en Cloudflare Pages
-export async function fetchApiData() {
-    const res = await fetch("/api/repos", { credentials: "include" });
-    if (res.status === 401) {
-        throw new Error("UNAUTHORIZED");
+/**
+ * Clear all localStorage
+ */
+export function clearAllStorage() {
+    try {
+        localStorage.clear();
+    } catch (e) {
+        console.warn('Error clearing storage:', e);
     }
-    if (!res.ok) {
-        throw new Error("Error API");
-    }
-    return await res.json(); // Devuelve { user, repos }
 }
 
-export async function fetchFallbackData() {
-    // Si la API falla, intentamos usar una base de datos local estática
-    const res = await fetch('./database.json');
-    if (!res.ok) throw new Error('No local database');
-    const data = await res.json();
-    return { user: data.user, repos: data.repos };
-}
-
+/**
+ * Encode repository name for API requests
+ * @param {string} repoName - Repository name
+ * @returns {string} Encoded repository name
+ */
 function repoPath(repoName) {
     return encodeURIComponent(repoName);
 }
 
+/**
+ * Fetch data from API with error handling
+ * @param {string} url - API endpoint
+ * @param {Object} options - Fetch options
+ * @returns {Promise<Object>} Response data
+ */
+async function fetchWithErrorHandling(url, options = {}) {
+    try {
+        const res = await fetch(url, { credentials: 'include', ...options });
+        
+        if (res.status === 401) {
+            throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
+        }
+        
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || ERROR_MESSAGES.API);
+        }
+        
+        return await res.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch API data (user and repos)
+ * @returns {Promise<Object>} User and repositories data
+ */
+export async function fetchApiData() {
+    const res = await fetchWithErrorHandling('/api/repos');
+    return res; // Returns { user, repos }
+}
+
+/**
+ * Fetch fallback data from local database
+ * @returns {Promise<Object>} User and repositories data
+ */
+export async function fetchFallbackData() {
+    try {
+        const res = await fetch('./database.json');
+        if (!res.ok) throw new Error('No local database');
+        const data = await res.json();
+        return { user: data.user, repos: data.repos };
+    } catch (e) {
+        throw new Error(ERROR_MESSAGES.NETWORK);
+    }
+}
+
+/**
+ * Fetch repository tree
+ * @param {string} repoName - Repository name
+ * @param {string} branch - Branch name
+ * @returns {Promise<Object>} Tree data
+ */
 export async function fetchRepoTree(repoName, branch) {
     const url = `/api/repos/${repoPath(repoName)}/tree?branch=${encodeURIComponent(branch)}`;
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error('Error tree API');
-    return res.json();
+    const res = await fetchWithErrorHandling(url);
+    return res;
 }
 
-export async function fetchFileContent(repoName, branch, path) {
-    const url = `/api/repos/${repoPath(repoName)}/file?path=${encodeURIComponent(path)}&branch=${encodeURIComponent(branch)}`;
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error('Error file API');
-    return res.text(); // El backend ya lo decodifica y devuelve como texto
+/**
+ * Fetch file content
+ * @param {string} repoName - Repository name
+ * @param {string} branch - Branch name
+ * @param {string} filePath - File path
+ * @returns {Promise<string>} File content
+ */
+export async function fetchFileContent(repoName, branch, filePath) {
+    const url = `/api/repos/${repoPath(repoName)}/file?path=${encodeURIComponent(filePath)}&branch=${encodeURIComponent(branch)}`;
+    const res = await fetchWithErrorHandling(url);
+    return res.content || res.text || '';
 }
 
+/**
+ * Create a new repository
+ * @param {string} name - Repository name
+ * @param {string} description - Repository description
+ * @param {boolean} isPrivate - Whether repository is private
+ * @returns {Promise<Object>} New repository data
+ */
 export async function createRepo(name, description, isPrivate) {
-    const res = await fetch("/api/repos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, isPrivate }),
-        credentials: "include"
+    const res = await fetchWithErrorHandling('/api/repos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description, isPrivate })
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo crear el repositorio");
-    }
-    return res.json();
+    return res;
 }
 
-export async function deleteRepo(name, confirm) {
-    const res = await fetch(`/api/repos/${repoPath(name)}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirm }),
-        credentials: "include"
+/**
+ * Delete a repository
+ * @param {string} name - Repository name
+ * @returns {Promise<Object>} Deletion result
+ */
+export async function deleteRepo(name) {
+    const res = await fetchWithErrorHandling(`/api/repos/${repoPath(name)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true })
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo eliminar el repositorio");
-    }
-    return res.json();
+    return res;
 }
 
+/**
+ * Update repository visibility
+ * @param {string} name - Repository name
+ * @param {boolean} isPrivate - Whether to make private
+ * @returns {Promise<Object>} Update result
+ */
 export async function updateRepoVisibility(name, isPrivate) {
-    const res = await fetch(`/api/repos/${repoPath(name)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ private: isPrivate }),
-        credentials: "include"
+    const res = await fetchWithErrorHandling(`/api/repos/${repoPath(name)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ private: isPrivate })
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo actualizar la visibilidad del repositorio");
-    }
-    return res.json();
+    return res;
 }
 
-
-export async function fetchCommits(repoName, branch, page = 1) {
-    const url = `/api/repos/${repoPath(repoName)}/commits?branch=${encodeURIComponent(branch)}&page=${page}`;
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error('Error commits API');
-    return res.json();
+/**
+ * Fetch commits for a repository
+ * @param {string} repoName - Repository name
+ * @param {string} branch - Branch name
+ * @param {number} page - Page number
+ * @param {number} perPage - Items per page
+ * @returns {Promise<Object>} Commits data
+ */
+export async function fetchCommits(repoName, branch, page = 1, perPage = 30) {
+    const url = `/api/repos/${repoPath(repoName)}/commits?branch=${encodeURIComponent(branch)}&page=${page}&per_page=${perPage}`;
+    const res = await fetchWithErrorHandling(url);
+    return res;
 }
 
+/**
+ * Fetch branches for a repository
+ * @param {string} repoName - Repository name
+ * @returns {Promise<Object>} Branches data
+ */
 export async function fetchBranches(repoName) {
     const url = `/api/repos/${repoPath(repoName)}/branches`;
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error('Error branches API');
-    return res.json();
+    const res = await fetchWithErrorHandling(url);
+    return res;
 }
 
-export async function saveFileContent(repoName, branch, path, content, message, sha) {
-    const res = await fetch(`/api/repos/${repoPath(repoName)}/file`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, branch, content, message, sha }),
-        credentials: "include"
+/**
+ * Save file content
+ * @param {string} repoName - Repository name
+ * @param {string} branch - Branch name
+ * @param {string} filePath - File path
+ * @param {string} content - File content
+ * @param {string} message - Commit message
+ * @returns {Promise<Object>} Save result
+ */
+export async function saveFileContent(repoName, branch, filePath, content, message) {
+    const url = `/api/repos/${repoPath(repoName)}/actions?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(filePath)}`;
+    const res = await fetchWithErrorHandling(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, message })
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo guardar el archivo");
-    }
-    return res.json();
+    return res;
 }
 
-export async function deleteFile(repoName, branch, path, message, sha) {
-    const res = await fetch(`/api/repos/${repoPath(repoName)}/file`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, branch, message, sha }),
-        credentials: "include"
+/**
+ * Delete a file
+ * @param {string} repoName - Repository name
+ * @param {string} branch - Branch name
+ * @param {string} filePath - File path
+ * @param {string} message - Commit message
+ * @returns {Promise<Object>} Deletion result
+ */
+export async function deleteFile(repoName, branch, filePath, message) {
+    const url = `/api/repos/${repoPath(repoName)}/actions?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(filePath)}`;
+    const res = await fetchWithErrorHandling(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, confirm: true })
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo eliminar el archivo");
-    }
-    return res.json();
+    return res;
 }
 
-// Kanban (Issues) Endpoints
-export async function fetchIssues(repoName) {
+/**
+ * Fetch issues for a repository
+ * @param {string} repoName - Repository name
+ * @param {string} state - Issue state (open, closed, all)
+ * @param {number} page - Page number
+ * @param {number} perPage - Items per page
+ * @returns {Promise<Object>} Issues data
+ */
+export async function fetchIssues(repoName, state = 'all', page = 1, perPage = 30) {
+    const url = `/api/repos/${repoPath(repoName)}/issues?state=${state}&page=${page}&per_page=${perPage}`;
+    const res = await fetchWithErrorHandling(url);
+    return res;
+}
+
+/**
+ * Create a new issue
+ * @param {string} repoName - Repository name
+ * @param {string} title - Issue title
+ * @param {string} body - Issue body
+ * @param {Array} labels - Issue labels
+ * @param {Array} assignees - Issue assignees
+ * @returns {Promise<Object>} New issue data
+ */
+export async function createIssue(repoName, title, body, labels = [], assignees = []) {
     const url = `/api/repos/${repoPath(repoName)}/issues`;
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error('Error al obtener issues');
-    return res.json();
-}
-
-export async function createIssue(repoName, title, body, labels) {
-    const res = await fetch(`/api/repos/${repoPath(repoName)}/issues`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body, labels }),
-        credentials: "include"
+    const res = await fetchWithErrorHandling(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, labels, assignees })
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo crear la tarea");
-    }
-    return res.json();
+    return res;
 }
 
-export async function updateIssue(repoName, issueNumber, state, labels) {
-    const res = await fetch(`/api/repos/${repoPath(repoName)}/issues`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ issue_number: issueNumber, state, labels }),
-        credentials: "include"
+/**
+ * Update an issue
+ * @param {string} repoName - Repository name
+ * @param {number} issueNumber - Issue number
+ * @param {Object} updates - Issue updates
+ * @returns {Promise<Object>} Update result
+ */
+export async function updateIssue(repoName, issueNumber, updates) {
+    const url = `/api/repos/${repoPath(repoName)}/issues/${issueNumber}`;
+    const res = await fetchWithErrorHandling(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
     });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "No se pudo actualizar la tarea");
-    }
-    return res.json();
+    return res;
 }
 
-// Actions (Workflows) Endpoint
+/**
+ * Fetch actions/workflow runs for a repository
+ * @param {string} repoName - Repository name
+ * @returns {Promise<Object>} Actions data
+ */
 export async function fetchActions(repoName) {
     const url = `/api/repos/${repoPath(repoName)}/actions`;
-    const res = await fetch(url, { credentials: "include" });
-    if (!res.ok) throw new Error('Error al obtener actions');
-    return res.json();
+    const res = await fetchWithErrorHandling(url);
+    return res;
+}
+
+/**
+ * Check session status
+ * @returns {Promise<Object>} Session status
+ */
+export async function checkSession() {
+    try {
+        const res = await fetch('/api/session', { credentials: 'include' });
+        if (!res.ok) {
+            return { authenticated: false };
+        }
+        return await res.json();
+    } catch (e) {
+        return { authenticated: false, error: e.message };
+    }
+}
+
+/**
+ * Login via OAuth
+ */
+export function login() {
+    window.location.href = '/api/oauth/login';
+}
+
+/**
+ * Logout
+ */
+export async function logout() {
+    try {
+        await fetch('/api/logout', { credentials: 'include' });
+    } finally {
+        window.location.href = '/';
+    }
+}
+
+/**
+ * Get version information
+ * @returns {Promise<Object>} Version info
+ */
+export async function getVersion() {
+    try {
+        const res = await fetch('/api/version');
+        if (!res.ok) return {};
+        return await res.json();
+    } catch (e) {
+        return {};
+    }
+}
+
+/**
+ * AI API call
+ * @param {Object} params - AI parameters
+ * @returns {Promise<Object>} AI response
+ */
+export async function callAI(params) {
+    const res = await fetchWithErrorHandling('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+    });
+    return res;
 }

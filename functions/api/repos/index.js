@@ -1,66 +1,126 @@
-import { getGitHubHeaders, requireAuth, validateRepoName } from '../../_shared/github.js';
-import { jsonParseErrorResponse, jsonResponse, readJson } from '../../_shared/http.js';
+/**
+ * Repositories Handler
+ * Fetches user repositories from GitHub API
+ */
+
+import { jsonResponse } from "../../_shared/http.js";
+import { getGitHubHeaders, getRepoOwner } from "../../_shared/github.js";
+import { requireAuth } from "../../_shared/github.js";
+import { AuthError, handleError } from "../../_shared/errors.js";
+
+const CACHE_DURATION = 60 * 5; // 5 minutes cache in memory
+
+// In-memory cache (use KV in production)
+const repoCache = new Map();
 
 export async function onRequestGet(context) {
-    const authError = requireAuth(context);
-    if (authError) return authError;
-    
-    const headers = getGitHubHeaders(context);
-    
     try {
-        const [userRes, reposRes] = await Promise.all([
-            fetch("https://api.github.com/user", { headers }),
-            fetch("https://api.github.com/user/repos?per_page=100&sort=updated&type=all", { headers })
-        ]);
+        // Require authentication
+        requireAuth(context);
         
-        if (!userRes.ok || !reposRes.ok) {
-            return jsonResponse({ error: "Error al comunicarse con GitHub" }, 502);
+        const { env, data } = context;
+        const owner = getRepoOwner(context);
+        const cacheKey = `repos_${owner}`;
+        
+        // Check cache
+        const cached = repoCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION * 1000)) {
+            return jsonResponse({
+                user: cached.user,
+                repos: cached.repos,
+                cached: true
+            });
         }
         
-        const [user, repos] = await Promise.all([userRes.json(), reposRes.json()]);
-        return jsonResponse({ user, repos });
-    } catch (err) {
-        return jsonResponse({ error: "Error interno en el proxy del backend" }, 500);
+        // Fetch from GitHub API
+        const headers = getGitHubHeaders(context);
+        
+        // Fetch user info
+        const userRes = await fetch(`https://api.github.com/users/${owner}`, {
+            headers
+        });
+        
+        if (!userRes.ok) {
+            throw new Error(`Failed to fetch user: ${userRes.status}`);
+        }
+        
+        const user = await userRes.json();
+        
+        // Fetch repositories (including private ones)
+        const reposRes = await fetch(`https://api.github.com/user/repos?visibility=all&affiliation=owner&sort=updated&direction=desc&per_page=100`, {
+            headers
+        });
+        
+        if (!reposRes.ok) {
+            throw new Error(`Failed to fetch repos: ${reposRes.status}`);
+        }
+        
+        let repos = await reposRes.json();
+        
+        // Filter out forks if desired (optional)
+        // repos = repos.filter(r => !r.fork);
+        
+        // Sort by updated_at descending
+        repos.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        
+        // Cache the result
+        repoCache.set(cacheKey, {
+            user,
+            repos,
+            timestamp: Date.now()
+        });
+        
+        return jsonResponse({
+            user,
+            repos,
+            cached: false
+        });
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }
 
 export async function onRequestPost(context) {
-    const authError = requireAuth(context);
-    if (authError) return authError;
-    
     try {
-        const body = await readJson(context.request);
-        const { name, description, isPrivate } = body;
+        requireAuth(context);
         
-        if (!validateRepoName(name)) {
-            return jsonResponse({ error: "Nombre de repositorio inválido" }, 400);
+        const { request, env } = context;
+        const { name, description = '', isPrivate = false } = await request.json();
+        
+        if (!name) {
+            throw new ValidationError('El nombre del repositorio es obligatorio');
         }
         
-        const headers = getGitHubHeaders(context, true);
-        const gitHubBody = JSON.stringify({
+        const headers = getGitHubHeaders(context);
+        headers['Content-Type'] = 'application/json';
+        
+        const body = JSON.stringify({
             name,
-            description: description || "",
-            private: Boolean(isPrivate),
-            auto_init: true
+            description,
+            private: isPrivate
         });
         
-        const res = await fetch("https://api.github.com/user/repos", {
-            method: "POST",
+        const res = await fetch('https://api.github.com/user/repos', {
+            method: 'POST',
             headers,
-            body: gitHubBody
+            body
         });
         
-        const data = await res.json();
         if (!res.ok) {
-            return jsonResponse({ error: data?.message || "No se pudo crear el repositorio en GitHub" }, res.status);
+            const error = await res.json();
+            throw new Error(error.message || 'Error al crear repositorio');
         }
         
-        return jsonResponse(data, 201);
-    } catch (e) {
-        if (e?.message?.startsWith("UNSUPPORTED_MEDIA") || e?.message?.startsWith("PAYLOAD_") || e?.message?.startsWith("INVALID_")) {
-            return jsonParseErrorResponse(e);
-        }
-        return jsonResponse({ error: "Formato de petición inválido" }, 400);
+        const newRepo = await res.json();
+        
+        // Clear cache
+        const owner = getRepoOwner(context);
+        repoCache.delete(`repos_${owner}`);
+        
+        return jsonResponse(newRepo, 201);
+        
+    } catch (error) {
+        return handleError(error, context);
     }
 }
-

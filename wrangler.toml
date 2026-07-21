@@ -1,11 +1,16 @@
 name = "gerardos-private"
 pages_build_output_dir = "./public"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat_v4"]
 
-[vars]
-GITHUB_USERNAME = "Gmdrago87,GerardMaestre"
-GITHUB_CLIENT_ID = "Ov23liZt2GrRqM6MBcHa"
-GITHUB_CLIENT_SECRET = "05225febfd12ff3be4787a49b8cb69d1a1b85743"
-JWT_SECRET = "super_secreto_para_probar_localmente"
-NODE_ENV = "development"
+# KV Namespace para cache (descomentar cuando se configure en Cloudflare)
+# [[kv_namespaces]]
+# binding = "CACHE_KV"
+# id = "tu-id-de-kv"
+
+# Variables de entorno (DEBEN configurarse en Cloudflare Pages, no en este archivo)
+# GITHUB_CLIENT_ID = "tu_client_id"
+# GITHUB_CLIENT_SECRET = "tu_client_secret"
+# JWT_SECRET = "tu_jwt_secret_seguro"
+# GITHUB_USERNAME = "tu_usuario_github"
+# NODE_ENV = "production"
