@@ -1,7 +1,7 @@
 import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
-import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches, saveFileContent, deleteFile, fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
-import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, renderPortfolioIntelligence, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent, showCustomAlert, showCustomConfirm, showCustomPrompt } from './modules/ui.js';
+import { getCachedData, getCachedDataAsync, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches, saveFileContent, deleteFile, fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
+import { renderProfile, calculateStats, setupFilters, showDataSourceIndicator, showToast, renderRepos, prepareRepoViewer, renderRepoTree, showFileLoading, renderFileContent, showViewerError, renderReadme, renderPortfolioIntelligence, closeModal, copyCloneCommand, hideLoading, showError, updateLoadingStatus, getCurrentEditorContent, showCustomAlert, showCustomConfirm, showCustomPrompt, trapFocusModal, untrapFocusModal } from './modules/ui.js';
 import { checkSession, login, logout } from './modules/auth.js';
 import { initShortcuts } from './modules/shortcuts.js';
 import { initAI } from './modules/ai_ui.js';
@@ -46,6 +46,46 @@ async function loadVersionInfo() {
     }
 }
 
+// Interceptor de navegación para animaciones fluidas entre páginas (View Transitions API)
+document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.origin === location.origin && !link.hash && link.getAttribute('target') !== '_blank') {
+        e.preventDefault();
+        
+        if (!document.startViewTransition) {
+            window.location.href = link.href;
+            return;
+        }
+
+        document.startViewTransition(async () => {
+            const response = await fetch(link.href);
+            const text = await response.text();
+            
+            const parser = new DOMParser();
+            const newDocument = parser.parseFromString(text, 'text/html');
+            document.body.innerHTML = newDocument.body.innerHTML;
+            window.history.pushState({}, '', link.href);
+            
+            if (window.lucide) window.lucide.createIcons();
+            initStaticListeners();
+            initScrollBtn();
+            initScrollAnimations();
+            
+            const s = getState();
+            if (s.user && s.allRepos && s.allRepos.length > 0) {
+                processData(s.user, s.allRepos, 'cache');
+                hideLoading();
+            } else {
+                initApp();
+            }
+        });
+    }
+});
+
+window.addEventListener('popstate', () => {
+    location.reload();
+});
+
 async function initApp() {
     initShortcuts();
     initAI();
@@ -60,9 +100,9 @@ async function initApp() {
         }
 
         hideLoginScreen();
-        updateLoadingStatus('Conectando con GitHub...');
+        updateLoadingStatus('Cargando datos desde IndexedDB...');
 
-        const cached = getCachedData();
+        const cached = await getCachedDataAsync();
         if (cached) {
             handleCachedSuccess(cached);
             return;
@@ -839,16 +879,19 @@ function showCreateRepoModal() {
     const modal = document.getElementById('create-repo-modal');
     if (modal) {
         modal.classList.remove('hidden');
-        document.getElementById('repo-name').focus();
+        trapFocusModal(modal);
     }
 }
 
 function hideCreateRepoModal() {
     const modal = document.getElementById('create-repo-modal');
     if (modal) {
+        untrapFocusModal(modal);
         modal.classList.add('hidden');
-        document.getElementById('create-repo-form').reset();
-        document.getElementById('create-repo-error').textContent = '';
+        const form = document.getElementById('create-repo-form');
+        if (form) form.reset();
+        const err = document.getElementById('create-repo-error');
+        if (err) err.textContent = '';
     }
 }
 
@@ -1072,7 +1115,10 @@ function initStaticListeners() {
     if (settingsBtn) {
         settingsBtn.onclick = () => {
             const modal = document.getElementById('settings-modal');
-            if (modal) modal.classList.remove('hidden');
+            if (modal) {
+                modal.classList.remove('hidden');
+                trapFocusModal(modal);
+            }
         };
     }
 

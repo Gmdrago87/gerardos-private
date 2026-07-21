@@ -1,4 +1,16 @@
-import { USERNAME, CACHE_KEY_USER, CACHE_KEY_REPOS, CACHE_KEY_TIME, CACHE_DURATION } from './utils.js';
+import { setCachedReposData, getCachedReposData } from './state.js';
+
+export async function getCachedDataAsync() {
+    try {
+        const idbData = await getCachedReposData();
+        if (idbData && idbData.timestamp && (Date.now() - idbData.timestamp < CACHE_DURATION)) {
+            return { user: idbData.user, repos: idbData.repos };
+        }
+    } catch (e) {
+        console.warn('Error leyendo de IndexedDB:', e);
+    }
+    return getCachedData();
+}
 
 export function getCachedData() {
     try {
@@ -21,8 +33,10 @@ export function saveToCache(user, repos) {
         localStorage.setItem(CACHE_KEY_USER, JSON.stringify(user));
         localStorage.setItem(CACHE_KEY_REPOS, JSON.stringify(repos));
         localStorage.setItem(CACHE_KEY_TIME, Date.now().toString());
+        setCachedReposData(user, repos);
     } catch (e) {
         console.warn('Storage lleno', e);
+        setCachedReposData(user, repos);
     }
 }
 

@@ -72,3 +72,25 @@ export async function clearPrivateRepoCache() {
     }
 }
 
+export async function getCachedReposData() {
+    try {
+        if (window.idbKeyval) {
+            const data = await window.idbKeyval.get('app_repos_cache');
+            if (data && data.user && data.repos) return data;
+        }
+    } catch (e) {
+        console.warn("IndexedDB error leyendo repos", e);
+    }
+    return null;
+}
+
+export async function setCachedReposData(user, repos) {
+    try {
+        if (window.idbKeyval) {
+            await window.idbKeyval.set('app_repos_cache', { user, repos, timestamp: Date.now() });
+        }
+    } catch (e) {
+        console.warn("IndexedDB error guardando repos", e);
+    }
+}
+

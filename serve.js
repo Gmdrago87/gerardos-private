@@ -17,7 +17,18 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
+  let relativePath = req.url.split('?')[0];
+  let filePath = path.join(__dirname, 'public', relativePath === '/' ? 'index.html' : relativePath);
+
+  try {
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(filePath, 'index.html');
+    } else if (!fs.existsSync(filePath) && fs.existsSync(filePath + '/index.html')) {
+      filePath = path.join(filePath, 'index.html');
+    } else if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
+      filePath = filePath + '.html';
+    }
+  } catch (e) {}
 
   const extname = String(path.extname(filePath)).toLowerCase();
   const contentType = MIME_TYPES[extname] || 'application/octet-stream';
@@ -25,18 +36,15 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (error, content) => {
     if (error) {
       if (error.code === 'ENOENT') {
-        // File not found, serve index.html for SPA
-        fs.readFile(path.join(__dirname, 'public', 'index.html'), (error, content) => {
+        fs.readFile(path.join(__dirname, 'public', 'index.html'), (err, fallbackContent) => {
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(content, 'utf-8');
+          res.end(fallbackContent, 'utf-8');
         });
       } else {
-        // Server error
         res.writeHead(500);
         res.end('Sorry, check with the site admin for error: ' + error.code + ' ..\n');
       }
     } else {
-      // Success
       res.writeHead(200, { 'Content-Type': contentType });
       res.end(content, 'utf-8');
     }

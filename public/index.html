@@ -11,15 +11,9 @@
     <meta name="keywords" content="github, repositorios, gestión, glassmorphism, web development">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gerardos-private.pages.dev/">
-    <meta property="og:title" content="RepoManager — Plataforma para Repositorios">
+    <meta property="og:title" content="RepoManager — Inicio">
     <meta property="og:description" content="Plataforma web para explorar y gestionar proyectos open source de GitHub.">
     <meta property="og:image" content="https://avatars.githubusercontent.com/u/195803064?v=4">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://gerardos-private.pages.dev/">
-    <meta property="twitter:title" content="RepoManager — Plataforma para Repositorios">
-    <meta property="twitter:description"
-        content="Plataforma web para explorar y gestionar proyectos open source de GitHub.">
-    <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/195803064?v=4">
     <link rel="manifest" href="/manifest.json">
     <link rel="canonical" href="https://gerardos-private.pages.dev/">
     <script type="application/ld+json">
@@ -32,7 +26,7 @@
       "applicationCategory": "DeveloperApplication"
     }
     </script>
-    <title>RepoManager — Plataforma para Repositorios</title>
+    <title>RepoManager — Inicio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://api.github.com">
@@ -68,9 +62,9 @@
                     <span class="web-header__logo-text">RepoManager</span>
                 </div>
                 <nav class="web-header__nav">
-                    <a href="#inicio" class="web-header__nav-link web-header__nav-link--active">Inicio</a>
-                    <a href="#repositorios" class="web-header__nav-link">Repositorios</a>
-                    <a href="#estadisticas" class="web-header__nav-link">Estadísticas</a>
+                    <a href="/index.html" class="web-header__nav-link web-header__nav-link--active">Inicio</a>
+                    <a href="/repos/index.html" class="web-header__nav-link">Repositorios</a>
+                    <a href="/workspace/index.html" class="web-header__nav-link">Entorno de Trabajo</a>
                 </nav>
             </div>
             <div class="web-header__right">
@@ -88,6 +82,7 @@
             </div>
         </div>
     </header>
+
     <main class="web-main" id="inicio">
         <div id="loading" class="loading-screen">
             <div class="loading-content">
@@ -109,6 +104,7 @@
                 </div>
             </div>
         </div>
+
         <div id="toast" class="toast hidden">
             <div class="toast__panel glass-panel">
                 <div class="toast__content">
@@ -125,9 +121,11 @@
                 </div>
             </div>
         </div>
+
         <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
             <i data-lucide="arrow-up"></i>
         </button>
+
         <div class="web-content">
             <div class="web-content__container">
                 <section class="header-layout">
@@ -172,6 +170,7 @@
                             </div>
                         </div>
                     </aside>
+
                     <div class="header-content">
                         <div class="hero-banner glass-panel animate-on-scroll stagger-2">
                             <div class="hero-glow"></div>
@@ -181,11 +180,11 @@
                                     <span>RepoManager</span>
                                 </h2>
                                 <p class="hero-description">
-                                    Explora y gestiona tus proyectos GitHub de manera estructurada con opciones
-                                    dinámicas y diseño moderno
+                                    Plataforma de inteligencia y visualización para tus repositorios de GitHub con alto contraste, velocidad nativa y navegación fluida.
                                 </p>
                             </div>
                         </div>
+
                         <section class="portfolio-intelligence glass-panel animate-on-scroll stagger-3"
                             aria-labelledby="portfolio-intelligence-title">
                             <div class="intelligence-header">
@@ -209,9 +208,9 @@
                                     <strong id="metric-launch-ready">0</strong>
                                 </div>
                             </div>
-                            <p id="portfolio-next-move" class="intelligence-next-move">Analizando tus repositorios...
-                            </p>
+                            <p id="portfolio-next-move" class="intelligence-next-move">Analizando tus repositorios...</p>
                         </section>
+
                         <div class="stats-grid" id="estadisticas">
                             <div class="stat-card glass-panel animate-on-scroll-scale stagger-1">
                                 <div class="stat-icon stat-icon--purple">
@@ -244,98 +243,35 @@
                         </div>
                     </div>
                 </section>
-                <section id="repositorios" class="search-wrapper animate-on-scroll stagger-4">
-                    <div class="glass-search-bar">
-                        <div class="search-form">
-                            <div class="search-row">
-                                <div class="search-field">
-                                    <i data-lucide="search" class="search-field__icon"></i>
-                                    <input type="text" id="search-input" aria-label="Buscar proyectos"
-                                        placeholder="Buscar proyectos...">
-                                </div>
-                                <button id="toggle-filters-btn" class="btn-filter" title="Mostrar/Ocultar Filtros">
-                                    <i data-lucide="sliders-horizontal"></i>
-                                </button>
-                                <button id="refresh-data-btn" class="btn-refresh"
-                                    title="Refrescar datos desde GitHub API" onclick="forceRefreshData()">
-                                    <i data-lucide="refresh-cw"></i>
-                                    <span class="btn-refresh__label">Refrescar</span>
-                                </button>
-                                <button id="btn-open-create-repo" class="btn-refresh"
-                                    style="background: rgba(0, 242, 234, 0.15); color: #00f2ea; border: 1px solid rgba(0, 242, 234, 0.3);"
-                                    title="Nuevo Repositorio">
-                                    <i data-lucide="plus-circle"></i>
-                                    <span class="btn-refresh__label">Nuevo</span>
-                                </button>
-                                <button id="btn-futuristic-engine" class="btn-refresh"
-                                    style="background: rgba(139, 92, 246, 0.2); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.5); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);"
-                                    title="Activar Motor Futurista">
-                                    <i data-lucide="hexagon"></i>
-                                    <span class="btn-refresh__label">Motor 3D</span>
-                                </button>
+
+                <section class="quick-nav-section" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <a href="/repos/index.html" class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="stat-icon" style="margin: 0;">
+                                <i data-lucide="folder-git-2"></i>
                             </div>
-                            <div id="data-source-indicator" class="data-source hidden">
-                                <i data-lucide="info"></i>
-                                <span id="data-source-text">Fuente de datos: API</span>
-                                <span id="cache-age-text"></span>
-                            </div>
-                            <div id="filters-row" class="filters-row hidden">
-                                <div class="sort-group">
-                                    <span class="sort-group__label">Ordenar:</span>
-                                    <button class="sort-btn active-sort" data-sort="updated"
-                                        onclick="applySorting('updated')">
-                                        <i data-lucide="clock"></i> Recientes
-                                    </button>
-                                    <button class="sort-btn" data-sort="stars" onclick="applySorting('stars')">
-                                        <i data-lucide="star"></i> Estrellas
-                                    </button>
-                                    <button class="sort-btn" data-sort="forks" onclick="applySorting('forks')">
-                                        <i data-lucide="git-fork"></i> Forks
-                                    </button>
-                                    <button class="sort-btn" data-sort="name" onclick="applySorting('name')">
-                                        <i data-lucide="arrow-down-a-z"></i> A-Z
-                                    </button>
-                                </div>
-                                <div class="language-group scrollbar-hide" id="filter-container">
-                                    <button class="filter-btn filter-btn--active" data-filter="all"
-                                        onclick="filterByLang('all', this)">
-                                        Todos
-                                    </button>
-                                </div>
+                            <div>
+                                <h3 style="font-size: 1.25rem; font-weight: 700;">Explorador de Repositorios</h3>
+                                <p style="color: var(--text-muted); font-size: 0.875rem;">Filtra, busca y explora todos tus proyectos</p>
                             </div>
                         </div>
-                    </div>
+                    </a>
+                    <a href="/workspace/index.html" class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="stat-icon" style="margin: 0;">
+                                <i data-lucide="layout"></i>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 1.25rem; font-weight: 700;">Entorno de Trabajo</h3>
+                                <p style="color: var(--text-muted); font-size: 0.875rem;">Visor Monaco, Kanban, Actions y Motor 3D</p>
+                            </div>
+                        </div>
+                    </a>
                 </section>
-                <section class="repos-grid" id="repos-grid">
-                </section>
-                <div class="load-more-section">
-                    <button id="load-more-btn" class="btn-load-more hidden">
-                        <span class="btn-load-more__inner">
-                            <i data-lucide="chevrons-down"></i>
-                            Cargar más proyectos
-                        </span>
-                    </button>
-                    <p id="showing-count" class="results-count"></p>
-                </div>
-            </div>
-        </div>
-        <div id="futuristic-engine" class="futuristic-engine hidden">
-            <div id="futuristic-canvas-container" class="futuristic-canvas-container"></div>
-            <div id="futuristic-overlay" class="futuristic-overlay">
-                <h2 class="futuristic-title">Visualización Espacial Activa</h2>
-                <button id="btn-close-futuristic" class="btn-refresh"
-                    style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">
-                    <i data-lucide="x-circle"></i>
-                    Salir del Motor 3D
-                </button>
-                <div class="futuristic-controls">
-                    <button id="btn-view-topology" class="futuristic-tab active">Topología 3D</button>
-                    <button id="btn-view-graph" class="futuristic-tab">Grafo Infinito</button>
-                    <button id="btn-view-commits" class="futuristic-tab">Timeline Commits</button>
-                </div>
             </div>
         </div>
     </main>
+
     <!-- Modal Ajustes -->
     <div id="settings-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
@@ -359,45 +295,6 @@
         </div>
     </div>
 
-    <!-- Modal Crear Repositorio -->
-    <div id="create-repo-modal" class="modal hidden">
-        <div class="modal-backdrop"></div>
-        <div class="modal-container modal-container-small">
-            <div class="modal-header">
-                <h2 class="modal-title">Crear Repositorio</h2>
-                <button class="modal-close"
-                    onclick="document.getElementById('create-repo-modal').classList.add('hidden');">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="create-repo-form" class="modal-form">
-                    <div class="form-group">
-                        <label class="form-label" for="repo-name">Nombre del Repositorio</label>
-                        <input type="text" id="repo-name" class="form-input" placeholder="mi-proyecto" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="repo-desc">Descripción (opcional)</label>
-                        <textarea id="repo-desc" class="form-textarea"
-                            placeholder="Descripción del proyecto..."></textarea>
-                    </div>
-                    <div class="form-group form-group-row">
-                        <label class="form-checkbox-label" for="repo-private">
-                            <input type="checkbox" id="repo-private" class="form-checkbox">
-                            Repositorio Privado
-                        </label>
-                    </div>
-                    <p id="create-repo-error" class="form-error-msg"
-                        style="color: var(--error-400); margin-bottom: 1rem;"></p>
-                    <div class="form-actions">
-                        <button type="button" id="create-repo-cancel-btn" class="btn-cancel">Cancelar</button>
-                        <button type="submit" id="create-repo-submit-btn" class="btn-submit">Crear</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Command Palette -->
     <div id="command-palette" class="command-palette hidden">
         <div class="palette-backdrop" onclick="document.getElementById('command-palette').classList.add('hidden');">
@@ -410,103 +307,6 @@
                 </div>
             </div>
             <div id="palette-results" class="palette-results" style="max-height: 400px; overflow-y: auto;"></div>
-        </div>
-    </div>
-
-    <!-- Modal Visor Repositorio -->
-    <div id="repo-viewer-modal" class="modal hidden">
-        <div class="modal-backdrop"></div>
-        <div class="modal-container" style="max-width: 1400px; height: 90vh;">
-            <div class="modal-header">
-                <div class="modal-title-row">
-                    <i data-lucide="book-open" style="color: var(--accent-400);"></i>
-                    <h2 id="repo-viewer-title" class="modal-title">Repositorio</h2>
-                    <div id="branch-select-container" class="branch-select-wrapper"></div>
-                </div>
-                <button class="modal-close" onclick="closeModal();">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="repo-viewer-body">
-                <div class="tab-pane tab-pane-active" id="tab-code" style="display: flex; flex: 1;">
-                    <div class="modal-sidebar">
-                        <div class="tree-toolbar">
-                            <button id="btn-new-file" class="btn-refresh" style="padding: 0.5rem; gap: 0.25rem;">
-                                <i data-lucide="file-plus"></i> Nuevo
-                            </button>
-                            <button id="btn-delete-file" class="btn-refresh"
-                                style="padding: 0.5rem; gap: 0.25rem; background: rgba(239, 68, 68, 0.1); color: var(--error-400); border-color: rgba(239, 68, 68, 0.3);">
-                                <i data-lucide="trash-2"></i> Borrar
-                            </button>
-                        </div>
-                        <div id="file-tree"></div>
-                    </div>
-                    <div class="modal-code-area" id="code-container">
-                        <div class="modal-code-viewer" id="code-viewer">
-                            <i data-lucide="mouse-pointer"></i>
-                            <p>Selecciona un archivo para ver su contenido</p>
-                        </div>
-                    </div>
-                    <div id="commits-sidebar" class="commits-sidebar"
-                        style="width: 300px; border-left: 1px solid rgba(255, 255, 255, 0.1); padding: 1rem;">
-                        <!-- Commits will be here -->
-                    </div>
-                </div>
-                <div class="tab-pane" id="tab-kanban"
-                    style="display: none; flex-direction: column; flex: 1; padding: 1rem;">
-                    <div class="kanban-header"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="font-family: var(--font-display);">Tablero Kanban</h3>
-                        <button id="btn-new-issue" class="btn-refresh" style="padding: 0.5rem 1rem;">
-                            <i data-lucide="plus-circle"></i> Nueva Tarea
-                        </button>
-                    </div>
-                    <div class="kanban-board">
-                        <div class="kanban-col" data-state="todo">
-                            <div class="kanban-col-header">To Do</div>
-                            <div id="kanban-todo" class="kanban-cards"></div>
-                        </div>
-                        <div class="kanban-col" data-state="in-progress">
-                            <div class="kanban-col-header">In Progress</div>
-                            <div id="kanban-progress" class="kanban-cards"></div>
-                        </div>
-                        <div class="kanban-col" data-state="closed">
-                            <div class="kanban-col-header">Done</div>
-                            <div id="kanban-done" class="kanban-cards"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane" id="tab-actions"
-                    style="display: none; flex-direction: column; flex: 1; padding: 1rem;">
-                    <h3 style="font-family: var(--font-display); margin-bottom: 1rem;">GitHub Actions</h3>
-                    <div id="actions-log"
-                        style="font-family: var(--font-mono); font-size: 0.875rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 1rem; flex: 1; overflow-y: auto;">
-                    </div>
-                </div>
-                <div class="tab-pane" id="tab-preview"
-                    style="display: none; flex-direction: column; flex: 1; padding: 1rem;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="font-family: var(--font-display);">Vista Previa</h3>
-                        <button id="btn-refresh-preview" class="btn-refresh" style="padding: 0.5rem 1rem;">
-                            <i data-lucide="refresh-cw"></i> Refrescar
-                        </button>
-                    </div>
-                    <iframe id="preview-frame"
-                        style="flex: 1; width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); background: white;"></iframe>
-                </div>
-            </div>
-            <div class="modal-footer"
-                style="display: flex; justify-content: space-between; padding: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <div id="repo-viewer-actions">
-                    <button class="btn-refresh" onclick="copyCloneCommand();">
-                        <i data-lucide="copy"></i> Copiar URL
-                    </button>
-                </div>
-                <button id="modal-save-btn" class="btn-submit" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i data-lucide="save"></i> Guardar Cambios
-                </button>
-            </div>
         </div>
     </div>
 
