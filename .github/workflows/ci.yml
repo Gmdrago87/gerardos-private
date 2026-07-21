@@ -2,15 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, vibe/**]
+    branches: [main]
   pull_request:
     branches: [main]
 
-# This is the main CI workflow that runs on PRs
-# It provides basic validation without blocking
+# Simple CI workflow that validates basic functionality
 
 jobs:
-  # Basic validation
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -28,13 +26,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Verify no hardcoded secrets in tracked files
+      - name: Check for secrets
         run: |
-          # Check for known secrets that were previously in the code
-          # This should pass since we removed them all
-          if grep -r "Ov23liZt2GrRqM6MBcHa\|05225febfd12ff3be4787a49b8cb69d1a1b85743\|super_secreto_para_probar_localmente" --include="*.js" --include="*.toml" --include="*.json" . 2>/dev/null; then
-            echo "::error:: Hardcoded secrets found!"
+          echo "Checking for hardcoded secrets..."
+          if grep -r "Ov23liZt2GrRqM6MBcHa" --include="*.js" --include="*.toml" --include="*.json" . 2>/dev/null; then
+            echo "::error:: Found GitHub Client ID!"
             exit 1
-          else
-            echo "✓ No hardcoded secrets found"
           fi
+          if grep -r "05225febfd12ff3be4787a49b8cb69d1a1b85743" --include="*.js" --include="*.toml" --include="*.json" . 2>/dev/null; then
+            echo "::error:: Found GitHub Client Secret!"
+            exit 1
+          fi
+          if grep -r "super_secreto_para_probar_localmente" --include="*.js" --include="*.toml" --include="*.json" . 2>/dev/null; then
+            echo "::error:: Found JWT Secret!"
+            exit 1
+          fi
+          echo "✓ No hardcoded secrets found"
