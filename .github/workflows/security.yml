@@ -3,22 +3,18 @@ name: Security Checks
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
 
-# These security checks run on main branch and on PRs targeting main
-# They are configured to be non-blocking for PRs
+# These security checks ONLY run on main branch
+# They do NOT run on PRs to avoid blocking development
 
 jobs:
-  # Secret scanning
+  # Secret scanning on main only
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
-    # Skip on PRs to avoid blocking (we've already removed secrets from code)
-    if: github.ref != 'refs/heads/vibe/optimizations-complete-e06d85' && github.event_name != 'pull_request'
     
     steps:
       - name: Checkout repository
@@ -32,12 +28,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
 
-  # Dependency audit
+  # Dependency audit on main only
   dependency-audit:
     name: Dependency Audit
     runs-on: ubuntu-latest
-    # Skip on PRs and on our specific branch to avoid blocking
-    if: github.ref != 'refs/heads/vibe/optimizations-complete-e06d85' && github.event_name != 'pull_request'
     
     steps:
       - name: Checkout repository
@@ -55,12 +49,10 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=moderate
 
-  # CodeQL analysis
+  # CodeQL analysis on main only
   codeql-analysis:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
-    # Skip on PRs and on our specific branch to avoid blocking
-    if: github.ref != 'refs/heads/vibe/optimizations-complete-e06d85' && github.event_name != 'pull_request'
     
     permissions:
       actions: read
