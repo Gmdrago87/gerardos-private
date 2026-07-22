@@ -1,3 +1,8 @@
+/**
+ * GerardOS Private Dashboard - Main Application
+ * Unified and cleaned version - Removed macOS design code
+ */
+
 import { USERNAME, debounce, escapeHtml } from './modules/utils.js';
 import { getState, setState, getCachedTree, setCachedTree, getCachedFile, setCachedFile } from './modules/state.js';
 import { getCachedData, saveToCache, getExpiredCache, clearCache, fetchApiData, fetchFallbackData, fetchRepoTree, fetchFileContent, createRepo, deleteRepo, updateRepoVisibility, fetchCommits, fetchBranches, saveFileContent, deleteFile, fetchIssues, createIssue, updateIssue, fetchActions } from './modules/api.js';
@@ -259,7 +264,7 @@ window.closeIdeView = function() {
 
 async function handleLoginSubmit(e) {
     if (e) e.preventDefault();
-    const btn = document.getElementById('mac-login-github-btn') || document.getElementById('mac-login-btn');
+    const btn = document.getElementById('mac-login-github-btn') || document.getElementById('login-github-btn');
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<span class="login-spinner"></span> Redirigiendo a GitHub...';
@@ -281,7 +286,7 @@ async function fetchFreshOrFallback() {
         processData(data.user, data.repos, 'api');
         hideLoading();
     } catch (apiError) {
-        console.warn('Falló la API o caché expirada, intentando fallback...', apiError);
+        console.warn('Fallo la API o caché expirada, intentando fallback...', apiError);
         if (apiError.message === "UNAUTHORIZED") {
             showLoginScreen();
             return;
@@ -431,7 +436,7 @@ async function loadRepoTreeAndReadme(repo, branch) {
 }
 
 function renderBranchDropdown(repo, branches) {
-    const titleRow = document.querySelector('.modal__title-row');
+    const titleRow = document.querySelector('.modal__title-row') || document.getElementById('ide-header');
     if (!titleRow) return;
 
     // Quitar dropdown viejo si existe
@@ -482,7 +487,7 @@ async function loadCommitsList(repoName, branch) {
     commitsSidebar.innerHTML = '<div class="commits-loading">Cargando historial...</div>';
 
     // Insertarlo en el modal body junto al code-area
-    const modalBody = document.querySelector('.modal__body');
+    const modalBody = document.querySelector('.modal__body') || document.getElementById('ide-view');
     if (modalBody) {
         modalBody.appendChild(commitsSidebar);
     }
@@ -499,7 +504,7 @@ async function loadCommitsList(repoName, branch) {
                     ${avatar}
                     <div class="commit-info">
                         <p class="commit-msg">${escapeHtml(c.commit.message)}</p>
-                        <p class="commit-meta">${escapeHtml(c.commit.author.name)} · ${date}</p>
+                        <p class="commit-meta">${escapeHtml(c.commit.author.name)}  b7 ${date}</p>
                     </div>
                 </div>
             `;
@@ -743,7 +748,7 @@ async function loadKanbanIssues() {
                 <div class="kanban-card-title">${escapeHtml(issue.title)}</div>
                 <div class="kanban-card-meta">
                     <span>#${issue.number}</span>
-                    <span>${issue.comments} 💬</span>
+                    <span>${issue.comments} </span>
                 </div>
             `;
 
@@ -956,7 +961,7 @@ function initCommandPalette() {
             if (count > 5) return;
             if (r.name.toLowerCase().includes(query)) {
                 html += `
-                <div class="palette-item" data-repo-name="${escapeHtml(r.name).replace(/"/g, '&quot;')}" onclick="window.openRepoFromPalette(this.getAttribute('data-repo-name'))">
+                <div class="palette-item" data-repo-name="${escapeHtml(r.name).replace(/\"/g, '&quot;')}" onclick="window.openRepoFromPalette(this.getAttribute('data-repo-name'))">
                     <i data-lucide="book" class="palette-item-icon" style="width:16px;height:16px"></i>
                     <span class="palette-item-title">${escapeHtml(r.name)}</span>
                 </div>`;
@@ -1159,9 +1164,6 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
 }
 
 function initStaticListeners() {
-    const yearEl = document.getElementById('year');
-    if (yearEl) yearEl.textContent = new Date().getFullYear();
-
     const loadMoreBtn = document.getElementById('load-more-btn');
     if (loadMoreBtn) loadMoreBtn.onclick = handleLoadMore;
 
@@ -1221,11 +1223,14 @@ function initStaticListeners() {
 
     initCommandPalette();
 
-    const loginBtn = document.getElementById('mac-login-github-btn');
+    const loginBtn = document.getElementById('mac-login-github-btn') || document.getElementById('login-github-btn');
     if (loginBtn) loginBtn.onclick = handleLoginSubmit;
 
-    const logoutBtn = document.getElementById('mac-logout-btn');
+    const logoutBtn = document.getElementById('mac-logout-btn') || document.getElementById('logout-btn');
     if (logoutBtn) logoutBtn.onclick = logout;
+
+    const logoutBtnDesktop = document.getElementById('mac-logout-btn-desktop');
+    if (logoutBtnDesktop) logoutBtnDesktop.onclick = logout;
 
     const openCreateBtn = document.getElementById('btn-open-create-repo');
     if (openCreateBtn) openCreateBtn.onclick = showCreateRepoModal;
@@ -1235,110 +1240,6 @@ function initStaticListeners() {
 
     const createForm = document.getElementById('create-repo-form');
     if (createForm) createForm.onsubmit = handleCreateRepoSubmit;
-}
-
-function initScrollBtn() {
-    const scrollBtn = document.getElementById('scroll-to-top');
-    if (!scrollBtn) return;
-    const winContent = document.getElementById('mac-window-content');
-    const mainContent = document.getElementById('main-content');
-    const scrollTarget = winContent || mainContent || window;
-
-    scrollBtn.onclick = () => {
-        if (scrollTarget.scrollTo) {
-            scrollTarget.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-    setupScrollTimeout(scrollTarget, scrollBtn);
-}
-
-function setupScrollTimeout(target, btn) {
-    let timeout;
-    if (!target || !btn) return;
-    target.addEventListener('scroll', () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            const scrollY = target.scrollTop !== undefined ? target.scrollTop : window.scrollY;
-            btn.style.opacity = scrollY > 300 ? '1' : '0';
-            btn.style.pointerEvents = scrollY > 300 ? 'auto' : 'none';
-        }, 100);
-    });
-}
-
-function initClock() {
-    updateMacClock();
-    setInterval(updateMacClock, 30000);
-}
-
-function updateMacClock() {
-    const el = document.getElementById('mac-clock');
-    if (!el) return;
-    const now = new Date();
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-    const h = now.getHours().toString().padStart(2, '0');
-    const m = now.getMinutes().toString().padStart(2, '0');
-    el.textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}  ${h}:${m}`;
-}
-
-function initWindowControls() {
-    const btnClose = document.getElementById('mac-btn-close');
-    if (btnClose) {
-        btnClose.onclick = () => {
-            document.getElementById('mac-main-window')?.classList.add('mac-window--closed');
-        };
-    }
-    const btnMin = document.getElementById('mac-btn-minimize');
-    if (btnMin) {
-        btnMin.onclick = () => {
-            document.getElementById('mac-main-window')?.classList.toggle('mac-window--minimized');
-        };
-    }
-    const btnMax = document.getElementById('mac-btn-maximize');
-    if (btnMax) {
-        btnMax.onclick = () => {
-            document.getElementById('mac-main-window')?.classList.toggle('mac-window--fullscreen');
-        };
-    }
-}
-
-function initDockActions() {
-    const dockHome = document.getElementById('dock-home');
-    if (dockHome) {
-        dockHome.onclick = () => {
-            const winContent = document.getElementById('mac-window-content') || document.getElementById('main-content');
-            if (winContent) winContent.scrollTo({ top: 0, behavior: 'smooth' });
-            document.getElementById('mac-main-window')?.classList.remove('mac-window--closed', 'mac-window--minimized');
-        };
-    }
-    const dockProfile = document.getElementById('dock-profile');
-    if (dockProfile) {
-        dockProfile.onclick = () => {
-            document.querySelector('.sidebar')?.scrollIntoView({ behavior: 'smooth' });
-        };
-    }
-    const dockSearch = document.getElementById('dock-search');
-    if (dockSearch) {
-        dockSearch.onclick = () => {
-            const input = document.getElementById('search-input');
-            input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            input?.focus();
-        };
-    }
-    const dockRepos = document.getElementById('dock-repos');
-    if (dockRepos) {
-        dockRepos.onclick = () => {
-            document.getElementById('repos-grid')?.scrollIntoView({ behavior: 'smooth' });
-        };
-    }
-    const dockSettings = document.getElementById('dock-settings');
-    if (dockSettings) {
-        dockSettings.onclick = () => {
-            document.getElementById('settings-modal')?.classList.remove('hidden');
-        };
-    }
 }
 
 function exposeGlobals() {
@@ -1368,23 +1269,11 @@ function exposeGlobals() {
             req.onblocked = () => location.reload();
         }
     };
-    window.applyWallpaper = (url) => {
-        const wallpaper = document.querySelector('.mac-wallpaper');
-        if (wallpaper && url) {
-            wallpaper.style.backgroundImage = `url('${url}')`;
-            wallpaper.style.backgroundSize = 'cover';
-            wallpaper.style.backgroundPosition = 'center';
-        }
-    };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) window.lucide.createIcons();
     initApp();
     initStaticListeners();
-    initScrollBtn();
-    initClock();
-    initWindowControls();
-    initDockActions();
     exposeGlobals();
 });
