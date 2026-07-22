@@ -271,7 +271,8 @@ function updateLoadMoreUi(total, visible, btn, append) {
 
 function createCardElement(repo, searchTerm) {
     const card = document.createElement('div');
-    card.className = 'repo-card';
+    // Mantenemos repo-card para event delegation, añadimos tailwind del nuevo diseño
+    card.className = 'glass-card rounded-xl p-stack-md flex flex-col group cursor-pointer h-48 repo-card';
     card.dataset.repoName = repo.name;
     const langColor = LANG_COLORS[repo.language] || '#ffffff';
     const repoName = escapeHtml(repo.name);
@@ -304,36 +305,39 @@ function getWebUrl(homepage) {
 function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
     const htmlUrl = sanitizeUrl(repo.html_url);
     const cloneUrl = sanitizeUrl(repo.clone_url);
-    const badgesHtml = generateBadgesHtml(repo.topics);
-    const privateBadge = repo.private ? '<span class="repo-card__private-badge" title="Repositorio Privado"><i data-lucide="lock"></i> Privado</span>' : '';
+    const privateBadge = repo.private ? '<i data-lucide="lock" class="w-4 h-4 text-error" title="Privado"></i>' : '';
     const safeRepoName = escapeHtml(repo.name).replace(/"/g, '&quot;');
 
     return `
-        <div class="repo-card__header">
-            <div class="repo-card__identity">
-                <div class="repo-card__folder-icon">
-                    <i data-lucide="folder"></i>
-                </div>
-                ${privateBadge}
+        <div class="flex justify-between items-start mb-auto">
+            <div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shrink-0">
+                <i data-lucide="folder" class="text-on-surface-variant w-5 h-5"></i>
             </div>
-            <div class="repo-card__actions" id="actions-${repo.id}">
-                <button class="repo-card__clone-btn" data-clone-url="${cloneUrl}" title="Copiar 'git clone'" aria-label="Copiar clone URL"><i data-lucide="clipboard-copy"></i></button>
-                ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link"><i data-lucide="globe"></i> WEB</a>` : ''}
-                <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link" aria-label="Abrir en GitHub"><i data-lucide="external-link"></i></a>
-                <a href="https://vscode.dev/github/GerardMaestre/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
-                <button class="repo-card__toggle-visibility-btn" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}"></i></button>
-                <button class="repo-card__delete-btn" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
+            <div class="flex items-center gap-2">
+                ${privateBadge}
+                ${repo.language ? `<div class="flex items-center gap-1 text-on-surface-variant bg-surface-container/50 px-2 py-1 rounded-full text-xs font-medium border border-outline-variant/10"><span class="w-2 h-2 rounded-full" style="background-color: ${langColor};"></span>${escapeHtml(repo.language)}</div>` : ''}
             </div>
         </div>
-        ${badgesHtml}
-        <div class="repo-card__update-row"><span class="repo-card__update-tag"><i data-lucide="clock"></i> ${updateBadge}</span></div>
-        <h3 class="repo-card__name">${name}</h3>
-        <p class="repo-card__description truncate-2-lines">${desc}</p>
-        <div class="repo-card__footer">
-            <div class="repo-card__language">${repo.language ? `<span class="repo-card__lang-dot" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${escapeHtml(repo.language)}` : ''}</div>
-            <div class="repo-card__stats">
-                <span class="repo-card__stat"><i data-lucide="star"></i> ${repo.stargazers_count}</span>
-                <span class="repo-card__stat"><i data-lucide="git-fork"></i> ${repo.forks_count}</span>
+        <div>
+            <h3 class="font-headline-md text-on-surface group-hover:text-primary transition-colors truncate">${name}</h3>
+            <p class="font-label-sm text-on-surface-variant mt-1 line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${desc}</p>
+            
+            <div class="flex items-center justify-between mt-4 pt-4 border-t border-outline-variant/10 font-label-sm text-on-surface-variant">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> ${repo.stargazers_count}</div>
+                    <div class="flex items-center gap-1"><i data-lucide="git-fork" class="w-3 h-3"></i> ${repo.forks_count}</div>
+                </div>
+                
+                <!-- Acciones ocultas que se muestran en hover -->
+                <div class="hidden group-hover:flex items-center gap-2 bg-surface-container-high/80 rounded-full px-2 py-1 absolute bottom-4 right-4 backdrop-blur-sm border border-outline-variant/30">
+                    <button class="repo-card__clone-btn hover:text-white" data-clone-url="${cloneUrl}" title="Copiar clone URL"><i data-lucide="clipboard-copy" class="w-4 h-4"></i></button>
+                    ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-white" title="Sitio Web"><i data-lucide="globe" class="w-4 h-4"></i></a>` : ''}
+                    <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-white" title="Abrir en GitHub"><i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    <button class="repo-card__toggle-visibility-btn hover:text-white" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}" class="w-4 h-4"></i></button>
+                    <button class="repo-card__delete-btn text-error/80 hover:text-error" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+
+                <div class="text-xs group-hover:opacity-0 transition-opacity ml-auto">${updateBadge}</div>
             </div>
         </div>
     `;
