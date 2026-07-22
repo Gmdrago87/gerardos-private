@@ -86,8 +86,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') {
+    // Skip non-GET requests or non-http(s) schemes (e.g., chrome-extension://)
+    if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) {
         return;
     }
     
@@ -108,11 +108,12 @@ self.addEventListener('fetch', (event) => {
                         const responseClone = response.clone();
                         
                         // Cache only successful responses for static assets
-                        if (response.ok && isCacheable(requestPath)) {
+                        if (response.ok && isCacheable(requestPath) && url.protocol.startsWith('http')) {
                             caches.open(CACHE_NAME)
                                 .then((cache) => {
-                                    cache.put(event.request, responseClone);
-                                });
+                                    cache.put(event.request, responseClone).catch(() => {});
+                                })
+                                .catch(() => {});
                         }
                         
                         return response;
