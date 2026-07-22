@@ -33,7 +33,7 @@ const MAX_CACHE_ENTRIES = 100;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker v5...');
+    console.log('[SW] Installing service worker v6...');
     
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -53,7 +53,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker v5...');
+    console.log('[SW] Activating service worker v6...');
     
     event.waitUntil(
         caches.keys().then((cacheNames) => {
