@@ -951,6 +951,21 @@ async function forceRefreshData() {
 
 // ===== INITIALIZATION =====
 async function initApp() {
+    // Trazado de errores desde la URL (OAuth Callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlError = urlParams.get('error');
+    const urlErrorDesc = urlParams.get('error_description') || urlParams.get('scope') || '';
+    
+    if (urlError) {
+        console.error(`[OAuth Trazado] Error detectado en la redirección: ${urlError}`);
+        if (urlErrorDesc) console.error(`[OAuth Trazado] Detalles adicionales: ${urlErrorDesc}`);
+        
+        showToast(`Error de autenticación: ${urlError.replace(/_/g, ' ')}`, 'error');
+        
+        // Limpiar URL para que no vuelva a salir si refresca
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     updateLoadingStatus('Verificando sesión...');
     
     try {

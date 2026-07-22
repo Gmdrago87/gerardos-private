@@ -77,9 +77,13 @@ export async function onRequestGet(context) {
             return new Response(`Error al autenticar con GitHub. Por favor, inténtalo de nuevo.`, { status: 400 });
         }
 
-        if (tokenData.scope !== "repo workflow delete_repo") {
-            console.error(`[API] Error: Scope inesperado: ${tokenData.scope}`);
-            return new Response("Error de autenticación: permisos insuficientes.", { status: 403 });
+        const returnedScopes = tokenData.scope ? tokenData.scope.split(/[\s,]+/) : [];
+        const requiredScopes = ["repo", "workflow", "delete_repo"];
+        const hasAllScopes = requiredScopes.every(s => returnedScopes.includes(s));
+        
+        if (!hasAllScopes) {
+            console.error(`[API] Error: Scope inesperado o faltan permisos. Esperado: ${requiredScopes.join(',')}, Recibido: ${tokenData.scope}`);
+            return Response.redirect(`${url.origin}/?error=insufficient_permissions&scope=${encodeURIComponent(tokenData.scope || '')}`, 302);
         }
 
         const accessToken = tokenData.access_token;
