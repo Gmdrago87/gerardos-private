@@ -137,7 +137,7 @@ export function isAllowedUser(username, env) {
     return allowed.includes(username.toLowerCase());
 }
 
-export async function requireAuth(context) {
+export function requireAuth(context) {
     const session = context.data?.session;
     if (!session?.github_token) {
         return jsonResponse({ error: "Sesión no válida" }, 401);

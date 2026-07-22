@@ -1018,3 +1018,10 @@ window.DevRepo = {
     showToast,
     forceRefreshData
 };
+
+// Exponer handlers a nivel global para los eventos en el HTML (onclick, onchange)
+window.forceRefreshData = forceRefreshData;
+window.closeModal = closeModal;
+window.applyFilters = applyFilters;
+window.applySorting = applySorting;
+window.showSection = function(section) { showToast('Navegando a ' + section + '...', 'info'); };
