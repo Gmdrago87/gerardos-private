@@ -960,6 +960,9 @@ async function forceRefreshData() {
 
 // ===== INITIALIZATION =====
 async function initApp() {
+    console.log("=== DEVREPO APP INITIALIZING ===");
+    console.log("Version: 1.1.2 (Bento Design applied)");
+    
     // Trazado de errores desde la URL (OAuth Callback)
     const urlParams = new URLSearchParams(window.location.search);
     const urlError = urlParams.get('error');

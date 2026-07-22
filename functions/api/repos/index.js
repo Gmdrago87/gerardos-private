@@ -23,7 +23,8 @@ export async function onRequestGet(context) {
         const [user, repos] = await Promise.all([userRes.json(), reposRes.json()]);
         return jsonResponse({ user, repos });
     } catch (err) {
-        return jsonResponse({ error: "Error interno en el proxy del backend" }, 500);
+        console.error("Backend Proxy Error:", err);
+        return jsonResponse({ error: "Error interno en el proxy del backend", details: err.message, stack: err.stack }, 500);
     }
 }
 
