@@ -23,7 +23,7 @@ const SECURITY_HEADERS = Object.freeze({
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
         "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
         "img-src 'self' data: blob: https://avatars.githubusercontent.com https://raw.githubusercontent.com https://img.shields.io https://images.unsplash.com; " +
-        "connect-src 'self' https://api.github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://images.unsplash.com https://fonts.googleapis.com https://fonts.gstatic.com https://d3js.org https://static.cloudflareinsights.com https://cloudflareinsights.com ws: wss:; " +
+        "connect-src 'self' https://cdn.tailwindcss.com https://api.github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://images.unsplash.com https://fonts.googleapis.com https://fonts.gstatic.com https://d3js.org https://static.cloudflareinsights.com https://cloudflareinsights.com ws: wss:; " +
         "frame-ancestors 'none'; " +
         "upgrade-insecure-requests;"
 });

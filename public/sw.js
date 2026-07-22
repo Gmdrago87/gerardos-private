@@ -4,7 +4,7 @@
  * Enhanced with better caching strategies and error handling
  */
 
-const CACHE_NAME = 'gerardos-private-v3';
+const CACHE_NAME = 'gerardos-private-v4';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
