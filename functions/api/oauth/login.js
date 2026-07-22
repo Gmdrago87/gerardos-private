@@ -25,7 +25,39 @@ export async function onRequestGet(context) {
 
     if (missingVars.length > 0) {
         console.error(`[API] Error: Faltan variables de configuración para OAuth: ${missingVars.join(", ")}`);
-        return Response.redirect(`${url.origin}/?error=missing_config&details=${encodeURIComponent(missingVars.join(","))}`, 302);
+        
+        const htmlError = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Configuración Incompleta</title>
+                <style>
+                    body { font-family: system-ui, sans-serif; background: #131315; color: #e4e2e4; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                    .card { background: #1f1f21; padding: 2rem; border-radius: 12px; max-width: 500px; border: 1px solid #ffb4ab; }
+                    h1 { color: #ffb4ab; margin-top: 0; }
+                    a { color: #adc6ff; text-decoration: none; display: inline-block; margin-top: 1rem; }
+                    a:hover { text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h1>⚠️ Configuración Faltante</h1>
+                    <p>La aplicación no puede autenticarse con GitHub porque faltan las siguientes variables de entorno en el servidor de <strong>Producción</strong> de Cloudflare Pages:</p>
+                    <ul style="color: #ffb4ab; font-family: monospace; background: rgba(255,180,171,0.1); padding: 1rem; border-radius: 6px;">
+                        ${missingVars.map(v => `<li>${v}</li>`).join('')}
+                    </ul>
+                    <p>Por favor, ve a tu panel de Cloudflare Pages, selecciona este proyecto, ve a <strong>Settings &gt; Environment variables</strong> y asegúrate de que las variables estén definidas en la pestaña <strong>Production</strong>.</p>
+                    <a href="/">&larr; Volver al inicio</a>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        return new Response(htmlError, {
+            status: 500,
+            headers: { "Content-Type": "text/html;charset=UTF-8" }
+        });
     }
 
     try {

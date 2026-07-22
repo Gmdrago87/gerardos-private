@@ -195,6 +195,19 @@ async function initApp() {
         
         showCustomAlert({ title: 'Error de Autenticación', message: msg, type: 'error' });
         
+        if (errType === 'missing_config') {
+            const loginView = document.getElementById('login-view');
+            if (loginView) {
+                const btn = document.getElementById('login-github-btn') || document.getElementById('mac-login-github-btn');
+                if (btn && btn.parentElement) {
+                    const errorBox = document.createElement('div');
+                    errorBox.className = 'mt-4 p-4 rounded-lg bg-error/10 border border-error/30 text-error text-sm text-left shadow-inner';
+                    errorBox.innerHTML = `<strong>⚠️ Configuración Faltante:</strong><br>La app no funcionará en este entorno hasta que añadas las variables de entorno en la pestaña <em>Production</em> de Cloudflare Pages.`;
+                    btn.parentElement.appendChild(errorBox);
+                }
+            }
+        }
+        
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
     }
