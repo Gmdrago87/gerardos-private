@@ -442,10 +442,9 @@ function generateFileHtml(item, repoName, branch) {
 }
 
 export function prepareRepoViewer(repoName) {
-    const modal = document.getElementById('modal');
-    modal.classList.remove('hidden', 'closing');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('modal-title').textContent = repoName;
+    if (window.openIdeView) window.openIdeView();
+    const titleEl = document.getElementById('ide-repo-name');
+    if (titleEl) titleEl.textContent = repoName;
     document.getElementById('file-tree').innerHTML = '<div class="modal__loading--pulse">Cargando estructura...</div>';
     const viewer = document.getElementById('code-viewer');
     viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Buscando README...</p></div>';
@@ -653,8 +652,13 @@ function importDynamicDOMPurify() {
 }
 
 export function closeModal() {
-    const modal = document.getElementById('modal');
-    modal.classList.add('closing');
+    if (window.closeIdeView) window.closeIdeView();
+    else {
+        const hubView = document.getElementById('hub-view');
+        const ideView = document.getElementById('ide-view');
+        if (ideView) ideView.classList.add('hidden');
+        if (hubView) hubView.classList.remove('hidden');
+    }
 
     const actionsContainer = document.getElementById('modal-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'none';
@@ -670,13 +674,8 @@ export function closeModal() {
         window._currentMonacoEditor = null;
     }
 
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('closing');
-        document.body.style.overflow = '';
-        document.getElementById('file-tree').innerHTML = '';
-        document.getElementById('code-viewer').innerHTML = '';
-    }, 300);
+    document.getElementById('file-tree').innerHTML = '';
+    document.getElementById('code-viewer').innerHTML = '';
 }
 
 export async function copyCloneCommand(url, btn) {

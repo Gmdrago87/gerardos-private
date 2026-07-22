@@ -204,24 +204,41 @@ async function initApp() {
 }
 
 function showLoginScreen() {
-    const loginScreen = document.getElementById('mac-login-screen');
-    const mainWindow = document.getElementById('mac-main-window');
+    const loginScreen = document.getElementById('login-view');
+    const hubView = document.getElementById('hub-view');
+    const ideView = document.getElementById('ide-view');
     const loadingScreen = document.getElementById('loading');
 
-    if (loadingScreen) loadingScreen.style.display = 'none';
-    if (mainWindow) mainWindow.style.opacity = '0.3';
+    if (loadingScreen) loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+        if (loadingScreen) loadingScreen.style.display = 'none';
+    }, 300);
+
+    if (hubView) hubView.classList.add('hidden');
+    if (ideView) ideView.classList.add('hidden');
     if (loginScreen) {
         loginScreen.classList.remove('hidden');
     }
 }
 
 function hideLoginScreen() {
-    const loginScreen = document.getElementById('mac-login-screen');
-    const mainWindow = document.getElementById('mac-main-window');
+    const loginScreen = document.getElementById('login-view');
+    const hubView = document.getElementById('hub-view');
 
     if (loginScreen) loginScreen.classList.add('hidden');
-    if (mainWindow) mainWindow.style.opacity = '1';
+    if (hubView) hubView.classList.remove('hidden');
 }
+
+window.openIdeView = function() {
+    const hubView = document.getElementById('hub-view');
+    const ideView = document.getElementById('ide-view');
+    if (hubView) hubView.classList.add('hidden');
+    if (ideView) ideView.classList.remove('hidden');
+};
+
+window.closeIdeView = function() {
+    closeModal();
+};
 
 async function handleLoginSubmit(e) {
     if (e) e.preventDefault();
