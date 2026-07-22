@@ -4,15 +4,10 @@ on:
   push:
     branches: [main]
 
-# This workflow ONLY runs on pushes to main branch
-# It does NOT run on pull requests or other branches
-
-# Environment variables for deployment
 env:
   NODE_VERSION: '20'
 
 jobs:
-  # Lint and test job
   lint-and-test:
     name: Lint and Test
     runs-on: ubuntu-latest
@@ -30,13 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Run JavaScript linter
-        run: npm run lint:js || echo "::warning:: JavaScript linting found issues"
-        
-      - name: Run CSS linter
-        run: npm run lint:css || echo "::warning:: CSS linting found issues"
+      - name: Run tests
+        run: npm test
 
-  # Build job
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -55,11 +46,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Build JavaScript
-        run: npm run build:js
-        
-      - name: Build CSS
-        run: npm run build:css
+      - name: Build All Assets
+        run: npm run build:all
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -67,21 +55,11 @@ jobs:
           name: build-artifacts
           path: public/
 
-  # Deploy job (only if secrets are available)
   deploy:
     name: Deploy to Cloudflare
     runs-on: ubuntu-latest
     needs: build
-    
-    # Only run if secrets are available
-    if: ${{ 
-      env.CLOUDFLARE_API_TOKEN != '' && 
-      env.CLOUDFLARE_ACCOUNT_ID != ''
-    }}
-    
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
     
     steps:
       - name: Checkout repository
@@ -96,8 +74,8 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@1
         with:
-          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: gerardos-private
           directory: public
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

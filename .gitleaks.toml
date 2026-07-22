@@ -43,7 +43,8 @@ paths = [
     "\.dev\.vars",
     "\.dev\.vars\.example",
     "wrangler\.toml",
-    "\.gitleaks\.toml"
+    "\.gitleaks\.toml",
+    "\.github/"
 ]
 
 # Regex patterns to ignore

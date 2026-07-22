@@ -1,6 +1,7 @@
 {
   "name": "gerardos-private",
   "version": "1.2.0",
+  "type": "module",
   "description": "GerardOS Private Dashboard - Versión privada y segura del explorador de proyectos GitHub",
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('.wrangler/tmp', { recursive: true, force: true })\"",
@@ -21,8 +22,11 @@
     "prepare": "npm run build:all"
   },
   "devDependencies": {
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.25.0",
     "wrangler": "^4.112.0"
+  },
+  "overrides": {
+    "sharp": "^0.35.0"
   },
   "engines": {
     "node": ">=18.0.0"
