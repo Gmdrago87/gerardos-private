@@ -1127,9 +1127,13 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
 function initStaticListeners() {
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
-    document.getElementById('load-more-btn').onclick = handleLoadMore;
+
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) loadMoreBtn.onclick = handleLoadMore;
+
     const searchInput = document.getElementById('search-input');
     if (searchInput) searchInput.oninput = debounce(() => runFilterAndSearch(), 300);
+
     const toggleBtn = document.getElementById('toggle-filters-btn');
     const filtersRow = document.getElementById('filters-row');
     if (toggleBtn && filtersRow) {
@@ -1145,31 +1149,27 @@ function initStaticListeners() {
         }
     });
 
-    // Listener para el botón de Guardar
     const saveBtn = document.getElementById('modal-save-btn');
     if (saveBtn) saveBtn.onclick = handleSaveFile;
 
-    // Listeners File Tree Toolbar
     const btnNewFile = document.getElementById('btn-new-file');
     if (btnNewFile) btnNewFile.onclick = handleNewFile;
+
     const btnDelFile = document.getElementById('btn-delete-file');
     if (btnDelFile) btnDelFile.onclick = handleDeleteFile;
 
-    // Modal Tabs
     document.querySelectorAll('.modal-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            // Desactivar todos
             document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-pane').forEach(p => {
                 p.classList.remove('active');
                 p.style.display = 'none';
             });
-            // Activar actual
             tab.classList.add('active');
             const target = document.getElementById(`tab-${tab.dataset.tab}`);
             if (target) {
                 target.classList.add('active');
-                target.style.display = tab.dataset.tab === 'code' ? 'flex' : 'flex';
+                target.style.display = 'flex';
 
                 if (tab.dataset.tab === 'kanban') loadKanbanIssues();
                 if (tab.dataset.tab === 'actions') loadActions();
@@ -1178,51 +1178,51 @@ function initStaticListeners() {
         });
     });
 
-    // Preview Refresh
     const btnRefreshPreview = document.getElementById('btn-refresh-preview');
     if (btnRefreshPreview) btnRefreshPreview.onclick = loadPreview;
 
-    // Kanban New Task
     const btnNewIssue = document.getElementById('btn-new-issue');
     if (btnNewIssue) btnNewIssue.onclick = handleNewIssue;
     setupKanbanDragAndDrop();
 
-    // Command Palette
     initCommandPalette();
 
-    // Listeners Login
     const loginBtn = document.getElementById('mac-login-github-btn');
     if (loginBtn) loginBtn.onclick = handleLoginSubmit;
 
-    // Listeners Logout
     const logoutBtn = document.getElementById('mac-logout-btn');
     if (logoutBtn) logoutBtn.onclick = logout;
 
-    // Listeners Crear Repo
     const openCreateBtn = document.getElementById('btn-open-create-repo');
     if (openCreateBtn) openCreateBtn.onclick = showCreateRepoModal;
 
     const cancelCreateBtn = document.getElementById('create-repo-cancel-btn');
     if (cancelCreateBtn) cancelCreateBtn.onclick = hideCreateRepoModal;
 
-    document.getElementById('create-repo-form').onsubmit = handleCreateRepoSubmit;
+    const createForm = document.getElementById('create-repo-form');
+    if (createForm) createForm.onsubmit = handleCreateRepoSubmit;
 }
 
 function initScrollBtn() {
     const scrollBtn = document.getElementById('scroll-to-top');
+    if (!scrollBtn) return;
     const winContent = document.getElementById('mac-window-content');
-    const useWindowScroll = document.body.classList.contains('web-mode');
-    if (winContent && !useWindowScroll) {
-        scrollBtn.onclick = () => winContent.scrollTo({ top: 0, behavior: 'smooth' });
-        setupScrollTimeout(winContent, scrollBtn);
-    } else {
-        scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-        setupScrollTimeout(window, scrollBtn);
-    }
+    const mainContent = document.getElementById('main-content');
+    const scrollTarget = winContent || mainContent || window;
+
+    scrollBtn.onclick = () => {
+        if (scrollTarget.scrollTo) {
+            scrollTarget.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+    setupScrollTimeout(scrollTarget, scrollBtn);
 }
 
 function setupScrollTimeout(target, btn) {
     let timeout;
+    if (!target || !btn) return;
     target.addEventListener('scroll', () => {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
@@ -1250,37 +1250,61 @@ function updateMacClock() {
 }
 
 function initWindowControls() {
-    document.getElementById('mac-btn-close').onclick = () => {
-        document.getElementById('mac-main-window').classList.add('mac-window--closed');
-    };
-    document.getElementById('mac-btn-minimize').onclick = () => {
-        document.getElementById('mac-main-window').classList.toggle('mac-window--minimized');
-    };
-    document.getElementById('mac-btn-maximize').onclick = () => {
-        document.getElementById('mac-main-window').classList.toggle('mac-window--fullscreen');
-    };
+    const btnClose = document.getElementById('mac-btn-close');
+    if (btnClose) {
+        btnClose.onclick = () => {
+            document.getElementById('mac-main-window')?.classList.add('mac-window--closed');
+        };
+    }
+    const btnMin = document.getElementById('mac-btn-minimize');
+    if (btnMin) {
+        btnMin.onclick = () => {
+            document.getElementById('mac-main-window')?.classList.toggle('mac-window--minimized');
+        };
+    }
+    const btnMax = document.getElementById('mac-btn-maximize');
+    if (btnMax) {
+        btnMax.onclick = () => {
+            document.getElementById('mac-main-window')?.classList.toggle('mac-window--fullscreen');
+        };
+    }
 }
 
 function initDockActions() {
-    document.getElementById('dock-home').onclick = () => {
-        const winContent = document.getElementById('mac-window-content');
-        if (winContent) winContent.scrollTo({ top: 0, behavior: 'smooth' });
-        document.getElementById('mac-main-window').classList.remove('mac-window--closed', 'mac-window--minimized');
-    };
-    document.getElementById('dock-profile').onclick = () => {
-        document.querySelector('.sidebar')?.scrollIntoView({ behavior: 'smooth' });
-    };
-    document.getElementById('dock-search').onclick = () => {
-        const input = document.getElementById('search-input');
-        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        input?.focus();
-    };
-    document.getElementById('dock-repos').onclick = () => {
-        document.getElementById('repos-grid')?.scrollIntoView({ behavior: 'smooth' });
-    };
-    document.getElementById('dock-settings')?.addEventListener('click', () => {
-        document.getElementById('settings-modal')?.classList.remove('hidden');
-    });
+    const dockHome = document.getElementById('dock-home');
+    if (dockHome) {
+        dockHome.onclick = () => {
+            const winContent = document.getElementById('mac-window-content') || document.getElementById('main-content');
+            if (winContent) winContent.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('mac-main-window')?.classList.remove('mac-window--closed', 'mac-window--minimized');
+        };
+    }
+    const dockProfile = document.getElementById('dock-profile');
+    if (dockProfile) {
+        dockProfile.onclick = () => {
+            document.querySelector('.sidebar')?.scrollIntoView({ behavior: 'smooth' });
+        };
+    }
+    const dockSearch = document.getElementById('dock-search');
+    if (dockSearch) {
+        dockSearch.onclick = () => {
+            const input = document.getElementById('search-input');
+            input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            input?.focus();
+        };
+    }
+    const dockRepos = document.getElementById('dock-repos');
+    if (dockRepos) {
+        dockRepos.onclick = () => {
+            document.getElementById('repos-grid')?.scrollIntoView({ behavior: 'smooth' });
+        };
+    }
+    const dockSettings = document.getElementById('dock-settings');
+    if (dockSettings) {
+        dockSettings.onclick = () => {
+            document.getElementById('settings-modal')?.classList.remove('hidden');
+        };
+    }
 }
 
 function exposeGlobals() {
