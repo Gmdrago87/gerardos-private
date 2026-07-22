@@ -1,3 +1,8 @@
+/**
+ * UI Module for GerardOS Private Dashboard
+ * Cleaned version - Removed macOS design references
+ */
+
 import { LANG_COLORS, FILTER_BTN_INACTIVE, FILTER_BTN_ACTIVE, FILTER_BTN_ALL_ACTIVE, escapeHtml, sanitizeUrl, highlightText, CACHE_KEY_TIME } from './utils.js';
 import { getState } from './state.js';
 import { sendAIMessage } from './ai_ui.js';
@@ -24,45 +29,58 @@ export function updateLoadingStatus(message) {
 
 export function hideLoading() {
     const loader = document.getElementById('loading');
-    loader.style.opacity = '0';
-    setTimeout(() => {
-        loader.style.display = 'none';
-        document.getElementById('main-content').style.opacity = '1';
-    }, 300);
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+            // Changed from main-content to hub-view to match actual HTML
+            const hubView = document.getElementById('hub-view');
+            if (hubView) hubView.style.opacity = '1';
+        }, 300);
+    }
 }
 
 export function showError(msg) {
-    document.getElementById('loading').innerHTML = `
+    const loader = document.getElementById('loading');
+    if (loader) {
+        loader.innerHTML = `
         <div class="error-screen">
             <p class="error-title">¡Ups!</p>
             <p class="error-message">${escapeHtml(msg)}</p>
             <button id="retry-btn" class="btn-retry">Reintentar</button>
         </div>
     `;
-    document.getElementById('retry-btn').addEventListener('click', () => location.reload());
+        const retryBtn = document.getElementById('retry-btn');
+        if (retryBtn) retryBtn.addEventListener('click', () => location.reload());
+    }
 }
 
 export function renderProfile(user) {
-    const avatarSummary = document.getElementById('avatar-summary');
-    if (avatarSummary && user.avatar_url) avatarSummary.src = user.avatar_url;
-    if (avatarImg) {
-        avatarImg.src = user.avatar_url || 'https://avatars.githubusercontent.com/u/195803064?v=4';
-        avatarImg.alt = `${user.name || user.login || 'Gerard'} - Avatar`;
-        avatarImg.onerror = () => {
-            avatarImg.onerror = null; // Previene el bucle infinito si la imagen de respaldo también falla
-            avatarImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%238b5cf6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
-        };
+    // Updated to use actual element IDs from HTML
+    const avatarEl = document.getElementById('avatar');
+    const avatarMobileEl = document.getElementById('avatar-mobile');
+    const nameEl = document.getElementById('name');
+    const usernameEl = document.getElementById('username');
+    const githubLinkEl = document.getElementById('github-link');
+
+    if (user) {
+        if (avatarEl && user.avatar_url) {
+            avatarEl.src = user.avatar_url;
+            avatarEl.alt = `${user.name || user.login || 'Gerard'} - Avatar`;
+        }
+        if (avatarMobileEl && user.avatar_url) {
+            avatarMobileEl.src = user.avatar_url;
+            avatarMobileEl.alt = `${user.name || user.login || 'Gerard'} - Avatar`;
+        }
+        if (nameEl) nameEl.textContent = user.name || 'GerardMaestre';
+        if (usernameEl) usernameEl.textContent = `@${user.login || 'GerardMaestre'}`;
+        if (githubLinkEl) githubLinkEl.href = user.html_url || 'https://github.com/GerardMaestre';
     }
-    document.getElementById('name').textContent = user.name || 'GerardMaestre';
-    document.getElementById('username').textContent = `@${user.login || 'GerardMaestre'}`;
-    animateCounter(document.getElementById('followers'), user.followers || 0, 1000);
-    animateCounter(document.getElementById('following'), user.following || 0, 1000);
-    document.getElementById('github-link').href = user.html_url || 'https://github.com/GerardMaestre';
 }
 
 export function calculateStats(repos) {
-    const totalStars = repos.reduce((acc, repo) => acc + repo.stargazers_count, 0);
-    const totalForks = repos.reduce((acc, repo) => acc + repo.forks_count, 0);
+    const totalStars = repos.reduce((acc, repo) => acc + (repo.stargazers_count || 0), 0);
+    const totalForks = repos.reduce((acc, repo) => acc + (repo.forks_count || 0), 0);
     const langs = repos.reduce((acc, r) => {
         if (r.language) acc[r.language] = (acc[r.language] || 0) + 1;
         return acc;
@@ -70,10 +88,13 @@ export function calculateStats(repos) {
     const topLang = Object.keys(langs).length > 0
         ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b)
         : 'N/A';
+    
+    // Updated to use actual element IDs from HTML
     animateCounter(document.getElementById('total-repos'), repos.length, 1200);
     animateCounter(document.getElementById('total-stars'), totalStars, 1500);
     animateCounter(document.getElementById('total-forks'), totalForks, 1500);
-    document.getElementById('top-lang').textContent = topLang;
+    const topLangEl = document.getElementById('top-lang');
+    if (topLangEl) topLangEl.textContent = topLang;
 }
 
 export function renderPortfolioIntelligence(repos) {
@@ -111,7 +132,18 @@ function getPortfolioNextMove({ activityScore, languages, launchReadyRepos, repo
 
 export function setupFilters(repos, onFilterClick) {
     const languages = [...new Set(repos.map(r => r.language).filter(Boolean))];
-    const container = document.getElementById('filter-container');
+    // Create filter container if it doesn't exist
+    let container = document.getElementById('filter-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'filter-container';
+        container.className = 'language-group';
+        const searchWrapper = document.getElementById('hub-scroll-container');
+        if (searchWrapper) {
+            searchWrapper.insertBefore(container, searchWrapper.firstChild);
+        }
+    }
+    
     container.innerHTML = '';
     const allBtn = document.createElement('button');
     allBtn.className = FILTER_BTN_ALL_ACTIVE;
@@ -130,56 +162,56 @@ export function setupFilters(repos, onFilterClick) {
 }
 
 export function showDataSourceIndicator(source) {
+    // Simplified - just log for now as the indicator elements don't exist in HTML
     const displayMessages = {
         'cache': 'Caché del navegador',
         'api': 'GitHub API',
         'fallback': 'Caché expirada'
     };
-    const sourceText = document.getElementById('data-source-text');
-    if (sourceText) {
-        sourceText.textContent = `Fuente: ${displayMessages[source] || 'GitHub API'}`;
-    }
-    const indicator = document.getElementById('data-source-indicator');
-    if (indicator) indicator.classList.remove('hidden');
-    updateCacheAgeText(source);
+    console.log('Data source:', displayMessages[source] || 'GitHub API');
 }
 
-function updateCacheAgeText(source) {
-    const cacheAgeText = document.getElementById('cache-age-text');
-    if (!cacheAgeText) return;
-    const timestamp = localStorage.getItem(CACHE_KEY_TIME);
-    if (timestamp && (source === 'cache' || source === 'fallback')) {
-        const cacheAge = Math.floor((Date.now() - parseInt(timestamp)) / 60000);
-        const displayAge = cacheAge < 60 ? `${cacheAge} min` : `${Math.floor(cacheAge / 60)}h ${cacheAge % 60}min`;
-        cacheAgeText.textContent = `· Última actualización: hace ${displayAge}`;
-    } else {
-        cacheAgeText.textContent = source === 'api' ? '· Recién actualizado' : '';
-    }
-}
-
-export function showToast(title = 'Modo Caché', message = 'Datos almacenados localmente', type = 'info') {
+export function showToast(title = 'Notificación', message = 'Mensaje de estado.', type = 'info') {
     const toast = document.getElementById('toast');
     if (!toast) return;
-    const iconMap = { 'info': 'wifi-off', 'warning': 'alert-triangle', 'success': 'check-circle', 'error': 'x-circle' };
-    const colorMap = { 'info': 'toast__icon--info', 'warning': 'toast__icon--warning', 'success': 'toast__icon--success', 'error': 'toast__icon--error' };
-    const iconElement = toast.querySelector('[data-lucide]');
-    if (iconElement) {
-        iconElement.setAttribute('data-lucide', iconMap[type] || 'wifi-off');
-        iconElement.setAttribute('class', colorMap[type] || 'toast__icon--info');
+    
+    const iconMap = { 'info': 'info', 'warning': 'warning', 'success': 'check_circle', 'error': 'error' };
+    const colorMap = { 
+        'info': 'text-primary', 
+        'warning': 'text-yellow-400', 
+        'success': 'text-green-400', 
+        'error': 'text-red-400' 
+    };
+    
+    const iconWrapper = toast.querySelector('#toast-icon-wrapper');
+    const iconEl = toast.querySelector('#toast-icon');
+    const titleEl = toast.querySelector('#toast-title');
+    const messageEl = toast.querySelector('#toast-message');
+    
+    if (iconEl) {
+        iconEl.textContent = iconMap[type] || 'info';
     }
-    toast.querySelector('.toast__title').textContent = title;
-    toast.querySelector('.toast__message').textContent = message;
-    toast.classList.remove('hidden');
-    toast.classList.add('toast--visible');
-    if (window.lucide) window.lucide.createIcons();
-    const closeBtn = toast.querySelector('.toast__close');
-    if (closeBtn) closeBtn.onclick = () => dismissToast(toast);
-    setTimeout(() => dismissToast(toast), 5000);
-}
-
-function dismissToast(toast) {
-    toast.classList.remove('toast--visible');
-    setTimeout(() => toast.classList.add('hidden'), 500);
+    if (iconWrapper) {
+        iconWrapper.className = `w-10 h-10 rounded-lg flex items-center justify-center ${colorMap[type] || 'text-primary'} bg-${type}-500/20`;
+    }
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.textContent = message;
+    
+    toast.classList.remove('hidden', 'translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    
+    const closeBtn = toast.querySelector('#toast-close');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            toast.classList.add('hidden', 'translate-y-20', 'opacity-0');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+        };
+    }
+    
+    setTimeout(() => {
+        toast.classList.add('hidden', 'translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 5000);
 }
 
 function getBadgeUrl(topic) {
@@ -242,7 +274,6 @@ export function renderRepos(repos, append = false, searchTerm = '', onCardClick,
     if (repos.length === 0) {
         grid.innerHTML = `<div class="repos-grid__empty">Sin resultados encontrados</div>`;
         if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
-        document.getElementById('showing-count').textContent = '';
         return;
     }
     const { visibleCount } = getState();
@@ -267,17 +298,13 @@ function updateLoadMoreUi(total, visible, btn, append) {
             btn.classList.add('hidden');
         }
     }
-    const countEl = document.getElementById('showing-count');
-    if (countEl) countEl.textContent = `Mostrando ${Math.min(visible, total)} de ${total}`;
-    if (window.lucide) window.lucide.createIcons();
-    if (!append) setTimeout(() => setupIntersectionObserver(), 100);
 }
 
 function createCardElement(repo, searchTerm) {
     const card = document.createElement('div');
-    card.className = 'repo-card';
+    card.className = 'repo-card glass-panel squircle';
     card.dataset.repoName = repo.name;
-    const langColor = LANG_COLORS[repo.language] || '#ffffff';
+    const langColor = LANG_COLORS[repo.language] || '#8b90a0';
     const repoName = escapeHtml(repo.name);
     const repoDesc = escapeHtml(repo.description) || 'Sin descripción disponible.';
     const highlightedName = searchTerm ? highlightText(repoName, searchTerm) : repoName;
@@ -300,625 +327,408 @@ function getUpdateBadgeText(pushedTimeOrString) {
 }
 
 function getWebUrl(homepage) {
-    if (!homepage || homepage.trim() === '') return '#';
-    const trimmed = homepage.trim();
-    return sanitizeUrl(trimmed.startsWith('http') ? trimmed : 'https://' + trimmed);
+    if (!homepage) return '#';
+    if (homepage.startsWith('http')) return sanitizeUrl(homepage);
+    return `https://${homepage}`;
 }
 
 function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
-    const ownerLogin = (repo.owner && repo.owner.login) ? repo.owner.login : 'GerardMaestre';
-    const htmlUrl = sanitizeUrl(repo.html_url);
-    const cloneUrl = sanitizeUrl(repo.clone_url);
-    const safeRepoName = escapeHtml(repo.name).replace(/"/g, '&quot;');
-
+    const stars = repo.stargazers_count || 0;
+    const forks = repo.forks_count || 0;
+    const language = repo.language || 'Unknown';
+    const langDotColor = LANG_COLORS[language] || '#8b90a0';
+    
     return `
-        <div class="glass-panel squircle p-6 magnetic-hover glass-panel-hover flex flex-col gap-4 group cursor-pointer relative overflow-hidden">
-            <div class="absolute -right-20 -top-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-500 pointer-events-none"></div>
-            
-            <div class="flex justify-between items-start z-10 gap-3">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 squircle-sm bg-surface-container-high flex items-center justify-center border border-white/5 flex-shrink-0">
-                        <span class="material-symbols-outlined text-primary text-[24px]">folder</span>
-                    </div>
-                    <div>
-                        <h3 class="font-headline-sm text-headline-sm text-white group-hover:text-primary transition-colors">${name}</h3>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant truncate-2-lines">${desc}</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <span class="font-label-mono text-label-mono text-on-surface-variant bg-white/5 px-2 py-1 rounded">${updateBadge}</span>
-                    <div class="flex items-center gap-1 ${repo.private ? 'text-tertiary-container' : 'text-secondary'}">
-                        <span class="w-2 h-2 rounded-full ${repo.private ? 'bg-tertiary-container shadow-[0_0_8px_#ff5545]' : 'status-dot-success'}"></span>
-                        <span class="font-label-mono text-label-mono">${repo.private ? 'Privado' : 'Público'}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 z-10 border-t border-white/5 pt-4">
-                <div>
-                    <p class="font-label-mono text-label-mono text-on-surface-variant opacity-70 mb-1">LANGUAGE</p>
-                    <p class="font-body-sm text-body-sm text-white flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 6px ${langColor}"></span>
-                        <span>${repo.language ? escapeHtml(repo.language) : 'N/A'}</span>
-                    </p>
-                </div>
-                <div>
-                    <p class="font-label-mono text-label-mono text-on-surface-variant opacity-70 mb-1">METRICS</p>
-                    <p class="font-body-sm text-body-sm text-white flex items-center gap-3">
-                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-yellow-400">star</span> ${repo.stargazers_count}</span>
-                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-primary">account_tree</span> ${repo.forks_count}</span>
-                    </p>
-                </div>
-                <div class="flex justify-end items-center gap-1.5 flex-wrap">
-                    <button class="repo-card__clone-btn p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" data-clone-url="${cloneUrl}" title="Copiar 'git clone'"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
-                    ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" title="Web"><span class="material-symbols-outlined text-[18px]">language</span></a>` : ''}
-                    <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" title="GitHub"><span class="material-symbols-outlined text-[18px]">open_in_new</span></a>
-                    <a href="https://vscode.dev/github/${encodeURIComponent(ownerLogin)}/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" title="VS Code Web"><span class="material-symbols-outlined text-[18px]">terminal</span></a>
-                    <button class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><span class="material-symbols-outlined text-[18px]">${repo.private ? 'lock_open' : 'lock'}</span></button>
-                    <button class="p-2 rounded squircle-sm hover:bg-white/10 text-red-400 hover:text-red-300 transition-colors" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><span class="material-symbols-outlined text-[18px]">delete</span></button>
-                </div>
-            </div>
+    <div class="repo-card__header">
+        <div class="repo-card__folder-icon">
+            <span class="material-symbols-outlined">folder</span>
         </div>
-    `;
-}
-
-let cardObserver = null;
-
-export function setupIntersectionObserver() {
-    if (cardObserver) {
-        cardObserver.disconnect();
-    }
-    cardObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-                cardObserver.unobserve(entry.target);
-            }
-        });
-    }, { root: null, rootMargin: '0px', threshold: 0.1 });
-    document.querySelectorAll('.repo-card').forEach(card => {
-        card.classList.add('fade-in-hidden');
-        cardObserver.observe(card);
-    });
-}
-
-function buildHierarchy(files) {
-    const root = {};
-    files.forEach(file => {
-        const parts = file.path.split('/');
-        let current = root;
-        parts.forEach((part, index) => {
-            if (!current[part]) {
-                current[part] = {
-                    name: part,
-                    type: index === parts.length - 1 ? 'file' : 'folder',
-                    path: file.path,
-                    children: {}
-                };
-            }
-            current = current[part].children;
-        });
-    });
-    return root;
-}
-
-function generateTreeHTML(node, repoName, branch) {
-    const entries = Object.values(node).sort((a, b) => {
-        if (a.type === b.type) return a.name.localeCompare(b.name);
-        return a.type === 'folder' ? -1 : 1;
-    });
-    return entries.map(item => {
-        if (item.type === 'folder') return generateFolderHtml(item, repoName, branch);
-        return generateFileHtml(item, repoName, branch);
-    }).join('');
-}
-
-function generateFolderHtml(item, repoName, branch) {
-    return `
-        <details class="tree-folder">
-            <summary class="tree-folder__summary">
-                <i data-lucide="folder" class="tree-folder__icon tree-folder__icon--closed"></i>
-                <i data-lucide="folder-open" class="tree-folder__icon tree-folder__icon--open"></i>
-                <span class="tree-folder__name">${escapeHtml(item.name)}</span>
-            </summary>
-            <div class="tree-folder__children">
-                ${generateTreeHTML(item.children, repoName, branch)}
-            </div>
-        </details>
-    `;
-}
-
-function generateFileHtml(item, repoName, branch) {
-    return `
-        <div class="tree-file file-node"
-             data-repo="${escapeHtml(repoName).replace(/"/g, '&quot;')}"
-             data-branch="${escapeHtml(branch).replace(/"/g, '&quot;')}"
-             data-path="${escapeHtml(item.path).replace(/"/g, '&quot;')}">
-            <i data-lucide="file-code"></i>
-            ${escapeHtml(item.name)}
+        <div class="repo-card__actions">
+            ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link">
+                <span class="material-symbols-outlined">public</span>
+                Web
+            </a>` : ''}
+            <button class="repo-card__clone-btn" data-clone-url="${repo.clone_url || repo.html_url}">
+                <span class="material-symbols-outlined">content_copy</span>
+            </button>
         </div>
+    </div>
+    <h3 class="repo-card__name">${name}</h3>
+    <p class="repo-card__description">${desc}</p>
+    <div class="repo-card__update-row">
+        <span class="repo-card__update-tag">
+            <span class="material-symbols-outlined">schedule</span>
+            ${updateBadge}
+        </span>
+    </div>
+    ${repo.topics && repo.topics.length > 0 ? generateBadgesHtml(repo.topics) : '<div class="repo-card__badges-empty"></div>'}
+    <div class="repo-card__footer">
+        <div class="repo-card__language">
+            <span class="repo-card__lang-dot" style="background-color: ${langDotColor}"></span>
+            <span>${language}</span>
+        </div>
+        <div class="repo-card__stats">
+            <span class="repo-card__stat">
+                <span class="material-symbols-outlined">star</span>
+                ${stars}
+            </span>
+            <span class="repo-card__stat">
+                <span class="material-symbols-outlined">call_split</span>
+                ${forks}
+            </span>
+        </div>
+    </div>
     `;
 }
 
 export function prepareRepoViewer(repoName) {
-    if (window.openIdeView) window.openIdeView();
-    const titleEl = document.getElementById('ide-repo-name');
-    if (titleEl) titleEl.textContent = repoName;
-    document.getElementById('file-tree').innerHTML = '<div class="modal__loading--pulse">Cargando estructura...</div>';
-    const viewer = document.getElementById('code-viewer');
-    viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Buscando README...</p></div>';
-    if (window.lucide) window.lucide.createIcons();
+    // Show IDE view and set up for repository viewing
+    const ideView = document.getElementById('ide-view');
+    const hubView = document.getElementById('hub-view');
+    
+    if (hubView) hubView.classList.add('hidden');
+    if (ideView) ideView.classList.remove('hidden');
+    
+    // Update IDE header
+    const repoNameEl = document.getElementById('ide-repo-name');
+    if (repoNameEl) repoNameEl.textContent = repoName;
+    
+    const filePathEl = document.getElementById('ide-file-path');
+    if (filePathEl) filePathEl.textContent = 'Selecciona un archivo';
 }
 
 export function renderRepoTree(repo, treeData, onFileClick, branch) {
     const fileTree = document.getElementById('file-tree');
-    const blobs = treeData.tree.filter(i => i.type === 'blob');
-    const hierarchy = buildHierarchy(blobs);
-    fileTree.innerHTML = generateTreeHTML(hierarchy, repo.name, branch || repo.default_branch || 'main');
-    if (window.lucide) window.lucide.createIcons();
-    setupFileTreeListeners(onFileClick);
+    if (!fileTree) return [];
+    
+    fileTree.innerHTML = '';
+    const blobs = [];
+    
+    if (treeData && treeData.tree) {
+        const rootUl = document.createElement('ul');
+        rootUl.className = 'tree-root';
+        
+        treeData.tree.forEach(item => {
+            if (item.type === 'blob') {
+                blobs.push(item);
+                const li = document.createElement('li');
+                li.className = 'tree-file';
+                li.dataset.repo = repo.name;
+                li.dataset.path = item.path;
+                li.onclick = () => onFileClick(li, branch);
+                
+                const icon = document.createElement('span');
+                icon.className = 'material-symbols-outlined';
+                icon.textContent = 'description';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = item.path;
+                
+                li.appendChild(icon);
+                li.appendChild(nameSpan);
+                rootUl.appendChild(li);
+            } else if (item.type === 'tree') {
+                // For folders, we'd need recursive rendering - simplified for now
+                const li = document.createElement('li');
+                li.className = 'tree-folder';
+                
+                const summary = document.createElement('summary');
+                summary.className = 'tree-folder__summary';
+                
+                const icon = document.createElement('span');
+                icon.className = 'material-symbols-outlined tree-folder__icon';
+                icon.textContent = 'folder';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'tree-folder__name';
+                nameSpan.textContent = item.path;
+                
+                summary.appendChild(icon);
+                summary.appendChild(nameSpan);
+                li.appendChild(summary);
+                rootUl.appendChild(li);
+            }
+        });
+        
+        fileTree.appendChild(rootUl);
+    }
+    
     return blobs;
 }
 
-function setupFileTreeListeners(onFileClick) {
-    const tree = document.getElementById('file-tree');
-    tree.onclick = (e) => {
-        const fileNode = e.target.closest('.file-node');
-        if (fileNode) onFileClick(fileNode);
-    };
-}
-
 export function showFileLoading() {
-    const viewer = document.getElementById('code-viewer');
-    viewer.innerHTML = `<div class="modal__loading"><div class="loading-spinner-small" style="width:1.5rem;height:1.5rem;border:2px solid var(--color-primary);border-top-color:transparent;border-radius:9999px;animation:spin 1s linear infinite"></div></div>`;
-}
-
-let currentEditor = null;
-let monacoCheckInterval = null;
-
-function getLanguageFromPath(path) {
-    const ext = path.split('.').pop().toLowerCase();
-    const map = {
-        'js': 'javascript', 'json': 'json', 'html': 'html', 'css': 'css',
-        'md': 'markdown', 'py': 'python', 'ts': 'typescript', 'yaml': 'yaml', 'yml': 'yaml',
-        'sh': 'shell', 'bash': 'shell', 'c': 'c', 'cpp': 'cpp', 'cs': 'csharp', 'java': 'java'
-    };
-    return map[ext] || 'plaintext';
+    const codeViewer = document.getElementById('code-viewer');
+    if (codeViewer) {
+        codeViewer.innerHTML = `
+            <div class="modal__loading">
+                <span class="material-symbols-outlined" style="font-size: 2rem; animation: spin 1s linear infinite;">progress_activity</span>
+                <p class="modal__loading-text">Cargando archivo...</p>
+            </div>
+        `;
+    }
 }
 
 export function renderFileContent(content, path, element) {
-    document.querySelectorAll('.file-node').forEach(d => d.classList.remove('tree-file--active'));
-    if (element) element.classList.add('tree-file--active');
-
-    const viewer = document.getElementById('code-viewer');
-
-    // Show save button
-    const actionsContainer = document.getElementById('modal-actions-container');
-    if (actionsContainer) actionsContainer.style.display = 'flex';
-
-    // Carga perezosa del motor Monaco si aún no está iniciado
-    if (window.loadMonacoEditor) window.loadMonacoEditor();
-
-    if (window.monaco && window.monacoReady) {
-        viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
-        initMonaco(content, path);
+    const codeViewer = document.getElementById('code-viewer');
+    if (!codeViewer) return;
+    
+    // Highlight active file in tree
+    document.querySelectorAll('.tree-file').forEach(file => {
+        file.classList.remove('tree-file--active');
+    });
+    if (element) {
+        element.classList.add('tree-file--active');
+    }
+    
+    // Update file path display
+    const filePathEl = document.getElementById('ide-file-path');
+    if (filePathEl) filePathEl.textContent = path;
+    
+    // Render content
+    const ext = path.split('.').pop().toLowerCase();
+    const isMarkdown = ['md', 'markdown'].includes(ext);
+    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext);
+    
+    if (isImage) {
+        codeViewer.innerHTML = `<img src="${content}" class="max-w-full max-h-full object-contain" alt="${path}">`;
+    } else if (isMarkdown) {
+        renderReadme(content);
     } else {
-        viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Cargando editor...</p></div>';
-        if (window.lucide) window.lucide.createIcons();
-
-        let attempts = 0;
-        if (monacoCheckInterval) clearInterval(monacoCheckInterval);
-        monacoCheckInterval = setInterval(() => {
-            attempts++;
-            if (window.monaco && window.monacoReady) {
-                clearInterval(monacoCheckInterval);
-                monacoCheckInterval = null;
-                viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
-                initMonaco(content, path);
-            } else if (attempts > 150) { // 15 segundos
-                clearInterval(monacoCheckInterval);
-                monacoCheckInterval = null;
-                const escaped = content.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', '\'': '&#039;' }[m]));
-                viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
-            }
-        }, 100);
+        const pre = document.createElement('pre');
+        pre.textContent = content;
+        pre.className = 'code-content';
+        codeViewer.innerHTML = '';
+        codeViewer.appendChild(pre);
     }
-}
-
-function initMonaco(content, path) {
-    if (currentEditor) {
-        currentEditor.dispose();
-    }
-    const container = document.getElementById('monaco-container');
-    if (!container) return;
-
-    currentEditor = window.monaco.editor.create(container, {
-        value: content,
-        language: getLanguageFromPath(path),
-        theme: 'vs-dark',
-        automaticLayout: true,
-        minimap: { enabled: false },
-        fontSize: 14,
-        fontFamily: "'JetBrains Mono', monospace",
-        scrollBeyondLastLine: false,
-        roundedSelection: false,
-        padding: { top: 16, bottom: 16 }
-    });
-    window._currentMonacoEditor = currentEditor;
-
-    // AI Copilot Actions
-    currentEditor.addAction({
-        id: 'ai-explain',
-        label: '🤖 IA: Explicar Código',
-        contextMenuGroupId: 'navigation',
-        contextMenuOrder: 1.5,
-        run: (ed) => handleAiAction(ed, 'explain')
-    });
-
-    currentEditor.addAction({
-        id: 'ai-refactor',
-        label: '🤖 IA: Refactorizar',
-        contextMenuGroupId: 'navigation',
-        contextMenuOrder: 1.6,
-        run: (ed) => handleAiAction(ed, 'refactor')
-    });
-
-    currentEditor.addAction({
-        id: 'ai-find-bugs',
-        label: '🤖 IA: Buscar Bugs',
-        contextMenuGroupId: 'navigation',
-        contextMenuOrder: 1.7,
-        run: (ed) => handleAiAction(ed, 'find_bugs')
-    });
-
-    currentEditor.addAction({
-        id: 'ai-comment',
-        label: '🤖 IA: Añadir Comentarios',
-        contextMenuGroupId: 'navigation',
-        contextMenuOrder: 1.8,
-        run: (ed) => handleAiAction(ed, 'comment')
-    });
-}
-
-async function handleAiAction(editor, action) {
-    let code = editor.getModel().getValueInRange(editor.getSelection());
-    if (!code || code.trim() === '') {
-        code = editor.getValue();
-    }
-
-    const modal = document.getElementById('ai-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-
-    sendAIMessage(code, action);
-}
-
-export function getCurrentEditorContent() {
-    return currentEditor ? currentEditor.getValue() : null;
 }
 
 export function showViewerError(message, type = 'error') {
-    const viewer = document.getElementById('code-viewer');
-    const colorClass = type === 'warning' ? 'modal__message--warning' : 'modal__error';
-    viewer.replaceChildren();
-
-    const container = document.createElement('div');
-    container.className = colorClass;
-    if (type !== 'warning') {
-        const icon = document.createElement('i');
-        icon.setAttribute('data-lucide', 'alert-triangle');
-        container.appendChild(icon);
-    }
-    container.appendChild(document.createTextNode(message));
-    viewer.appendChild(container);
-
-    if (window.lucide) window.lucide.createIcons();
+    const codeViewer = document.getElementById('code-viewer');
+    if (!codeViewer) return;
+    
+    const iconMap = { 'error': 'error', 'warning': 'warning', 'info': 'info' };
+    const colorMap = { 'error': 'text-red-400', 'warning': 'text-yellow-400', 'info': 'text-primary' };
+    
+    codeViewer.innerHTML = `
+        <div class="modal__error">
+            <span class="material-symbols-outlined ${colorMap[type] || 'text-red-400'}" style="font-size: 2rem;">${iconMap[type] || 'error'}</span>
+            <p>${message}</p>
+        </div>
+    `;
 }
 
-export async function renderReadme(content) {
-    const viewer = document.getElementById('code-viewer');
-    const actionsContainer = document.getElementById('modal-actions-container');
-    if (actionsContainer) actionsContainer.style.display = 'none';
-    if (!window.marked) await importDynamicMarked();
-    if (!window.DOMPurify) await importDynamicDOMPurify();
-    viewer.innerHTML = `
-        <div class="h-full overflow-auto custom-scroll">
-            <div class="markdown-body">
-                ${window.DOMPurify.sanitize(window.marked.parse(content))}
-            </div>
-        </div>`;
-}
-
-function importDynamicMarked() {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load marked'));
-        document.head.appendChild(script);
-    });
-}
-
-function importDynamicDOMPurify() {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load DOMPurify'));
-        document.head.appendChild(script);
-    });
+export function renderReadme(content) {
+    const codeViewer = document.getElementById('code-viewer');
+    if (!codeViewer) return;
+    
+    // Simple markdown rendering - for full markdown, you'd need a library
+    codeViewer.innerHTML = `
+        <div class="markdown-body">
+            ${escapeHtml(content)}
+        </div>
+    `;
 }
 
 export function closeModal() {
-    if (window.closeIdeView) window.closeIdeView();
-    else {
-        const hubView = document.getElementById('hub-view');
-        const ideView = document.getElementById('ide-view');
-        if (ideView) ideView.classList.add('hidden');
-        if (hubView) hubView.classList.remove('hidden');
-    }
-
-    const actionsContainer = document.getElementById('modal-actions-container');
-    if (actionsContainer) actionsContainer.style.display = 'none';
-
-    if (monacoCheckInterval) {
-        clearInterval(monacoCheckInterval);
-        monacoCheckInterval = null;
-    }
-
-    if (currentEditor) {
-        currentEditor.dispose();
-        currentEditor = null;
-        window._currentMonacoEditor = null;
-    }
-
-    document.getElementById('file-tree').innerHTML = '';
-    document.getElementById('code-viewer').innerHTML = '';
+    const ideView = document.getElementById('ide-view');
+    const hubView = document.getElementById('hub-view');
+    
+    if (ideView) ideView.classList.add('hidden');
+    if (hubView) hubView.classList.remove('hidden');
+    
+    // Reset current repo info
+    currentRepoInfo = null;
+    currentBranch = 'main';
+    currentFilePath = null;
 }
 
-export async function copyCloneCommand(url, btn) {
-    const command = `git clone ${url}`;
-    try {
-        await navigator.clipboard.writeText(command);
-        const originalContent = btn.innerHTML;
-        btn.innerHTML = `<i data-lucide="check" class="clone-success-icon"></i>`;
-        if (window.lucide) window.lucide.createIcons();
-        setTimeout(() => {
-            btn.innerHTML = originalContent;
-            if (window.lucide) window.lucide.createIcons();
-        }, 2000);
-    } catch (err) {
-        showCustomPrompt({
-            title: 'Comando de Clonado',
-            icon: 'terminal',
-            message: 'Copia manualmente el siguiente comando:',
-            fields: [{ name: 'cmd', label: 'Comando', value: command, readOnly: true }],
-            confirmText: 'Copiar',
-            cancelText: 'Cerrar'
-        });
-    }
-}
-
-/* ============================================
-   SISTEMA DE PANELES MODALES PERSONALIZADOS (GLASSMORPHISM)
-   ============================================ */
-
-export function showCustomAlert({ title = 'Aviso', icon = 'info', message = '', confirmText = 'Entendido', type = 'info' } = {}) {
-    return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-modal-overlay';
-
-        let iconColorClass = 'modal-icon--info';
-        if (type === 'error') iconColorClass = 'modal-icon--danger';
-        if (type === 'success') iconColorClass = 'modal-icon--success';
-        if (type === 'warning') iconColorClass = 'modal-icon--warning';
-
-        overlay.innerHTML = `
-            <div class="custom-modal-backdrop"></div>
-            <div class="custom-modal-container glass-panel">
-                <div class="custom-modal-header">
-                    <div class="custom-modal-icon ${iconColorClass}">
-                        <i data-lucide="${escapeHtml(icon)}"></i>
-                    </div>
-                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
-                </div>
-                <div class="custom-modal-body">
-                    <p class="custom-modal-message">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-                </div>
-                <div class="custom-modal-footer">
-                    <button type="button" class="btn-submit custom-modal-btn-confirm">${escapeHtml(confirmText)}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-        if (window.lucide) window.lucide.createIcons();
-
-        const close = () => {
-            overlay.classList.add('closing');
+export function copyCloneCommand(url, btn) {
+    navigator.clipboard.writeText(url).then(() => {
+        if (btn) {
+            btn.innerHTML = '<span class="material-symbols-outlined">check</span>';
             setTimeout(() => {
-                overlay.remove();
-                resolve();
-            }, 200);
-        };
-
-        const confirmBtn = overlay.querySelector('.custom-modal-btn-confirm');
-        confirmBtn.focus();
-        confirmBtn.addEventListener('click', close);
-        overlay.querySelector('.custom-modal-backdrop').addEventListener('click', close);
-
-        overlay.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' || e.key === 'Enter') {
-                e.preventDefault();
-                close();
-            }
-        });
-    });
-}
-
-export function showCustomConfirm({ title = 'Confirmar acción', icon = 'help-circle', message = '¿Estás seguro?', confirmText = 'Confirmar', cancelText = 'Cancelar', isDanger = false } = {}) {
-    return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-modal-overlay';
-
-        const iconColorClass = isDanger ? 'modal-icon--danger' : 'modal-icon--info';
-        const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-submit';
-
-        overlay.innerHTML = `
-            <div class="custom-modal-backdrop"></div>
-            <div class="custom-modal-container glass-panel">
-                <div class="custom-modal-header">
-                    <div class="custom-modal-icon ${iconColorClass}">
-                        <i data-lucide="${escapeHtml(icon)}"></i>
-                    </div>
-                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
-                </div>
-                <div class="custom-modal-body">
-                    <p class="custom-modal-message">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-                </div>
-                <div class="custom-modal-footer">
-                    <button type="button" class="btn-cancel custom-modal-btn-cancel">${escapeHtml(cancelText)}</button>
-                    <button type="button" class="${confirmBtnClass} custom-modal-btn-confirm">${escapeHtml(confirmText)}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-        if (window.lucide) window.lucide.createIcons();
-
-        const close = (result) => {
-            overlay.classList.add('closing');
-            setTimeout(() => {
-                overlay.remove();
-                resolve(result);
-            }, 200);
-        };
-
-        overlay.querySelector('.custom-modal-btn-confirm').addEventListener('click', () => close(true));
-        overlay.querySelector('.custom-modal-btn-cancel').addEventListener('click', () => close(false));
-        overlay.querySelector('.custom-modal-backdrop').addEventListener('click', () => close(false));
-
-        overlay.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                close(false);
-            }
-        });
-    });
-}
-
-export function showCustomPrompt({ title = 'Introducir datos', icon = 'edit-3', message = '', fields = [], confirmText = 'Aceptar', cancelText = 'Cancelar', isDanger = false, validate = null } = {}) {
-    return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-modal-overlay';
-
-        const iconColorClass = isDanger ? 'modal-icon--danger' : 'modal-icon--info';
-        const confirmBtnClass = isDanger ? 'btn-danger' : 'btn-submit';
-
-        let fieldsList = fields;
-        if (!fieldsList || fieldsList.length === 0) {
-            fieldsList = [{ name: 'input', label: '', type: 'text', value: '', placeholder: '', required: false }];
+                btn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
+            }, 2000);
         }
+        showToast('Copiado', 'Comando de clonación copiado al portapapeles', 'success');
+    }).catch(err => {
+        showToast('Error', 'No se pudo copiar al portapapeles', 'error');
+    });
+}
 
+export function getCurrentEditorContent() {
+    const codeViewer = document.getElementById('code-viewer');
+    if (!codeViewer) return null;
+    
+    const pre = codeViewer.querySelector('pre');
+    if (pre) return pre.textContent;
+    
+    return null;
+}
+
+export function showCustomAlert({ title, message, type = 'info', icon = 'info' }) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-[300] flex items-center justify-center bg-background/80 backdrop-blur-sm';
+        modal.innerHTML = `
+            <div class="glass-panel squircle p-6 max-w-md mx-4">
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="material-symbols-outlined text-4xl ${type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-yellow-400' : 'text-primary'}">${icon}</span>
+                    <h3 class="font-headline-md text-on-surface">${escapeHtml(title)}</h3>
+                </div>
+                <p class="font-body-md text-on-surface-variant mb-6">${escapeHtml(message)}</p>
+                <button class="w-full bg-primary text-on-primary py-3 px-6 rounded-lg font-label-emphasized hover:opacity-90 transition-opacity" onclick="this.closest('.fixed').remove(); resolve(true)">
+                    Aceptar
+                </button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Replace the resolve in the button onclick
+        const button = modal.querySelector('button');
+        if (button) {
+            button.onclick = () => {
+                modal.remove();
+                resolve(true);
+            };
+        }
+    });
+}
+
+export function showCustomConfirm({ title, message, type = 'info', icon = 'info', confirmText = 'Confirmar', cancelText = 'Cancelar', isDanger = false }) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-[300] flex items-center justify-center bg-background/80 backdrop-blur-sm';
+        modal.innerHTML = `
+            <div class="glass-panel squircle p-6 max-w-md mx-4">
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="material-symbols-outlined text-4xl ${type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-yellow-400' : 'text-primary'}">${icon}</span>
+                    <h3 class="font-headline-md text-on-surface">${escapeHtml(title)}</h3>
+                </div>
+                <p class="font-body-md text-on-surface-variant mb-6">${escapeHtml(message)}</p>
+                <div class="flex gap-4">
+                    <button class="flex-1 bg-${isDanger ? 'error' : 'primary'} text-on-${isDanger ? 'error' : 'primary'} py-3 px-6 rounded-lg font-label-emphasized hover:opacity-90 transition-opacity confirm-btn" onclick="this.closest('.fixed').remove(); resolve(true)">
+                        ${escapeHtml(confirmText)}
+                    </button>
+                    <button class="flex-1 bg-surface-container-high text-on-surface py-3 px-6 rounded-lg font-label-emphasized hover:bg-surface-variant transition-colors cancel-btn" onclick="this.closest('.fixed').remove(); resolve(false)">
+                        ${escapeHtml(cancelText)}
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        const confirmBtn = modal.querySelector('.confirm-btn');
+        const cancelBtn = modal.querySelector('.cancel-btn');
+        
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                modal.remove();
+                resolve(true);
+            };
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                modal.remove();
+                resolve(false);
+            };
+        }
+    });
+}
+
+export function showCustomPrompt({ title, message, fields = [], confirmText = 'Confirmar', cancelText = 'Cancelar', isDanger = false, validate = null }) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-[300] flex items-center justify-center bg-background/80 backdrop-blur-sm';
+        
         let fieldsHtml = '';
-        fieldsList.forEach((f, idx) => {
-            const fieldId = `custom-modal-field-${idx}`;
-            const fieldLabel = f.label ? `<label for="${fieldId}" class="form-label">${escapeHtml(f.label)}</label>` : '';
-            const readOnlyAttr = f.readOnly ? 'readonly' : '';
-            if (f.textarea) {
-                fieldsHtml += `
-                    <div class="form-group">
-                        ${fieldLabel}
-                        <textarea id="${fieldId}" name="${escapeHtml(f.name)}" class="form-textarea" placeholder="${escapeHtml(f.placeholder || '')}" ${f.required ? 'required' : ''} ${readOnlyAttr}>${escapeHtml(f.value || '')}</textarea>
-                    </div>
-                `;
-            } else {
-                fieldsHtml += `
-                    <div class="form-group">
-                        ${fieldLabel}
-                        <input type="${escapeHtml(f.type || 'text')}" id="${fieldId}" name="${escapeHtml(f.name)}" class="form-input" value="${escapeHtml(f.value || '')}" placeholder="${escapeHtml(f.placeholder || '')}" ${f.required ? 'required' : ''} ${readOnlyAttr} />
-                    </div>
-                `;
-            }
-        });
-
-        overlay.innerHTML = `
-            <div class="custom-modal-backdrop"></div>
-            <div class="custom-modal-container glass-panel">
-                <div class="custom-modal-header">
-                    <div class="custom-modal-icon ${iconColorClass}">
-                        <i data-lucide="${escapeHtml(icon)}"></i>
-                    </div>
-                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
+        fields.forEach(field => {
+            const inputType = field.textarea ? 'textarea' : 'text';
+            const inputId = `prompt-${field.name}-${Date.now()}`;
+            fieldsHtml += `
+                <div class="mb-4">
+                    <label class="block font-label-sm text-on-surface-variant mb-1">${escapeHtml(field.label)}</label>
+                    <${inputType} 
+                        id="${inputId}" 
+                        class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary ${field.textarea ? 'resize-none h-24' : ''}"
+                        placeholder="${escapeHtml(field.placeholder || '')}"
+                        ${field.required ? 'required' : ''}
+                        ${inputType === 'textarea' ? '></' + inputType + '>' : '/>'}
                 </div>
-                <form class="custom-modal-form">
-                    <div class="custom-modal-body">
-                        ${message ? `<p class="custom-modal-message">${escapeHtml(message).replace(/\n/g, '<br>')}</p>` : ''}
-                        ${fieldsHtml}
-                        <p class="custom-modal-error form-error-msg" style="display:none; color: var(--red-400); margin-top: 0.5rem; font-size: 0.85rem;"></p>
-                    </div>
-                    <div class="custom-modal-footer">
-                        <button type="button" class="btn-cancel custom-modal-btn-cancel">${escapeHtml(cancelText)}</button>
-                        <button type="submit" class="${confirmBtnClass} custom-modal-btn-confirm">${escapeHtml(confirmText)}</button>
-                    </div>
-                </form>
+            `;
+        });
+        
+        modal.innerHTML = `
+            <div class="glass-panel squircle p-6 max-w-md mx-4">
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="material-symbols-outlined text-4xl text-primary">edit</span>
+                    <h3 class="font-headline-md text-on-surface">${escapeHtml(title)}</h3>
+                </div>
+                <p class="font-body-md text-on-surface-variant mb-6">${escapeHtml(message)}</p>
+                ${fieldsHtml}
+                <div class="flex gap-4">
+                    <button class="flex-1 bg-primary text-on-primary py-3 px-6 rounded-lg font-label-emphasized hover:opacity-90 transition-opacity confirm-btn" onclick="handlePromptConfirm(this)">
+                        ${escapeHtml(confirmText)}
+                    </button>
+                    <button class="flex-1 bg-surface-container-high text-on-surface py-3 px-6 rounded-lg font-label-emphasized hover:bg-surface-variant transition-colors cancel-btn" onclick="this.closest('.fixed').remove(); resolve(null)">
+                        ${escapeHtml(cancelText)}
+                    </button>
+                </div>
             </div>
         `;
-
-        document.body.appendChild(overlay);
-        if (window.lucide) window.lucide.createIcons();
-
-        const form = overlay.querySelector('.custom-modal-form');
-        const errorEl = overlay.querySelector('.custom-modal-error');
-        const firstInput = overlay.querySelector('input:not([readonly]), textarea:not([readonly])') || overlay.querySelector('input, textarea');
-        if (firstInput) {
-            firstInput.focus();
-            if (firstInput.select) firstInput.select();
-        }
-
-        const close = (result) => {
-            overlay.classList.add('closing');
-            setTimeout(() => {
-                overlay.remove();
-                resolve(result);
-            }, 200);
-        };
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-            let resultData = {};
-            fieldsList.forEach(f => {
-                resultData[f.name] = formData.get(f.name) || '';
-            });
-
-            const finalResult = fieldsList.length === 1 ? resultData[fieldsList[0].name] : resultData;
-
-            if (typeof validate === 'function') {
-                const error = validate(finalResult);
-                if (error) {
-                    errorEl.textContent = error;
-                    errorEl.style.display = 'block';
-                    const container = overlay.querySelector('.custom-modal-container');
-                    container.classList.add('shake-anim');
-                    setTimeout(() => container.classList.remove('shake-anim'), 400);
-                    return;
+        document.body.appendChild(modal);
+        
+        const confirmBtn = modal.querySelector('.confirm-btn');
+        const cancelBtn = modal.querySelector('.cancel-btn');
+        
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                const values = {};
+                let isValid = true;
+                
+                fields.forEach(field => {
+                    const inputId = `prompt-${field.name}-${Date.now()}`;
+                    const input = modal.querySelector(`#${inputId}`);
+                    if (input) {
+                        values[field.name] = input.value;
+                        if (field.required && !values[field.name]) {
+                            isValid = false;
+                        }
+                    }
+                });
+                
+                if (isValid && validate) {
+                    const validationError = validate(values);
+                    if (validationError) {
+                        showToast('Validación', validationError, 'error');
+                        isValid = false;
+                    }
                 }
-            }
-
-            close(finalResult);
-        });
-
-        overlay.querySelector('.custom-modal-btn-cancel').addEventListener('click', () => close(null));
-        overlay.querySelector('.custom-modal-backdrop').addEventListener('click', () => close(null));
-
-        overlay.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                close(null);
-            }
-        });
+                
+                if (isValid) {
+                    modal.remove();
+                    resolve(values);
+                }
+            };
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                modal.remove();
+                resolve(null);
+            };
+        }
     });
 }
+
+// Helper function for prompt confirmation
+window.handlePromptConfirm = function(btn) {
+    const modal = btn.closest('.fixed');
+    if (!modal) return;
+    
+    const confirmBtn = modal.querySelector('.confirm-btn');
+    if (confirmBtn && confirmBtn.onclick) {
+        confirmBtn.onclick();
+    }
+};
