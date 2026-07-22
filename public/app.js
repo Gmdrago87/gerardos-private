@@ -251,56 +251,51 @@ function renderRepos(repos) {
 
 function createRepoCard(repo) {
     const card = document.createElement('div');
-    card.className = 'glass-card repo-card p-5 group flex flex-col h-full border border-outline-variant/30 relative overflow-hidden cursor-pointer';
+    card.className = 'glass-card rounded-xl p-6 magnetic-hover glass-panel-hover flex flex-col group cursor-pointer relative overflow-hidden h-48';
     card.onclick = () => openRepoModal(repo);
     
-    const languageColors = {
-        JavaScript: '#f1e05a',
-        TypeScript: '#3178c6',
-        Python: '#3572A5',
-        Java: '#b07219',
-        C: '#555555',
-        'C++': '#f34b7d',
-        Go: '#00ADD8',
-        Rust: '#dea584',
-        PHP: '#4F5D95',
-        Ruby: '#701516'
-    };
-    
-    const langColor = languageColors[repo.language] || '#8b90a0';
-    const lastUpdated = repo.updated_at ? getRelativeTime(repo.updated_at) : 'Unknown';
-    
-    const formatNumber = (num) => {
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-        return num;
-    };
-    const stars = formatNumber(repo.stargazers_count || 0);
-    const forks = formatNumber(repo.forks_count || 0);
-    
+    // Add decorative gradient
     card.innerHTML = `
-        <div class="absolute top-0 left-0 w-full h-1" style="background-color: ${langColor}"></div>
-        
-        <div class="flex items-start justify-between mb-3">
-            <div class="w-10 h-10 rounded-lg bg-surface-container-highest border border-outline-variant/50 flex items-center justify-center">
-                <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">${getRepoIcon(repo)}</span>
+        <div class="absolute -right-20 -top-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-500 pointer-events-none"></div>
+        <div class="flex justify-between items-start z-10">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 squircle-sm bg-surface-container-high flex items-center justify-center border border-white/5">
+                    <span class="material-symbols-outlined text-primary text-[24px]">api</span>
+                </div>
+                <div>
+                    <h3 class="font-headline-sm text-headline-sm text-white group-hover:text-primary transition-colors truncate">${repo.name || 'Untitled'}</h3>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant truncate">${repo.language || 'Unknown'} • ${repo.description || 'No description'}</p>
+                </div>
             </div>
-            <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-surface-container-high border border-outline-variant/30">
-                <span class="w-2 h-2 rounded-full" style="background-color: ${langColor}"></span>
-                <span class="text-xs font-mono text-on-surface-variant">${escapeHtml(repo.language || 'Unknown')}</span>
+            <div class="flex items-center gap-3">
+                <span class="font-label-mono text-label-mono text-on-surface-variant bg-white/5 px-2 py-1 rounded">v${repo.version || '1.0.0'}</span>
+                <div class="flex items-center gap-1 text-secondary">
+                    <span class="w-2 h-2 rounded-full status-dot-success"></span>
+                    <span class="font-label-mono text-label-mono">Passing</span>
+                </div>
             </div>
         </div>
-        
-        <h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors truncate">${escapeHtml(repo.name || 'Untitled')}</h3>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mt-2 line-clamp-2 flex-1">
-            ${escapeHtml(repo.description || 'No description provided.')}
-        </p>
-        
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-outline-variant/20 text-xs font-mono text-on-surface-variant">
-            <div class="flex items-center gap-3">
-                <span class="flex items-center gap-1 hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[14px]">star</span> ${stars}</span>
-                <span class="flex items-center gap-1 hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[14px]">fork_right</span> ${forks}</span>
+        <div class="grid grid-cols-3 gap-4 mt-2 z-10 border-t border-white/5 pt-4">
+            <div>
+                <p class="font-label-mono text-label-mono text-on-surface-variant opacity-70 mb-1">LAST COMMIT</p>
+                <p class="font-body-sm text-body-sm truncate text-white">${repo.lastCommit || 'Initial commit'}</p>
             </div>
-            <span>${lastUpdated}</span>
+            <div>
+                <p class="font-label-mono text-label-mono text-on-surface-variant opacity-70 mb-1">LATENCY</p>
+                <p class="font-body-sm text-body-sm text-white flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px] text-tertiary-container">trending_down</span> ${repo.latency || '12ms'}
+                </p>
+            </div>
+            <div class="flex justify-end items-end">
+                <div class="flex -space-x-2">
+                    ${repo.contributors ? repo.contributors.map(c => `
+                        <img alt="Contributor" class="w-6 h-6 rounded-full border border-surface-container-highest" src="${c.avatar}">
+                    `).join('') : ''}
+                    ${repo.contributors && repo.contributors.length > 3 ? `
+                        <div class="w-6 h-6 rounded-full border border-surface-container-highest bg-surface-container-high flex items-center justify-center text-[10px] text-on-surface-variant">+${repo.contributors.length - 3}</div>
+                    ` : ''}
+                </div>
+            </div>
         </div>
     `;
     
@@ -961,7 +956,7 @@ async function forceRefreshData() {
 // ===== INITIALIZATION =====
 async function initApp() {
     console.log("=== DEVREPO APP INITIALIZING ===");
-    console.log("Version: 1.1.2 (Bento Design applied)");
+    console.log("Version: 1.1.3 (Restored Bento Design + Sidebar Fix)");
     
     // Trazado de errores desde la URL (OAuth Callback)
     const urlParams = new URLSearchParams(window.location.search);
