@@ -1,65 +1,116 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
-
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DevRepo - Enterprise Mainframe GitHub Portfolio con diseño Apple Glassmorphism de alto rendimiento.">
-    <meta name="theme-color" content="#0e0e0f">
-    <meta name="author" content="GerardMaestre">
-    <meta name="keywords" content="portfolio, github, devrepo, apple-edition, glassmorphism, web development, open source">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>DevRepo - Enterprise Mainframe</title>
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gerardos-private.pages.dev/">
-    <meta property="og:title" content="GerardMaestre | DevRepo Enterprise Mainframe">
-    <meta property="og:description" content="DevRepo Enterprise Mainframe - Explorador de repositorios de alta velocidad.">
-    <meta property="og:image" content="https://avatars.githubusercontent.com/u/195803064?v=4">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://gerardos-private.pages.dev/">
-    <meta property="twitter:title" content="GerardMaestre | DevRepo Enterprise Mainframe">
-    <meta property="twitter:description" content="DevRepo Enterprise Mainframe - Explorador de repositorios de alta velocidad.">
-    <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/195803064?v=4">
-    
-    <!-- Manifest -->
-    <link rel="manifest" href="/manifest.json">
-    
-    <!-- SEO & Canonical -->
-    <link rel="canonical" href="https://gerardos-private.pages.dev/">
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "ProfilePage",
-      "name": "Gerard Maestre",
-      "url": "https://gerardos-private.pages.dev/",
-      "image": "https://avatars.githubusercontent.com/u/195803064?v=4"
-    }
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#930005",
+                        "on-primary-container": "#00285c",
+                        "inverse-primary": "#005bc1",
+                        "primary-fixed": "#d8e2ff",
+                        "primary-container": "#4b8eff",
+                        "on-tertiary": "#690003",
+                        "secondary-fixed-dim": "#53e16f",
+                        "secondary": "#53e16f",
+                        "on-secondary-fixed": "#002107",
+                        "on-secondary": "#003911",
+                        "tertiary-container": "#ff5545",
+                        "on-secondary-container": "#003a11",
+                        "on-primary-fixed": "#001a41",
+                        "on-tertiary-container": "#5c0002",
+                        "secondary-container": "#05b046",
+                        "on-error": "#690005",
+                        "on-surface": "#e5e2e3",
+                        "inverse-surface": "#e5e2e3",
+                        "surface-container-lowest": "#0e0e0f",
+                        "inverse-on-surface": "#313031",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "secondary-fixed": "#72fe88",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-background": "#e5e2e3",
+                        "error-container": "#93000a",
+                        "surface-container-high": "#2a2a2b",
+                        "surface-tint": "#adc6ff",
+                        "surface": "#131314",
+                        "on-primary-fixed-variant": "#004493",
+                        "on-primary": "#002e69",
+                        "on-surface-variant": "#c1c6d7",
+                        "surface-container": "#201f20",
+                        "surface-dim": "#131314",
+                        "background": "#131314",
+                        "surface-bright": "#3a393a",
+                        "surface-container-highest": "#353436",
+                        "outline": "#8b90a0",
+                        "on-tertiary-fixed": "#410001",
+                        "surface-variant": "#353436",
+                        "outline-variant": "#414755",
+                        "surface-container-low": "#1c1b1c",
+                        "tertiary": "#ffb4aa",
+                        "tertiary-fixed": "#ffdad5",
+                        "on-secondary-fixed-variant": "#00531c",
+                        "primary": "#adc6ff",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin": "32px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "stack-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "keyboard-shortcut": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "keyboard-shortcut": ["11px", { "lineHeight": "12px", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
     </script>
-    
-    <title>DevRepo — Enterprise Mainframe</title>
-    
-    <!-- Preload & DNS Prefetch -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://api.github.com">
-    <link rel="dns-prefetch" href="https://unpkg.com">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    
-    <!-- Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
-    
+
     <!-- Non-blocking External Scripts -->
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js" defer></script>
     <script src="https://d3js.org/d3.v7.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
     
-    <!-- Styles -->
+    <!-- Custom CSS Styles -->
     <link rel="stylesheet" href="/style.css">
-    
+
     <!-- Service Worker PWA -->
     <script>
     if ('serviceWorker' in navigator) {
@@ -71,341 +122,314 @@
     }
     </script>
 
-    <script type="module" src="/app.js"></script>    
+    <script type="module" src="/app.js"></script>
 </head>
 
-<body class="web-mode bg-[#0e0e0f] text-[#e5e2e3] antialiased overflow-hidden w-screen h-screen flex flex-col font-sans">
+<body class="bg-surface-container-lowest text-on-surface antialiased overflow-hidden w-screen h-screen flex flex-col font-body-sm text-body-sm selection:bg-primary/30 selection:text-primary dark">
 
     <!-- Global Shader Background Canvas -->
-    <canvas id="shader-canvas-bg" class="global-shader-canvas"></canvas>
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <canvas id="shader-canvas-bg" style="display:block;width:100%;height:100%"></canvas>
+    </div>
 
-    <!-- App Container -->
-    <div class="mac-desktop flex flex-col w-full h-full relative z-10">
-
-        <!-- Top Navigation Bar -->
-        <nav class="mac-menubar fixed top-0 w-full z-50 bg-white/5 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6 h-16 shadow-none" role="menubar" aria-label="Barra de navegación principal">
-            <div class="flex items-center gap-4">
-                <span class="mac-menubar__apple font-bold text-xl text-white tracking-tight flex items-center gap-2">
-                    <i data-lucide="terminal" class="text-[#007aff] w-5 h-5"></i>
-                    DevRepo
-                </span>
-                <span class="text-xs font-mono text-white/50 bg-white/5 px-2.5 py-1 squircle-sm border border-white/10 hidden sm:inline-block">Enterprise Mainframe</span>
-            </div>
-
-            <!-- Search / Command Palette Trigger -->
+    <!-- TopNavBar Component -->
+    <nav class="fixed top-0 w-full z-50 border-b border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-between px-margin h-16 shadow-none">
+        <div class="flex items-center gap-4">
+            <span class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[24px]">terminal</span>
+                DevRepo
+            </span>
+            <span class="font-label-mono text-label-mono text-on-surface-variant bg-white/5 px-2.5 py-1 squircle-sm border border-white/10 hidden sm:inline-block">Enterprise Mainframe</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <!-- Search / KBD Shortcut Trigger -->
             <div class="hidden md:flex items-center gap-2 px-3 py-1.5 squircle-full glass-panel cursor-pointer hover:bg-white/10 transition-colors" onclick="document.getElementById('command-palette').classList.remove('hidden'); document.getElementById('cmd-input').focus();">
-                <i data-lucide="search" class="w-4 h-4 text-[#c1c6d7]"></i>
-                <span class="text-xs text-[#c1c6d7] mx-2">Buscar repositorios, acciones...</span>
-                <kbd class="kbd-shortcut px-1.5 py-0.5 rounded flex items-center gap-1 font-mono text-[11px] text-[#c1c6d7]">⌘K</kbd>
+                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">search</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant mx-2">Search everywhere...</span>
+                <kbd class="kbd-shortcut px-1.5 py-0.5 rounded flex items-center gap-1 font-keyboard-shortcut text-keyboard-shortcut text-on-surface-variant">
+                    ⌘K
+                </kbd>
             </div>
-
             <div class="flex items-center gap-4">
-                <button class="relative w-8 h-8 flex items-center justify-center squircle-full hover:bg-white/10 transition-colors text-[#c1c6d7]" title="Estado del Sistema">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-[#34c759]"></i>
+                <button class="relative w-8 h-8 flex items-center justify-center squircle-full hover:bg-white/10 transition-colors scale-95 duration-100 text-on-surface-variant" title="Estado del Sistema">
+                    <span class="material-symbols-outlined">notifications</span>
                     <span class="absolute top-1 right-1 w-2 h-2 rounded-full status-dot-success"></span>
                 </button>
-                <button class="w-8 h-8 flex items-center justify-center squircle-full hover:bg-white/10 transition-colors text-[#c1c6d7]" id="mac-logout-btn" title="Cerrar Sesión">
-                    <i data-lucide="log-out" class="w-4 h-4 text-[#f87171]"></i>
+                <button class="w-8 h-8 flex items-center justify-center squircle-full hover:bg-white/10 transition-colors scale-95 duration-100 text-on-surface-variant" id="mac-logout-btn" title="Cerrar Sesión">
+                    <span class="material-symbols-outlined">logout</span>
                 </button>
                 <div class="w-8 h-8 squircle-full overflow-hidden border border-white/10 ml-2">
-                    <img id="avatar" alt="Avatar" class="w-full h-full object-cover" src="https://avatars.githubusercontent.com/u/195803064?v=4">
+                    <img id="avatar" alt="User profile" class="w-full h-full object-cover" src="https://avatars.githubusercontent.com/u/195803064?v=4"/>
                 </div>
-                <span id="mac-clock" class="text-xs font-mono text-white/70 hidden lg:inline-block" aria-live="polite"></span>
+                <span id="mac-clock" class="font-label-mono text-label-mono text-on-surface-variant hidden lg:inline-block"></span>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <!-- Main Workspace Container -->
-        <div class="flex flex-1 pt-16 w-full h-full overflow-hidden relative z-10">
+    <!-- App Container -->
+    <div class="flex flex-1 pt-16 z-10 w-full h-full overflow-hidden relative">
 
-            <!-- Side Navigation Bar -->
-            <aside class="fixed left-0 top-16 bottom-0 w-20 border-r border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center py-6 h-[calc(100vh-4rem)] z-40">
-                <!-- Header Logo/Avatar -->
-                <div class="mb-8 w-10 h-10 squircle-sm overflow-hidden border border-white/20 glass-panel flex items-center justify-center">
-                    <i data-lucide="box" class="w-5 h-5 text-[#007aff]"></i>
+        <!-- SideNavBar Component -->
+        <aside class="fixed left-0 top-16 bottom-0 w-20 border-r border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center py-stack-gap h-[calc(100vh-4rem)] shadow-none z-40">
+            <div class="mb-8 w-10 h-10 squircle-sm overflow-hidden border border-white/20 glass-panel flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-[24px]">terminal</span>
+            </div>
+            <div class="flex flex-col gap-4 flex-1 w-full items-center">
+                <a class="w-12 h-12 flex items-center justify-center squircle-sm text-primary bg-primary/10 transition-all duration-200 relative group" href="#" title="Hub">
+                    <div class="absolute left-0 top-2 bottom-2 w-[2px] bg-primary rounded-r-full"></div>
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+                    <div class="absolute left-14 bg-surface-container-high px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Hub</div>
+                </a>
+                <a class="w-12 h-12 flex items-center justify-center squircle-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-200 relative group" href="#" title="GerardOS AI" onclick="document.getElementById('ai-modal').classList.remove('hidden');">
+                    <span class="material-symbols-outlined text-[#a78bfa]">smart_toy</span>
+                    <div class="absolute left-14 bg-surface-container-high px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">GerardOS AI</div>
+                </a>
+                <a class="w-12 h-12 flex items-center justify-center squircle-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-200 relative group" href="#" title="Motor 3D" onclick="document.getElementById('btn-futuristic-engine').click();">
+                    <span class="material-symbols-outlined text-[#c084fc]">view_in_ar</span>
+                    <div class="absolute left-14 bg-surface-container-high px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Motor 3D</div>
+                </a>
+                <a class="w-12 h-12 flex items-center justify-center squircle-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-200 relative group" href="#" title="Nuevo Repo" onclick="document.getElementById('btn-open-create-repo').click();">
+                    <span class="material-symbols-outlined text-[#00f2ea]">add_circle</span>
+                    <div class="absolute left-14 bg-surface-container-high px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Nuevo Repo</div>
+                </a>
+            </div>
+            <div class="flex flex-col gap-4 mt-auto w-full items-center">
+                <a class="w-12 h-12 flex items-center justify-center squircle-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-all duration-200 relative group" id="github-link" href="https://github.com/GerardMaestre" target="_blank" rel="noopener noreferrer" title="GitHub">
+                    <span class="material-symbols-outlined">code</span>
+                    <div class="absolute left-14 bg-surface-container-high px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">GitHub</div>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Canvas -->
+        <main class="flex-1 ml-20 p-margin overflow-y-auto w-full h-full custom-scroll relative" id="main-content">
+
+            <!-- Hero / 3D Interactive Header -->
+            <header class="w-full h-64 mb-stack-gap relative squircle glass-panel overflow-hidden flex items-end p-8 border border-white/10 shadow-2xl">
+                <!-- 3D Scene Background -->
+                <div class="absolute inset-0 z-0 opacity-60">
+                    <div id="threejs-hero-canvas" style="width:100%;height:100%"></div>
                 </div>
-                
-                <!-- Primary Navigation Tabs -->
-                <div class="flex flex-col gap-4 flex-1 w-full items-center">
-                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#adc6ff] bg-[#007aff]/20 transition-all duration-200 relative group" href="#" title="Hub Central">
-                        <div class="absolute left-0 top-2 bottom-2 w-[2px] bg-[#007aff] rounded-r-full"></div>
-                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Hub</div>
-                    </a>
-                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="#" title="AI Assistant" onclick="document.getElementById('ai-modal').classList.remove('hidden');">
-                        <i data-lucide="bot" class="w-5 h-5 text-[#a78bfa]"></i>
-                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">GerardOS AI</div>
-                    </a>
-                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="#" title="Motor 3D" id="side-btn-futuristic" onclick="document.getElementById('btn-futuristic-engine').click();">
-                        <i data-lucide="hexagon" class="w-5 h-5 text-[#c084fc]"></i>
-                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Motor 3D</div>
-                    </a>
-                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="#" title="Nuevo Repositorio" onclick="document.getElementById('btn-open-create-repo').click();">
-                        <i data-lucide="plus-circle" class="w-5 h-5 text-[#00f2ea]"></i>
-                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Nuevo Repo</div>
-                    </a>
+                <!-- Gradient overlay -->
+                <div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/90 to-transparent"></div>
+
+                <div class="relative z-10 w-full flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                    <div>
+                        <h1 class="font-display text-display text-white mb-2 tracking-tight">Mainframe Enterprise</h1>
+                        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">High-performance repository management. Global scale operations online.</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <button class="bg-[#007AFF] text-white px-6 py-2.5 squircle-sm font-label-mono text-label-mono hover:bg-[#007AFF]/90 transition-colors flex items-center gap-2" id="btn-open-create-repo">
+                            <span class="material-symbols-outlined text-[16px]">add</span>
+                            New Project
+                        </button>
+                        <button class="glass-panel text-[#c084fc] px-4 py-2.5 squircle-sm font-label-mono text-label-mono hover:bg-white/10 transition-colors flex items-center gap-2 border border-[#8b5cf6]/40" id="btn-futuristic-engine">
+                            <span class="material-symbols-outlined text-[16px]">hexagon</span>
+                            Motor 3D
+                        </button>
+                        <button class="glass-panel text-white px-4 py-2.5 squircle-sm font-label-mono text-label-mono hover:bg-white/10 transition-colors flex items-center gap-2" id="refresh-data-btn" onclick="forceRefreshData()">
+                            <span class="material-symbols-outlined text-[16px]">refresh</span>
+                            Refrescar
+                        </button>
+                    </div>
                 </div>
+            </header>
 
-                <!-- Footer Navigation Tabs -->
-                <div class="flex flex-col gap-4 mt-auto w-full items-center">
-                    <a id="github-link" class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="https://github.com/GerardMaestre" target="_blank" rel="noopener noreferrer" title="Ver GitHub">
-                        <i data-lucide="github" class="w-5 h-5"></i>
-                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Perfil GitHub</div>
-                    </a>
-                </div>
-            </aside>
+            <!-- Bento Grid Layout -->
+            <div class="grid grid-cols-12 gap-stack-gap h-full pb-20">
 
-            <!-- Main Canvas Area -->
-            <main class="flex-1 ml-20 p-8 overflow-y-auto w-full h-full custom-scroll relative" id="main-content">
-
-                <!-- 3D Interactive Mainframe Header / Hero -->
-                <header class="w-full h-64 mb-8 relative squircle glass-panel overflow-hidden flex items-end p-8 border border-white/10 shadow-2xl">
-                    <!-- 3D Scene Background -->
-                    <div id="threejs-hero-canvas" class="absolute inset-0 z-0 opacity-70"></div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0f]/90 via-[#0e0e0f]/40 to-transparent"></div>
-
-                    <div class="relative z-10 w-full flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                        <div>
-                            <span class="text-xs font-mono text-[#007aff] uppercase tracking-widest font-semibold mb-1 block">Enterprise Operations</span>
-                            <h1 class="font-display text-3xl lg:text-4xl text-white mb-2 tracking-tight">Mainframe Enterprise</h1>
-                            <p class="text-sm text-[#c1c6d7] max-w-xl">High-performance repository management & portfolio intelligence cockpit.</p>
+                <!-- Main Repositories (Spans 8 cols) -->
+                <section class="col-span-12 lg:col-span-8 flex flex-col gap-stack-gap">
+                    <div class="glass-panel squircle p-6 flex flex-col gap-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">folder_open</span>
+                                Active Repositories
+                            </h2>
+                            <div class="flex items-center gap-2">
+                                <button class="text-on-surface-variant hover:text-primary transition-colors" id="toggle-filters-btn"><span class="material-symbols-outlined text-[20px]">filter_list</span></button>
+                            </div>
                         </div>
-                        <div class="flex flex-wrap gap-3">
-                            <button id="btn-open-create-repo" class="bg-[#007AFF] text-white px-5 py-2.5 squircle-sm font-mono text-xs font-semibold hover:bg-[#007AFF]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#007AFF]/20">
-                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                                Nuevo Repositorio
-                            </button>
-                            <button id="btn-futuristic-engine" class="glass-panel text-[#c084fc] px-4 py-2.5 squircle-sm font-mono text-xs font-semibold hover:bg-white/10 transition-all flex items-center gap-2 border border-[#8b5cf6]/40">
-                                <i data-lucide="hexagon" class="w-4 h-4"></i>
-                                Motor 3D
-                            </button>
-                            <button id="refresh-data-btn" onclick="forceRefreshData()" class="glass-panel text-white px-4 py-2.5 squircle-sm font-mono text-xs font-semibold hover:bg-white/10 transition-all flex items-center gap-2">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                Refrescar
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
+                            <div class="flex-1 relative w-full">
+                                <input type="text" id="search-input" aria-label="Buscar proyectos" placeholder="Search repositories..." class="w-full bg-black/30 border border-white/10 squircle-sm px-4 py-2.5 font-body-sm text-body-sm text-white focus:outline-none focus:border-primary transition-all"/>
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button class="sort-btn active-sort px-3 py-1.5 rounded text-xs font-label-mono bg-primary/20 text-primary border border-primary/30" data-sort="updated" onclick="applySorting('updated')">Recientes</button>
+                                <button class="sort-btn px-3 py-1.5 rounded text-xs font-label-mono text-on-surface-variant hover:bg-white/5 transition-all" data-sort="stars" onclick="applySorting('stars')">Estrellas</button>
+                                <button class="sort-btn px-3 py-1.5 rounded text-xs font-label-mono text-on-surface-variant hover:bg-white/5 transition-all" data-sort="forks" onclick="applySorting('forks')">Forks</button>
+                                <button class="sort-btn px-3 py-1.5 rounded text-xs font-label-mono text-on-surface-variant hover:bg-white/5 transition-all" data-sort="name" onclick="applySorting('name')">A-Z</button>
+                            </div>
+                        </div>
+                        <div id="filters-row" class="filters-row hidden pt-2 border-t border-white/5">
+                            <div class="flex flex-wrap gap-2" id="filter-container">
+                                <button class="filter-btn filter-btn--active" data-filter="all">Todos</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Repos Grid -->
+                    <div id="repos-grid" class="flex flex-col gap-stack-gap"></div>
+
+                    <div class="load-more-section flex flex-col items-center gap-2 py-4">
+                        <button id="load-more-btn" class="btn-load-more glass-panel px-6 py-2.5 squircle-sm text-xs font-label-mono text-white hover:bg-white/10 transition-all hidden">
+                            Cargar más proyectos
+                        </button>
+                        <p id="showing-count" class="font-label-mono text-label-mono text-on-surface-variant"></p>
+                    </div>
+                </section>
+
+                <!-- Sidebar Modules (Spans 4 cols) -->
+                <section class="col-span-12 lg:col-span-4 flex flex-col gap-stack-gap">
+
+                    <!-- Strategic Radar / Portfolio Cockpit -->
+                    <div class="glass-panel squircle p-6 flex flex-col gap-4 border border-white/10">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-label-mono text-label-mono text-primary uppercase">Strategic Radar</span>
+                                <h3 class="font-headline-sm text-headline-sm text-white">Evolución Portfolio</h3>
+                            </div>
+                            <div id="portfolio-score" class="w-12 h-12 squircle-sm bg-primary/20 border border-primary/40 flex items-center justify-center text-lg font-bold text-primary">0</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
+                            <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
+                                <span class="font-label-mono text-[10px] text-on-surface-variant block">Actividad 90d</span>
+                                <strong id="metric-activity" class="font-label-mono text-xs text-white">0%</strong>
+                            </div>
+                            <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
+                                <span class="font-label-mono text-[10px] text-on-surface-variant block">Stacks</span>
+                                <strong id="metric-diversity" class="font-label-mono text-xs text-white">0</strong>
+                            </div>
+                            <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
+                                <span class="font-label-mono text-[10px] text-on-surface-variant block">Launch-ready</span>
+                                <strong id="metric-launch-ready" class="font-label-mono text-xs text-white">0</strong>
+                            </div>
+                        </div>
+                        <p id="portfolio-next-move" class="font-body-sm text-body-sm text-on-surface-variant bg-primary/10 p-3 squircle-sm border border-primary/20">Analizando métricas...</p>
+                    </div>
+
+                    <!-- GitAI Assistant Panel -->
+                    <div class="glass-panel squircle relative overflow-hidden flex flex-col h-72 border border-white/10 shadow-lg">
+                        <div class="absolute inset-0 ai-shimmer opacity-30 z-0 pointer-events-none"></div>
+                        <div class="p-4 border-b border-white/5 flex items-center justify-between z-10 bg-white/5 backdrop-blur-md">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary animate-pulse">smart_toy</span>
+                                <h3 class="font-headline-sm text-[16px] font-semibold text-white">GitAI Assistant</h3>
+                            </div>
+                            <button class="text-primary text-xs font-label-mono hover:underline" onclick="document.getElementById('ai-modal').classList.remove('hidden')">Abrir Modal ↗</button>
+                        </div>
+                        <div class="flex-1 p-4 z-10 flex flex-col gap-3 overflow-y-auto custom-scroll" id="ai-messages">
+                            <div class="flex gap-3">
+                                <div class="w-6 h-6 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center border border-primary/30 mt-1">
+                                    <span class="material-symbols-outlined text-[14px] text-primary">auto_awesome</span>
+                                </div>
+                                <div class="bg-surface-container-high/50 p-3 squircle-sm border border-white/5 font-body-sm text-body-sm text-on-surface">
+                                    Hola, soy el asistente GerardOS AI. ¿En qué puedo ayudarte hoy con tu código o tu portafolio?
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 z-10 border-t border-white/5 bg-black/30 flex gap-2">
+                            <input class="flex-1 bg-black/30 border border-white/10 squircle-sm px-4 py-2 font-body-sm text-body-sm text-white focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/50" id="ai-input" placeholder="Ask GitAI..." type="text"/>
+                            <button class="bg-primary text-on-primary px-3 py-2 squircle-sm font-label-mono text-label-mono hover:bg-primary/90 transition-colors flex items-center justify-center" id="ai-send-btn">
+                                <span class="material-symbols-outlined text-[18px]">send</span>
                             </button>
                         </div>
                     </div>
-                </header>
 
-                <!-- Bento Grid Layout -->
-                <div class="grid grid-cols-12 gap-6 h-full pb-20">
-
-                    <!-- Active Repositories Column (Spans 8 cols) -->
-                    <section class="col-span-12 lg:col-span-8 flex flex-col gap-6">
-                        
-                        <!-- Filter & Search Controls Header -->
-                        <div class="glass-panel squircle p-4 flex flex-col gap-4">
-                            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-                                <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                        <i data-lucide="code-2" class="w-5 h-5 text-[#007aff]"></i>
-                                        Active Repositories
-                                    </h2>
+                    <!-- Global Compute -->
+                    <div class="glass-panel squircle p-6 flex flex-col gap-4 border border-white/10">
+                        <h3 class="font-headline-sm text-[16px] font-semibold text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant text-[18px]">memory</span>
+                            Global Compute
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between font-label-mono text-label-mono text-on-surface-variant mb-1">
+                                    <span>CPU Usage</span>
+                                    <span class="text-white">42%</span>
                                 </div>
-
-                                <!-- Search Field -->
-                                <div class="relative w-full sm:w-72">
-                                    <i data-lucide="search" class="w-4 h-4 text-[#8b90a0] absolute left-3 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="search-input" aria-label="Buscar proyectos" placeholder="Buscar repositorios..." class="w-full bg-[#1c1b1c]/80 border border-white/10 squircle-sm pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-[#007aff] transition-all">
+                                <div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full w-[42%]"></div>
                                 </div>
                             </div>
-
-                            <!-- Sorting & Language Filters -->
-                            <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/5">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-xs font-mono text-[#8b90a0]">Ordenar:</span>
-                                    <button class="sort-btn active-sort px-2.5 py-1 rounded text-xs font-mono bg-[#007aff]/20 text-[#adc6ff] border border-[#007aff]/30" data-sort="updated" onclick="applySorting('updated')">Recientes</button>
-                                    <button class="sort-btn px-2.5 py-1 rounded text-xs font-mono text-[#c1c6d7] hover:bg-white/5 transition-all" data-sort="stars" onclick="applySorting('stars')">Estrellas</button>
-                                    <button class="sort-btn px-2.5 py-1 rounded text-xs font-mono text-[#c1c6d7] hover:bg-white/5 transition-all" data-sort="forks" onclick="applySorting('forks')">Forks</button>
-                                    <button class="sort-btn px-2.5 py-1 rounded text-xs font-mono text-[#c1c6d7] hover:bg-white/5 transition-all" data-sort="name" onclick="applySorting('name')">A-Z</button>
+                            <div>
+                                <div class="flex justify-between font-label-mono text-label-mono text-on-surface-variant mb-1">
+                                    <span>Memory Allocation</span>
+                                    <span class="text-white">78%</span>
                                 </div>
-                                <button id="toggle-filters-btn" class="text-xs text-[#c1c6d7] hover:text-white flex items-center gap-1">
-                                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Filtros
-                                </button>
+                                <div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                                    <div class="h-full bg-tertiary-container rounded-full w-[78%]"></div>
+                                </div>
                             </div>
-
-                            <!-- Hidden Filters Row for Languages -->
-                            <div id="filters-row" class="filters-row hidden pt-2 border-t border-white/5">
-                                <div class="flex flex-wrap gap-2" id="filter-container">
-                                    <button class="filter-btn filter-btn--active" data-filter="all">Todos</button>
-                                </div>
+                            <div id="data-source-indicator" class="pt-2 border-t border-white/5 text-[11px] font-label-mono text-on-surface-variant flex items-center justify-between">
+                                <span id="data-source-text">Fuente: API</span>
+                                <span id="cache-age-text"></span>
                             </div>
                         </div>
-
-                        <!-- Repositories Grid Container -->
-                        <div id="repos-grid" class="repos-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Populated dynamically by UI module -->
-                        </div>
-
-                        <!-- Load More Section -->
-                        <div class="load-more-section flex flex-col items-center gap-2 py-4">
-                            <button id="load-more-btn" class="btn-load-more glass-panel px-6 py-2.5 squircle-sm text-xs font-mono text-white hover:bg-white/10 transition-all hidden">
-                                Cargar más proyectos
-                            </button>
-                            <p id="showing-count" class="text-xs font-mono text-[#8b90a0]"></p>
-                        </div>
-                    </section>
-
-                    <!-- Sidebar Modules (Spans 4 cols) -->
-                    <section class="col-span-12 lg:col-span-4 flex flex-col gap-6">
-
-                        <!-- Radar de Evolución / Portfolio Cockpit -->
-                        <div class="glass-panel squircle p-6 flex flex-col gap-4 border border-white/10">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="text-[11px] font-mono text-[#007aff] uppercase tracking-wider">Strategic Radar</span>
-                                    <h3 class="text-base font-semibold text-white">Evolución Portfolio</h3>
-                                </div>
-                                <div id="portfolio-score" class="w-12 h-12 squircle-sm bg-[#007aff]/20 border border-[#007aff]/40 flex items-center justify-center text-lg font-bold text-[#adc6ff]">0</div>
-                            </div>
-
-                            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
-                                <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
-                                    <span class="text-[10px] font-mono text-[#8b90a0] block">Actividad 90d</span>
-                                    <strong id="metric-activity" class="text-xs text-white font-mono">0%</strong>
-                                </div>
-                                <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
-                                    <span class="text-[10px] font-mono text-[#8b90a0] block">Stacks</span>
-                                    <strong id="metric-diversity" class="text-xs text-white font-mono">0</strong>
-                                </div>
-                                <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
-                                    <span class="text-[10px] font-mono text-[#8b90a0] block">Launch-ready</span>
-                                    <strong id="metric-launch-ready" class="text-xs text-white font-mono">0</strong>
-                                </div>
-                            </div>
-                            <p id="portfolio-next-move" class="text-xs text-[#c1c6d7] bg-[#007aff]/10 p-3 squircle-sm border border-[#007aff]/20">Analizando métricas...</p>
-                        </div>
-
-                        <!-- GitAI Assistant Embedded Panel -->
-                        <div class="glass-panel squircle relative overflow-hidden flex flex-col h-80 border border-white/10 shadow-lg">
-                            <div class="absolute inset-0 ai-shimmer opacity-30 z-0 pointer-events-none"></div>
-                            <div class="p-4 border-b border-white/5 flex items-center justify-between z-10 bg-white/5 backdrop-blur-md">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="bot" class="w-4 h-4 text-[#a78bfa] animate-pulse"></i>
-                                    <h3 class="text-sm font-semibold text-white">GitAI Assistant</h3>
-                                </div>
-                                <button class="text-xs text-[#a78bfa] hover:underline font-mono" onclick="document.getElementById('ai-modal').classList.remove('hidden')">Modal ↗</button>
-                            </div>
-
-                            <!-- Messages Area -->
-                            <div class="flex-1 p-4 z-10 flex flex-col gap-3 overflow-y-auto custom-scroll" id="ai-messages">
-                                <div class="flex gap-2.5">
-                                    <div class="w-6 h-6 rounded-full bg-[#8b5cf6]/20 flex-shrink-0 flex items-center justify-center border border-[#8b5cf6]/30 mt-0.5">
-                                        <i data-lucide="bot" class="w-3.5 h-3.5 text-[#a78bfa]"></i>
-                                    </div>
-                                    <div class="bg-[#2a2a2b]/70 p-3 squircle-sm border border-white/5 text-xs text-[#e5e2e3]">
-                                        Hola, soy GerardOS AI. Hazme preguntas sobre tu código o repositorios.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Input Area -->
-                            <div class="p-3 z-10 border-t border-white/5 bg-black/30 flex gap-2">
-                                <input type="text" id="ai-input" placeholder="Pregunta a la IA..." class="flex-1 bg-black/40 border border-white/10 squircle-sm px-3 py-2 text-xs text-white focus:outline-none focus:border-[#a78bfa]">
-                                <button id="ai-send-btn" class="bg-[#8b5cf6] text-white px-3 py-2 squircle-sm hover:bg-[#7c3aed] transition-colors flex items-center justify-center">
-                                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- System Compute Metrics -->
-                        <div class="glass-panel squircle p-5 flex flex-col gap-4 border border-white/10">
-                            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                                <i data-lucide="cpu" class="w-4 h-4 text-[#8b90a0]"></i>
-                                Global Compute & Infrastructure
-                            </h3>
-                            <div class="space-y-3 text-xs">
-                                <div>
-                                    <div class="flex justify-between font-mono text-[#8b90a0] mb-1">
-                                        <span>CPU Usage</span>
-                                        <span class="text-white">42%</span>
-                                    </div>
-                                    <div class="w-full h-1.5 bg-[#353436] rounded-full overflow-hidden">
-                                        <div class="h-full bg-[#007aff] rounded-full w-[42%]"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between font-mono text-[#8b90a0] mb-1">
-                                        <span>Memory Allocation</span>
-                                        <span class="text-white">78%</span>
-                                    </div>
-                                    <div class="w-full h-1.5 bg-[#353436] rounded-full overflow-hidden">
-                                        <div class="h-full bg-[#ff5545] rounded-full w-[78%]"></div>
-                                    </div>
-                                </div>
-                                <div id="data-source-indicator" class="pt-2 border-t border-white/5 text-[11px] font-mono text-[#8b90a0] flex items-center justify-between">
-                                    <span id="data-source-text">Fuente: API</span>
-                                    <span id="cache-age-text"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Profile Summary & Counters -->
-                        <div class="glass-panel squircle p-5 flex flex-col gap-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 squircle-sm overflow-hidden border border-white/10">
-                                    <img id="avatar-summary" src="https://avatars.githubusercontent.com/u/195803064?v=4" class="w-full h-full object-cover" alt="Profile Avatar">
-                                </div>
-                                <div>
-                                    <h4 id="name" class="text-sm font-bold text-white">GerardMaestre</h4>
-                                    <p id="username" class="text-xs font-mono text-[#8b90a0]">@GerardMaestre</p>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2 text-center text-xs">
-                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
-                                    <p id="followers" class="font-bold text-white text-sm">0</p>
-                                    <span class="text-[10px] font-mono text-[#8b90a0]">Followers</span>
-                                </div>
-                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
-                                    <p id="following" class="font-bold text-white text-sm">0</p>
-                                    <span class="text-[10px] font-mono text-[#8b90a0]">Following</span>
-                                </div>
-                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
-                                    <p id="total-repos" class="font-bold text-white text-sm">0</p>
-                                    <span class="text-[10px] font-mono text-[#8b90a0]">Repos</span>
-                                </div>
-                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
-                                    <p id="total-stars" class="font-bold text-white text-sm">0</p>
-                                    <span class="text-[10px] font-mono text-[#8b90a0]">Estrellas</span>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-between text-xs font-mono pt-2 border-t border-white/5">
-                                <span class="text-[#8b90a0]">Top Lenguaje:</span>
-                                <span id="top-lang" class="text-[#007aff] font-bold">...</span>
-                            </div>
-                        </div>
-
-                    </section>
-
-                </div>
-
-                <!-- Footer -->
-                <footer class="site-footer py-6 text-center text-xs text-[#8b90a0]">
-                    <p>Diseñado y desarrollado por Gerard Maestre</p>
-                    <p class="mt-1">&copy; <span id="year"></span> GerardMaestre · DevRepo Enterprise Mainframe</p>
-                    <p id="footer-version" class="mt-1 font-mono text-[11px] opacity-70">v1.2.0</p>
-                </footer>
-            </main>
-
-            <!-- Motor Futurista (Oculto por defecto) -->
-            <div id="futuristic-engine" class="futuristic-engine hidden">
-                <div id="futuristic-canvas-container" class="futuristic-canvas-container"></div>
-                <div id="futuristic-overlay" class="futuristic-overlay">
-                    <h2 class="futuristic-title">Visualización Espacial Activa</h2>
-                    <button id="btn-close-futuristic" class="btn-refresh" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">
-                        <i data-lucide="x-circle"></i>
-                        Salir del Motor 3D
-                    </button>
-                    <div class="futuristic-controls">
-                        <button id="btn-view-topology" class="futuristic-tab active">Topología 3D</button>
-                        <button id="btn-view-graph" class="futuristic-tab">Grafo Infinito</button>
-                        <button id="btn-view-commits" class="futuristic-tab">Timeline Commits</button>
                     </div>
-                </div>
+
+                    <!-- Profile Details -->
+                    <div class="glass-panel squircle p-6 flex flex-col gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 squircle-sm overflow-hidden border border-white/10">
+                                <img id="avatar-summary" src="https://avatars.githubusercontent.com/u/195803064?v=4" class="w-full h-full object-cover" alt="Avatar Summary">
+                            </div>
+                            <div>
+                                <h4 id="name" class="font-headline-sm text-headline-sm text-white">GerardMaestre</h4>
+                                <p id="username" class="font-label-mono text-label-mono text-on-surface-variant">@GerardMaestre</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-center">
+                            <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                <p id="followers" class="font-bold text-white text-sm">0</p>
+                                <span class="font-label-mono text-[10px] text-on-surface-variant">Followers</span>
+                            </div>
+                            <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                <p id="following" class="font-bold text-white text-sm">0</p>
+                                <span class="font-label-mono text-[10px] text-on-surface-variant">Following</span>
+                            </div>
+                            <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                <p id="total-repos" class="font-bold text-white text-sm">0</p>
+                                <span class="font-label-mono text-[10px] text-on-surface-variant">Repos</span>
+                            </div>
+                            <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                <p id="total-stars" class="font-bold text-white text-sm">0</p>
+                                <span class="font-label-mono text-[10px] text-on-surface-variant">Estrellas</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs font-label-mono pt-2 border-t border-white/5">
+                            <span class="text-on-surface-variant">Top Lenguaje:</span>
+                            <span id="top-lang" class="text-primary font-bold">...</span>
+                        </div>
+                    </div>
+
+                </section>
             </div>
 
-        </div><!-- /Main Workspace -->
+            <!-- Footer -->
+            <footer class="site-footer py-6 text-center text-xs text-on-surface-variant">
+                <p>Diseñado y desarrollado por Gerard Maestre</p>
+                <p class="mt-1">&copy; <span id="year"></span> GerardMaestre · DevRepo Enterprise Mainframe</p>
+                <p id="footer-version" class="mt-1 font-label-mono text-[11px] opacity-70">v1.2.0</p>
+            </footer>
+        </main>
+
+        <!-- Motor Futurista (Oculto por defecto) -->
+        <div id="futuristic-engine" class="futuristic-engine hidden">
+            <div id="futuristic-canvas-container" class="futuristic-canvas-container"></div>
+            <div id="futuristic-overlay" class="futuristic-overlay">
+                <h2 class="futuristic-title">Visualización Espacial Activa</h2>
+                <button id="btn-close-futuristic" class="btn-refresh" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">
+                    <i data-lucide="x-circle"></i>
+                    Salir del Motor 3D
+                </button>
+                <div class="futuristic-controls">
+                    <button id="btn-view-topology" class="futuristic-tab active">Topología 3D</button>
+                    <button id="btn-view-graph" class="futuristic-tab">Grafo Infinito</button>
+                    <button id="btn-view-commits" class="futuristic-tab">Timeline Commits</button>
+                </div>
+            </div>
+        </div>
 
     </div><!-- /App Container -->
 
@@ -446,36 +470,36 @@
 
     <!-- Scroll to Top Button -->
     <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
-        <i data-lucide="arrow-up"></i>
+        <span class="material-symbols-outlined">arrow_upward</span>
     </button>
 
-    <!-- Apple DevRepo Edition Login Screen -->
-    <div id="mac-login-screen" class="login-screen hidden">
+    <!-- Apple DevRepo Login Screen -->
+    <div id="mac-login-screen" class="dark bg-background text-on-surface font-sans min-h-screen flex items-center justify-center relative overflow-hidden fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <div class="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full ambient-blob-1 mix-blend-screen blur-3xl"></div>
             <div class="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full ambient-blob-2 mix-blend-screen blur-3xl"></div>
         </div>
-        <main class="relative z-10 w-full max-w-md px-4">
-            <div class="glass-panel squircle p-8 flex flex-col items-center text-center shadow-2xl border border-white/10">
+        <main class="relative z-10 w-full max-w-md px-margin md:px-0">
+            <div class="glass-panel squircle rounded-xl p-8 flex flex-col items-center text-center shadow-2xl">
                 <div class="mb-8 flex flex-col items-center">
-                    <div class="w-16 h-16 squircle-sm glass-panel flex items-center justify-center mb-6 border border-white/20">
-                        <i data-lucide="terminal" class="w-8 h-8 text-[#007aff]"></i>
+                    <div class="w-16 h-16 rounded-lg glass-panel flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-primary text-4xl">terminal</span>
                     </div>
-                    <h1 class="font-display text-2xl font-bold text-white mb-2 tracking-tight">Welcome to DevRepo</h1>
-                    <p class="text-sm text-[#c1c6d7] max-w-[280px]">Sign in to manage your enterprise repositories with high performance</p>
+                    <h1 class="font-display text-display text-on-surface mb-2 tracking-tight">Welcome to DevRepo</h1>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-[280px]">Sign in to manage your repositories with speed</p>
                 </div>
-                <div class="w-full space-y-4 mb-6" id="mac-login-form">
-                    <button type="button" id="mac-login-github-btn" class="w-full h-14 bg-[#007AFF] text-white squircle-sm font-semibold flex items-center justify-center gap-3 hover:bg-[#005bc1] transition-all shadow-lg shadow-[#007AFF]/25">
-                        <i data-lucide="github" class="w-5 h-5"></i>
-                        <span class="text-base">Sign in with GitHub</span>
+                <div class="w-full space-y-4 mb-8" id="mac-login-form">
+                    <button type="button" id="mac-login-github-btn" class="w-full h-14 bg-[#007AFF] text-white rounded flex items-center justify-center space-x-3 hover:bg-[#005bc1] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                        <svg class="w-6 h-6 fill-current" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
+                        <span class="font-body-lg text-body-lg font-medium">Sign in with GitHub</span>
                     </button>
                 </div>
                 <div class="mt-4 border-t border-white/10 pt-6 w-full text-center">
-                    <p class="text-xs font-mono text-[#8b90a0] flex items-center justify-center gap-2">
-                        <i data-lucide="lock" class="w-4 h-4 text-[#34c759]"></i>
-                        <span>Secure OAuth login. Encrypted session tokens.</span>
+                    <p class="font-label-mono text-label-mono text-on-surface-variant flex items-center justify-center space-x-2">
+                        <span class="material-symbols-outlined text-[16px]">lock</span>
+                        <span>Secure login via OAuth. Fast, private, and encrypted.</span>
                     </p>
-                    <p class="login-version-tag mt-3 text-[11px] font-mono text-[#8b90a0] opacity-60">v1.2.0</p>
+                    <p class="login-version-tag mt-2 text-[11px] font-label-mono text-on-surface-variant opacity-60">v1.2.0</p>
                 </div>
             </div>
         </main>
@@ -486,12 +510,10 @@
         <div class="palette-backdrop" onclick="document.getElementById('command-palette').classList.add('hidden')"></div>
         <div class="palette-container glass-panel">
             <div class="palette-search-row">
-                <i data-lucide="search" style="color:var(--text-secondary); width:20px; height:20px;"></i>
+                <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
                 <input type="text" id="cmd-input" class="palette-input" aria-label="Buscar comandos" placeholder="Buscar repositorios, comandos... (Esc para salir)" autocomplete="off">
             </div>
-            <div id="palette-results" class="palette-results">
-                <!-- Populated dynamically by JS -->
-            </div>
+            <div id="palette-results" class="palette-results"></div>
         </div>
     </div>
 
@@ -502,7 +524,7 @@
             <div class="modal__header">
                 <div class="modal__title-row" style="flex: 1;">
                     <div class="modal__icon-badge" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa;">
-                        <i data-lucide="bot"></i>
+                        <span class="material-symbols-outlined">smart_toy</span>
                     </div>
                     <div class="modal__titles">
                         <h3 class="modal__title">Asistente GerardOS AI</h3>
@@ -510,22 +532,22 @@
                     </div>
                 </div>
                 <button class="modal__close" id="ai-close-btn">
-                    <i data-lucide="x"></i>
+                    <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
             
             <div class="ai-quick-actions-bar">
                 <span class="ai-quick-label">Acciones de Código:</span>
-                <button class="ai-quick-action" data-action="explain"><i data-lucide="help-circle"></i> Explicar</button>
-                <button class="ai-quick-action" data-action="refactor"><i data-lucide="sparkles"></i> Refactorizar</button>
-                <button class="ai-quick-action" data-action="find_bugs"><i data-lucide="shield-alert"></i> Buscar Bugs</button>
-                <button class="ai-quick-action" data-action="comment"><i data-lucide="file-text"></i> Comentar</button>
+                <button class="ai-quick-action" data-action="explain"><span class="material-symbols-outlined text-[16px]">help</span> Explicar</button>
+                <button class="ai-quick-action" data-action="refactor"><span class="material-symbols-outlined text-[16px]">auto_awesome</span> Refactorizar</button>
+                <button class="ai-quick-action" data-action="find_bugs"><span class="material-symbols-outlined text-[16px]">bug_report</span> Buscar Bugs</button>
+                <button class="ai-quick-action" data-action="comment"><span class="material-symbols-outlined text-[16px]">notes</span> Comentar</button>
             </div>
 
             <div class="ai-chat-body" id="ai-messages">
                 <div class="ai-chat-msg ai-chat-msg--ai">
-                    <div class="ai-msg-avatar ai-msg-avatar--ai"><i data-lucide="bot"></i></div>
-                    <div class="ai-msg-bubble">
+                    <div class="ai-msg-avatar ai-msg-avatar--ai"><span class="material-symbols-outlined">smart_toy</span></div>
+                    <div class="ai-msg-bubble font-body-sm">
                         Hola, soy el asistente GerardOS AI. ¿En qué puedo ayudarte hoy con tu código o tu portafolio?
                     </div>
                 </div>
@@ -534,7 +556,7 @@
             <div class="ai-chat-input-row">
                 <input type="text" id="ai-input" aria-label="Pregunta al asistente de IA" placeholder="Haz una pregunta a la IA o selecciona una acción..." autocomplete="off">
                 <button id="ai-send-btn" class="btn-refresh" style="padding: 10px 16px;">
-                    <i data-lucide="send"></i>
+                    <span class="material-symbols-outlined">send</span>
                 </button>
             </div>
         </div>
@@ -547,31 +569,31 @@
             <div class="modal__header">
                 <div class="modal__title-row" style="flex: 1;">
                     <div class="modal__icon">
-                        <i data-lucide="github"></i>
+                        <span class="material-symbols-outlined">folder</span>
                     </div>
                     <h3 id="modal-title" class="modal__title">Repository</h3>
                 </div>
                 <div id="modal-actions-container" style="display: none; margin-right: 15px;">
                     <button id="modal-save-btn" class="btn-submit" style="padding: 6px 12px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; background: rgba(0, 122, 255, 0.2); border: 1px solid rgba(0, 122, 255, 0.5);">
-                        <i data-lucide="save" style="width: 16px; height: 16px;"></i> Guardar
+                        <span class="material-symbols-outlined text-[16px]">save</span> Guardar
                     </button>
                 </div>
                 <button class="modal__close" onclick="closeModal()">
-                    <i data-lucide="x"></i>
+                    <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
             <div class="modal__tabs" style="display: flex; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); padding: 0 15px;">
                 <button class="modal-tab active" data-tab="code" style="background: none; border: none; color: var(--text-primary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid var(--color-electric-blue); font-weight: 500;">
-                    <i data-lucide="code-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:5px;"></i> Código
+                    <span class="material-symbols-outlined text-[16px] align-middle mr-1">code</span> Código
                 </button>
-                <button class="modal-tab" data-tab="kanban" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.2s;">
-                    <i data-lucide="trello" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:5px;"></i> Kanban
+                <button class="modal-tab" data-tab="kanban" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500;">
+                    <span class="material-symbols-outlined text-[16px] align-middle mr-1">view_kanban</span> Kanban
                 </button>
-                <button class="modal-tab" data-tab="preview" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.2s;">
-                    <i data-lucide="monitor-play" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:5px;"></i> Preview
+                <button class="modal-tab" data-tab="preview" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500;">
+                    <span class="material-symbols-outlined text-[16px] align-middle mr-1">preview</span> Preview
                 </button>
-                <button class="modal-tab" data-tab="actions" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.2s;">
-                    <i data-lucide="terminal" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:5px;"></i> Actions
+                <button class="modal-tab" data-tab="actions" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500;">
+                    <span class="material-symbols-outlined text-[16px] align-middle mr-1">terminal</span> Actions
                 </button>
             </div>
 
@@ -579,17 +601,17 @@
             <div class="modal__body tab-pane active" id="tab-code">
                 <div class="modal__sidebar">
                     <div class="tree-toolbar" style="display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.2);">
-                        <button id="btn-new-file" title="Nuevo Archivo" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px; transition: all 0.2s;">
-                            <i data-lucide="file-plus" style="width: 18px; height: 18px;"></i>
+                        <button id="btn-new-file" title="Nuevo Archivo" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px;">
+                            <span class="material-symbols-outlined text-[18px]">note_add</span>
                         </button>
-                        <button id="btn-delete-file" title="Eliminar Selección" style="background: none; border: none; color: var(--red-400); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px; transition: all 0.2s; margin-left: auto;">
-                            <i data-lucide="trash" style="width: 18px; height: 18px;"></i>
+                        <button id="btn-delete-file" title="Eliminar Selección" style="background: none; border: none; color: var(--red-400); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px; margin-left: auto;">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
                         </button>
                     </div>
                     <div id="file-tree" style="overflow-y: auto; flex: 1;">
                         <div class="modal__placeholder">
                             <div class="modal__placeholder-inner">
-                                <i data-lucide="folder"></i>
+                                <span class="material-symbols-outlined">folder</span>
                                 <p class="modal__placeholder-text">Cargando...</p>
                             </div>
                         </div>
@@ -597,7 +619,7 @@
                 </div>
                 <div class="modal__code-area" id="code-container">
                     <div id="code-viewer" class="modal__code-viewer">
-                        <i data-lucide="mouse-pointer"></i>
+                        <span class="material-symbols-outlined">touch_app</span>
                         <p>Selecciona un archivo</p>
                     </div>
                 </div>
@@ -607,7 +629,7 @@
             <div class="modal__body tab-pane" id="tab-kanban" style="display: none; padding: 20px; flex-direction: column;">
                 <div class="kanban-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>Gestor de Tareas (Issues)</h3>
-                    <button id="btn-new-issue" class="btn-submit" style="padding: 8px 16px;"><i data-lucide="plus" style="width:16px;height:16px;vertical-align:middle;margin-right:5px;"></i> Nueva Tarea</button>
+                    <button id="btn-new-issue" class="btn-submit" style="padding: 8px 16px;"><span class="material-symbols-outlined text-[16px] align-middle mr-1">add</span> Nueva Tarea</button>
                 </div>
                 <div class="kanban-board" style="display: flex; gap: 20px; flex: 1; overflow-x: auto; margin-top: 20px;">
                     <div class="kanban-col" data-state="open" style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; flex-direction: column;">
@@ -628,9 +650,9 @@
             <!-- TAB: PREVIEW -->
             <div class="modal__body tab-pane" id="tab-preview" style="display: none; padding: 0; flex-direction: column; background: #fff;">
                 <div style="padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; display: flex; align-items: center; color: #333;">
-                    <i data-lucide="globe" style="width: 16px; height: 16px; margin-right: 8px;"></i>
+                    <span class="material-symbols-outlined text-[16px] mr-2">language</span>
                     <span style="font-size: 0.9rem; font-family: monospace;">localhost:3000 (Live Preview)</span>
-                    <button id="btn-refresh-preview" style="margin-left: auto; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px;"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i></button>
+                    <button id="btn-refresh-preview" style="margin-left: auto; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px;"><span class="material-symbols-outlined text-[16px]">refresh</span></button>
                 </div>
                 <iframe id="preview-frame" sandbox="allow-scripts" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
@@ -651,11 +673,11 @@
         <div class="modal__container modal__container--small glass-panel">
             <div class="modal__header">
                 <div class="modal__title-row">
-                    <div class="modal__icon"><i data-lucide="plus-circle"></i></div>
+                    <div class="modal__icon"><span class="material-symbols-outlined">add_circle</span></div>
                     <h3 class="modal__title">Nuevo Repositorio</h3>
                 </div>
                 <button class="modal__close" onclick="document.getElementById('create-repo-modal').classList.add('hidden')">
-                    <i data-lucide="x"></i>
+                    <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
             <form id="create-repo-form" class="modal__form">

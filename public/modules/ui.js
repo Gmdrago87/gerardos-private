@@ -309,36 +309,55 @@ function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
     const ownerLogin = (repo.owner && repo.owner.login) ? repo.owner.login : 'GerardMaestre';
     const htmlUrl = sanitizeUrl(repo.html_url);
     const cloneUrl = sanitizeUrl(repo.clone_url);
-    const badgesHtml = generateBadgesHtml(repo.topics);
-    const privateBadge = repo.private ? '<span class="repo-card__private-badge" title="Repositorio Privado"><i data-lucide="lock"></i> Privado</span>' : '';
     const safeRepoName = escapeHtml(repo.name).replace(/"/g, '&quot;');
 
     return `
-        <div class="repo-card__header">
-            <div class="repo-card__identity">
-                <div class="repo-card__folder-icon">
-                    <i data-lucide="folder"></i>
+        <div class="glass-panel squircle p-6 magnetic-hover glass-panel-hover flex flex-col gap-4 group cursor-pointer relative overflow-hidden">
+            <div class="absolute -right-20 -top-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-500 pointer-events-none"></div>
+            
+            <div class="flex justify-between items-start z-10 gap-3">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 squircle-sm bg-surface-container-high flex items-center justify-center border border-white/5 flex-shrink-0">
+                        <span class="material-symbols-outlined text-primary text-[24px]">folder</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm text-white group-hover:text-primary transition-colors">${name}</h3>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant truncate-2-lines">${desc}</p>
+                    </div>
                 </div>
-                ${privateBadge}
+                
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="font-label-mono text-label-mono text-on-surface-variant bg-white/5 px-2 py-1 rounded">${updateBadge}</span>
+                    <div class="flex items-center gap-1 ${repo.private ? 'text-tertiary-container' : 'text-secondary'}">
+                        <span class="w-2 h-2 rounded-full ${repo.private ? 'bg-tertiary-container shadow-[0_0_8px_#ff5545]' : 'status-dot-success'}"></span>
+                        <span class="font-label-mono text-label-mono">${repo.private ? 'Privado' : 'Público'}</span>
+                    </div>
+                </div>
             </div>
-            <div class="repo-card__actions" id="actions-${repo.id}">
-                <button class="repo-card__clone-btn" data-clone-url="${cloneUrl}" title="Copiar 'git clone'" aria-label="Copiar clone URL"><i data-lucide="clipboard-copy"></i></button>
-                ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link"><i data-lucide="globe"></i> WEB</a>` : ''}
-                <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link" aria-label="Abrir en GitHub"><i data-lucide="external-link"></i></a>
-                <a href="https://vscode.dev/github/${encodeURIComponent(ownerLogin)}/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link"><i data-lucide="code-2"></i> VS Code</a>
-                <button class="repo-card__toggle-visibility-btn" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}"></i></button>
-                <button class="repo-card__delete-btn" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><i data-lucide="trash-2"></i></button>
-            </div>
-        </div>
-        ${badgesHtml}
-        <div class="repo-card__update-row"><span class="repo-card__update-tag"><i data-lucide="clock"></i> ${updateBadge}</span></div>
-        <h3 class="repo-card__name">${name}</h3>
-        <p class="repo-card__description truncate-2-lines">${desc}</p>
-        <div class="repo-card__footer">
-            <div class="repo-card__language">${repo.language ? `<span class="repo-card__lang-dot" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${escapeHtml(repo.language)}` : ''}</div>
-            <div class="repo-card__stats">
-                <span class="repo-card__stat"><i data-lucide="star"></i> ${repo.stargazers_count}</span>
-                <span class="repo-card__stat"><i data-lucide="git-fork"></i> ${repo.forks_count}</span>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 z-10 border-t border-white/5 pt-4">
+                <div>
+                    <p class="font-label-mono text-label-mono text-on-surface-variant opacity-70 mb-1">LANGUAGE</p>
+                    <p class="font-body-sm text-body-sm text-white flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 6px ${langColor}"></span>
+                        <span>${repo.language ? escapeHtml(repo.language) : 'N/A'}</span>
+                    </p>
+                </div>
+                <div>
+                    <p class="font-label-mono text-label-mono text-on-surface-variant opacity-70 mb-1">METRICS</p>
+                    <p class="font-body-sm text-body-sm text-white flex items-center gap-3">
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-yellow-400">star</span> ${repo.stargazers_count}</span>
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-primary">account_tree</span> ${repo.forks_count}</span>
+                    </p>
+                </div>
+                <div class="flex justify-end items-center gap-1.5 flex-wrap">
+                    <button class="repo-card__clone-btn p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" data-clone-url="${cloneUrl}" title="Copiar 'git clone'"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+                    ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" title="Web"><span class="material-symbols-outlined text-[18px]">language</span></a>` : ''}
+                    <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" title="GitHub"><span class="material-symbols-outlined text-[18px]">open_in_new</span></a>
+                    <a href="https://vscode.dev/github/${encodeURIComponent(ownerLogin)}/${encodeURIComponent(repo.name)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" title="VS Code Web"><span class="material-symbols-outlined text-[18px]">terminal</span></a>
+                    <button class="p-2 rounded squircle-sm hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><span class="material-symbols-outlined text-[18px]">${repo.private ? 'lock_open' : 'lock'}</span></button>
+                    <button class="p-2 rounded squircle-sm hover:bg-white/10 text-red-400 hover:text-red-300 transition-colors" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar Repositorio"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+                </div>
             </div>
         </div>
     `;
