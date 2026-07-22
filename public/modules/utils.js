@@ -5,9 +5,9 @@ export const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 export const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
 export const CACHE_DURATION = 60 * 60 * 1000;
 
-export const FILTER_BTN_INACTIVE = 'px-4 py-1.5 bg-transparent border border-outline-variant/30 rounded-full text-[10px] font-bold text-on-surface uppercase tracking-wider cursor-pointer hover:bg-surface-variant transition-colors';
-export const FILTER_BTN_ACTIVE = 'px-4 py-1.5 bg-white text-black border border-white rounded-full text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors';
-export const FILTER_BTN_ALL_ACTIVE = 'px-4 py-1.5 bg-white text-black border border-white rounded-full text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors';
+export const FILTER_BTN_INACTIVE = 'filter-btn';
+export const FILTER_BTN_ACTIVE = 'filter-btn filter-btn--active';
+export const FILTER_BTN_ALL_ACTIVE = 'filter-btn filter-btn--active';
 
 export const LANG_COLORS = {
     'JavaScript': '#facc15',
