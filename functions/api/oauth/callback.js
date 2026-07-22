@@ -118,9 +118,9 @@ export async function onRequestGet(context) {
         const jwt = await signJwt(payload, jwtSecret, "gerardos-private", "gerardos-client");
 
         // 5. Establecer la cookie (con expiración de 15 minutos) y redirigir al inicio, además de limpiar oauth_state
-        const isProduction = env.NODE_ENV === "production";
-        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 15}; Secure`;
-        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Secure`;
+        const isSecure = new URL(request.url).protocol === "https:";
+        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 15}${isSecure ? '; Secure' : ''}`;
+        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecure ? '; Secure' : ''}`;
 
         const responseHeaders = new Headers();
         responseHeaders.set("Location", "/");

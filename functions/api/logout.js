@@ -2,7 +2,7 @@ export async function onRequestPost(context) {
     const { env, request } = context;
     const isProduction = env.NODE_ENV === "production";
     const expires = "Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    let cookieString = `session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; ${expires}`;
+    let cookieString = `session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${expires}`;
     let oauthStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${expires}`;
 
     if (isProduction || request.url.startsWith("https://")) {
