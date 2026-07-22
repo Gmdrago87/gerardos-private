@@ -1,9 +1,9 @@
-------formdata-undici-059852027428
+------formdata-undici-092345372394
 Content-Disposition: form-data; name="metadata"
 
-{"main_module":"functionsWorker-0.7311690215020806.js"}
-------formdata-undici-059852027428
-Content-Disposition: form-data; name="functionsWorker-0.7311690215020806.js"; filename="functionsWorker-0.7311690215020806.js"
+{"main_module":"functionsWorker-0.4722816589265332.js"}
+------formdata-undici-092345372394
+Content-Disposition: form-data; name="functionsWorker-0.4722816589265332.js"; filename="functionsWorker-0.4722816589265332.js"
 Content-Type: application/javascript+module
 
 var __defProp = Object.defineProperty;
@@ -759,9 +759,14 @@ async function onRequestGet6(context) {
   const clientSecret = env.GITHUB_CLIENT_SECRET;
   const jwtSecret = env.JWT_SECRET;
   const githubUsername = env.GITHUB_USERNAME;
-  if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
-    console.error("[API] Error: Faltan variables OAuth en env.");
-    return new Response("El servidor no est\xE1 configurado correctamente (faltan variables OAuth).", { status: 500 });
+  const missingVars = [];
+  if (!clientId) missingVars.push("GITHUB_CLIENT_ID");
+  if (!clientSecret) missingVars.push("GITHUB_CLIENT_SECRET");
+  if (!jwtSecret) missingVars.push("JWT_SECRET");
+  if (!githubUsername) missingVars.push("GITHUB_USERNAME");
+  if (missingVars.length > 0) {
+    console.error(`[API] Error: Faltan variables OAuth en env: ${missingVars.join(", ")}`);
+    return new Response(`El servidor no est\xE1 configurado correctamente. Faltan las variables de entorno en Cloudflare Pages: ${missingVars.join(", ")}. Por favor config\xFAralas en el panel de Cloudflare Pages (Settings > Environment variables).`, { status: 500 });
   }
   try {
     console.log("[API] Intercambiando c\xF3digo por token de acceso...");
@@ -846,9 +851,12 @@ async function onRequestGet7(context) {
   console.log(`[API] OAuth Login iniciado desde: ${url.pathname}`);
   const clientId = env.GITHUB_CLIENT_ID;
   const githubUsername = env.GITHUB_USERNAME;
-  if (!clientId || !githubUsername) {
-    console.error("[API] Error: Faltan variables de configuraci\xF3n para OAuth.");
-    return new Response("El servidor no est\xE1 configurado correctamente.", { status: 500 });
+  const missingVars = [];
+  if (!clientId) missingVars.push("GITHUB_CLIENT_ID");
+  if (!githubUsername) missingVars.push("GITHUB_USERNAME");
+  if (missingVars.length > 0) {
+    console.error(`[API] Error: Faltan variables de configuraci\xF3n para OAuth: ${missingVars.join(", ")}`);
+    return new Response(`El servidor no est\xE1 configurado correctamente. Faltan las variables de entorno en Cloudflare Pages: ${missingVars.join(", ")}. Por favor config\xFAralas en el panel de Cloudflare Pages (Settings > Environment variables).`, { status: 500 });
   }
   try {
     const state = crypto.randomUUID();
@@ -1468,7 +1476,7 @@ async function onRequest2(context) {
 }
 __name(onRequest2, "onRequest");
 
-// ../.wrangler/tmp/pages-NXsPqN/functionsRoutes-0.4810387071864306.mjs
+// ../.wrangler/tmp/pages-2Fx8qO/functionsRoutes-0.7853189786027982.mjs
 var routes = [
   {
     routePath: "/api/repos/:name/actions",
@@ -2075,4 +2083,4 @@ export {
   pages_template_worker_default as default
 };
 
-------formdata-undici-059852027428--
+------formdata-undici-092345372394--
