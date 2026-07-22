@@ -47,19 +47,15 @@ paths = [
     '''\.github/'''
 ]
 
-# Regex patterns to ignore
-[allowlist.regexes]
-# Allow example values in documentation
-examples = '''(?:example|EXAMPLE|placeholder|PLACEHOLDER|tu_|mi_|your_|YOUR_|sample|SAMPLE|test|TEST|mock|MOCK|dummy|DUMMY)[a-zA-Z0-9_\-]*'''
-
-# Allow test values
-testValues = '''(?:test|TEST|mock|MOCK|dummy|DUMMY|fake|FAKE)[a-zA-Z0-9_\-]*'''
-
-# Allow common placeholder patterns
-placeholders = '''(?:XXX|YYY|ZZZ|TODO|FIXME|HACK|NOTE|IMPORTANT)[a-zA-Z0-9_\-]*'''
-
-# Allow example secrets in documentation
-exampleSecrets = '''(?:your_|my_|example_|sample_)[a-zA-Z0-9_\-]{5,}'''
-
-# Allow common variable names
-variableNames = '''(?:clientId|clientSecret|jwtSecret|githubUsername|apiKey|token|secret|password|key)[a-zA-Z0-9_]*'''
+regexes = [
+    # Allow example values in documentation
+    '''(?:example|EXAMPLE|placeholder|PLACEHOLDER|tu_|mi_|your_|YOUR_|sample|SAMPLE|test|TEST|mock|MOCK|dummy|DUMMY)[a-zA-Z0-9_\-]*''',
+    # Allow test values
+    '''(?:test|TEST|mock|MOCK|dummy|DUMMY|fake|FAKE)[a-zA-Z0-9_\-]*''',
+    # Allow common placeholder patterns
+    '''(?:XXX|YYY|ZZZ|TODO|FIXME|HACK|NOTE|IMPORTANT)[a-zA-Z0-9_\-]*''',
+    # Allow example secrets in documentation
+    '''(?:your_|my_|example_|sample_)[a-zA-Z0-9_\-]{5,}''',
+    # Allow common variable names
+    '''(?:clientId|clientSecret|jwtSecret|githubUsername|apiKey|token|secret|password|key)[a-zA-Z0-9_]*'''
+]
