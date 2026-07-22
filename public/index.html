@@ -262,60 +262,83 @@
         <header class="bg-surface/60 backdrop-blur-xl text-primary font-body-md text-body-md fixed top-0 w-full z-50 border-b border-outline-variant/30 shadow-sm flex justify-between items-center px-6 h-16 md:hidden">
             <div class="font-headline-md text-headline-md font-bold text-on-surface">DevRepo</div>
             <div class="flex items-center gap-4">
-                <span class="material-symbols-outlined hover:bg-white/10 transition-colors rounded-full p-1 cursor-pointer">notifications</span>
-                <span class="material-symbols-outlined hover:bg-white/10 transition-colors rounded-full p-1 cursor-pointer" onclick="document.getElementById('settings-modal').classList.remove('hidden')">settings</span>
+                <span class="material-symbols-outlined text-on-surface-variant hover:bg-white/10 transition-colors rounded-full p-1 cursor-pointer" style="font-variation-settings: 'FILL' 0;">notifications</span>
+                <span class="material-symbols-outlined text-on-surface-variant hover:bg-white/10 transition-colors rounded-full p-1 cursor-pointer" style="font-variation-settings: 'FILL' 0;" onclick="document.getElementById('settings-modal').classList.remove('hidden')">settings</span>
                 <img id="avatar-mobile" src="https://avatars.githubusercontent.com/u/195803064?v=4" class="w-8 h-8 rounded-full border border-outline-variant/50" alt="Avatar"/>
             </div>
         </header>
 
-        <!-- Sidebar Desktop -->
-        <aside class="hidden md:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low/80 backdrop-blur-lg border-r border-outline-variant/20 z-40 flex-col p-stack-md transition-all duration-300 ease-in-out font-label-emphasized text-label-emphasized text-primary">
-            <div class="flex items-center gap-3 mb-8 px-2 mt-2">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-container to-surface-variant flex items-center justify-center shadow-lg">
-                    <span class="material-symbols-outlined text-on-primary-container font-bold">code_blocks</span>
+        <!-- SideNavBar (from JSON) -->
+        <nav class="hidden md:flex flex-col p-stack-md bg-surface-container-low/80 backdrop-blur-lg h-screen w-64 fixed left-0 top-0 border-r border-outline-variant/20 z-40 transition-all duration-300 ease-in-out">
+            <div class="flex items-center gap-3 mb-8 px-2 mt-4">
+                <div class="w-10 h-10 rounded-lg bg-surface-container-highest overflow-hidden border border-outline-variant/30 flex-shrink-0">
+                    <img alt="Organization Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-1D7OBYn9vpNX7E0fOnnl4BKxxFBKNCX4Q7slvXKYH3OwNZgCFCNEGfSdxR_F1vqyhAeYfqcVnmJOhFRt0Oqzu5x4Ajwbu0DRLXpqAFuojhlIuXX9Q_YXToKduUVtepBInjKiRzk9uBX-yh2tXRPIDKcQNKY5JkIsrEYB0XX938BhKFILmZKVL4SaU0FPDTnghbRnHR8RNpSSo9khcSX-FBw-Ixa9y2pcZqumBs6rg6GFojJv-M_auuML0ij8LZOsQ1f0u04KF8jx"/>
                 </div>
-                <div>
-                    <h1 class="font-headline-lg text-headline-lg font-black text-primary leading-none" id="name">DevRepo</h1>
-                    <p class="text-on-surface-variant text-[10px] uppercase tracking-wider mt-1" id="username">Enterprise</p>
+                <div class="flex flex-col">
+                    <span id="name" class="font-headline-lg text-headline-lg font-black text-primary leading-none tracking-tight">DevRepo</span>
+                    <span id="username" class="font-label-sm text-label-sm text-on-surface-variant">Enterprise</span>
                 </div>
             </div>
             
-            <button id="btn-open-create-repo" class="mb-6 w-full py-2.5 px-4 bg-primary text-on-primary rounded-lg font-label-emphasized flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm">
-                <span class="material-symbols-outlined text-sm">add</span>
-                New Repository
+            <button id="btn-open-create-repo" class="mb-6 w-full py-2.5 px-4 bg-[#007AFF] hover:bg-blue-600 text-white rounded-lg font-label-emphasized text-label-emphasized transition-colors shadow-[0_0_15px_rgba(0,122,255,0.3)] flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">add</span> New Repository
             </button>
             
-            <nav class="flex-1 space-y-1">
-                <a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container rounded-lg group" href="#" onclick="forceRefreshData()">
-                    <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">folder</span>
-                    <span>Repositories</span>
-                    <span class="ml-auto text-[10px] opacity-60 font-mono hidden group-hover:block transition-all">Refrescar</span>
-                </a>
-                <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors group" href="#" id="btn-futuristic-engine">
-                    <span class="material-symbols-outlined text-[20px]">hexagon</span>
-                    <span>Motor 3D</span>
-                </a>
-                <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors group" href="#" onclick="document.getElementById('ai-modal').classList.remove('hidden')">
-                    <span class="material-symbols-outlined text-[20px]">bot</span>
-                    <span>GerardOS AI</span>
-                </a>
-                <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors group" href="https://github.com/GerardMaestre" id="github-link" target="_blank">
-                    <span class="material-symbols-outlined text-[20px]">open_in_new</span>
-                    <span>GitHub Profile</span>
-                </a>
-            </nav>
+            <ul class="flex-1 flex flex-col gap-1">
+                <li>
+                    <a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container rounded-lg font-label-emphasized text-label-emphasized group" href="#" onclick="forceRefreshData()">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder</span>
+                        Repositories
+                        <span class="ml-auto text-[10px] opacity-60 font-mono hidden group-hover:block transition-all">Refrescar</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors" href="#">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">merge_type</span> Pull Requests
+                    </a>
+                </li>
+                <li>
+                    <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors" href="#">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">error_outline</span> Issues
+                    </a>
+                </li>
+                <li>
+                    <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors" href="#">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">analytics</span> Insights
+                    </a>
+                </li>
+                <li>
+                    <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors group" href="#" id="btn-futuristic-engine">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">hexagon</span> Motor 3D
+                    </a>
+                </li>
+                <li>
+                    <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors group" href="#" onclick="document.getElementById('ai-modal').classList.remove('hidden')">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">bot</span> GerardOS AI
+                    </a>
+                </li>
+            </ul>
             
-            <div class="mt-auto pt-4 border-t border-outline-variant/20 space-y-1">
-                <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors" href="#" onclick="document.getElementById('settings-modal').classList.remove('hidden')">
-                    <span class="material-symbols-outlined text-[18px]">settings</span>
-                    <span>Settings</span>
-                </a>
-                <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors" href="#" id="mac-logout-btn">
-                    <span class="material-symbols-outlined text-[18px] text-error">logout</span>
-                    <span class="text-error">Logout</span>
-                </a>
+            <div class="mt-auto border-t border-outline-variant/20 pt-4 pb-2">
+                <ul class="flex flex-col gap-1">
+                    <li>
+                        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors" href="https://github.com/GerardMaestre" id="github-link" target="_blank">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">open_in_new</span> GitHub Profile
+                        </a>
+                    </li>
+                    <li>
+                        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors" href="#" onclick="document.getElementById('settings-modal').classList.remove('hidden')">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span> Settings
+                        </a>
+                    </li>
+                    <li>
+                        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg font-label-emphasized text-label-emphasized transition-colors" href="#" id="mac-logout-btn">
+                            <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 0;">logout</span> <span class="text-error">Logout</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
-        </aside>
+        </nav>
 
         <!-- Main Content Area -->
         <main class="flex-1 md:ml-64 pt-20 md:pt-0 min-h-screen flex flex-col relative z-10 w-full overflow-y-auto">
@@ -351,9 +374,8 @@
                         <p class="font-body-md text-on-surface-variant mt-1">Manage and monitor your active projects.</p>
                     </div>
                     <!-- Filtros -->
+                    <!-- Filtros -->
                     <div class="flex flex-wrap items-center gap-2" id="filter-container">
-                        <button class="px-3 py-1 bg-surface-container-high border border-outline-variant/30 rounded-full text-xs text-on-surface hover:bg-primary hover:text-on-primary transition-colors" data-sort="updated" onclick="applySorting('updated')">Recientes</button>
-                        <button class="px-3 py-1 bg-surface-container-high border border-outline-variant/30 rounded-full text-xs text-on-surface hover:bg-primary hover:text-on-primary transition-colors" data-sort="stars" onclick="applySorting('stars')">Estrellas</button>
                     </div>
                 </div>
 
@@ -361,7 +383,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter-fixed mb-stack-lg">
                     <div class="glass-panel rounded-xl p-stack-md flex items-center justify-between">
                         <div>
-                            <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Total Repos</p>
+                            <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">TOTAL REPOS</p>
                             <p class="font-headline-lg text-on-surface" id="total-repos">0</p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-primary-container/20 flex items-center justify-center">
@@ -370,7 +392,7 @@
                     </div>
                     <div class="glass-panel rounded-xl p-stack-md flex items-center justify-between">
                         <div>
-                            <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Total Estrellas</p>
+                            <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">TOTAL ESTRELLAS</p>
                             <p class="font-headline-lg text-on-surface" id="total-stars">0</p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center">
@@ -379,7 +401,7 @@
                     </div>
                     <div class="glass-panel rounded-xl p-stack-md flex items-center justify-between">
                         <div>
-                            <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Top Lenguaje</p>
+                            <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">TOP LENGUAJE</p>
                             <div class="flex items-baseline gap-2">
                                 <p class="font-headline-lg text-on-surface truncate max-w-[120px]" id="top-lang">...</p>
                             </div>
@@ -429,6 +451,84 @@
                         <button id="btn-view-topology" class="futuristic-tab active px-3 py-1 bg-surface-container border border-outline-variant/30 rounded-md text-xs text-on-surface hover:bg-surface-variant">Topología 3D</button>
                         <button id="btn-view-graph" class="futuristic-tab px-3 py-1 bg-surface-container border border-outline-variant/30 rounded-md text-xs text-on-surface hover:bg-surface-variant">Grafo Infinito</button>
                         <button id="btn-view-commits" class="futuristic-tab px-3 py-1 bg-surface-container border border-outline-variant/30 rounded-md text-xs text-on-surface hover:bg-surface-variant">Timeline Commits</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== IDE View (Hidden by default) ===== -->
+    <div id="ide-view" class="hidden w-full h-full flex flex-col relative opacity-0 transition-opacity duration-500">
+        <!-- Main IDE Area -->
+        <main class="flex-1 md:ml-64 h-full flex flex-col relative bg-background mt-16 md:mt-0 overflow-hidden">
+            <!-- Top Context Bar (IDE Header) -->
+            <div class="h-14 border-b border-outline-variant/30 flex items-center justify-between px-4 bg-surface-container-lowest/50 backdrop-blur-md z-20">
+                <div class="flex items-center gap-3 text-sm text-on-surface-variant">
+                    <button class="material-symbols-outlined text-lg hover:text-primary transition-colors cursor-pointer" onclick="closeIdeView()" title="Back to Dashboard">arrow_back</button>
+                    <div class="w-[1px] h-4 bg-outline-variant/30 mx-1"></div>
+                    <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">account_tree</span>
+                    <span class="font-label-emphasized" id="ide-repo-branch">main</span>
+                    <span class="material-symbols-outlined text-lg mx-1" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+                    <span class="font-label-sm text-on-surface" id="ide-repo-path">root</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- CI/CD Status Pill -->
+                    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/10 border border-tertiary-fixed/20 shadow-[0_0_10px_rgba(66,227,85,0.1)]">
+                        <div class="w-2 h-2 rounded-full bg-tertiary-fixed animate-pulse"></div>
+                        <span class="font-label-sm text-tertiary-fixed">Build Passing</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="w-8 h-8 rounded-lg hover:bg-surface-variant flex items-center justify-center text-on-surface-variant transition-colors" id="btn-ide-search">
+                            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">search</span>
+                        </button>
+                        <button class="w-8 h-8 rounded-lg hover:bg-surface-variant flex items-center justify-center text-on-surface-variant transition-colors">
+                            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">more_horiz</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Split View: Explorer + Editor -->
+            <div class="flex-1 flex overflow-hidden relative">
+                <!-- File Explorer (Secondary Sidebar) -->
+                <div class="w-64 glass-sidebar flex-shrink-0 hidden lg:flex flex-col h-full z-10 border-r border-outline-variant/20 bg-surface-container-low/50">
+                    <div class="p-3 text-xs font-semibold text-on-surface-variant tracking-wider uppercase border-b border-outline-variant/10 flex justify-between items-center">
+                        Project Files
+                        <span class="material-symbols-outlined text-[16px] cursor-pointer hover:text-primary">create_new_folder</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto py-2" id="ide-file-tree">
+                        <!-- File Tree Item - Folder -->
+                        <div class="flex items-center gap-2 px-3 py-1.5 hover:bg-surface-variant/30 cursor-pointer text-on-surface">
+                            <span class="material-symbols-outlined text-lg text-outline" style="font-variation-settings: 'FILL' 0;">keyboard_arrow_down</span>
+                            <span class="material-symbols-outlined text-lg text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">folder</span>
+                            <span class="font-body-md text-sm truncate">core</span>
+                        </div>
+                        <div class="pl-7 pr-3 py-1">
+                            <div class="flex items-center gap-2 px-3 py-1.5 hover:bg-surface-variant/30 cursor-pointer text-on-surface-variant hover:text-on-surface rounded">
+                                <span class="material-symbols-outlined text-lg text-primary" style="font-variation-settings: 'FILL' 0;">description</span>
+                                <span class="font-body-md text-sm truncate">SessionManager.ts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor Area -->
+                <div class="flex-1 flex flex-col bg-surface-dim relative glass-editor">
+                    <!-- Editor Tabs -->
+                    <div class="flex h-10 border-b border-outline-variant/20 bg-surface-container-lowest/80 overflow-x-auto hide-scrollbar">
+                        <div class="flex items-center gap-2 px-4 py-2 bg-surface-dim border-t-2 border-t-primary text-on-surface text-sm cursor-pointer min-w-[120px]">
+                            <span class="material-symbols-outlined text-[16px] text-primary">description</span>
+                            <span class="truncate">SessionManager.ts</span>
+                            <span class="material-symbols-outlined text-[14px] ml-auto hover:text-error opacity-50 hover:opacity-100">close</span>
+                        </div>
+                    </div>
+                    <!-- Editor Container -->
+                    <div class="flex-1 relative w-full h-full" id="ide-editor-container">
+                        <!-- CodeMirror will be mounted here -->
+                        <div class="absolute inset-0 flex items-center justify-center text-on-surface-variant opacity-50 flex-col gap-4">
+                            <span class="material-symbols-outlined text-6xl">code_blocks</span>
+                            <p>Select a file to start coding</p>
+                        </div>
                     </div>
                 </div>
             </div>

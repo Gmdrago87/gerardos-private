@@ -305,39 +305,59 @@ function getWebUrl(homepage) {
 function getCardHtml(repo, name, desc, langColor, updateBadge, webUrl, hasWeb) {
     const htmlUrl = sanitizeUrl(repo.html_url);
     const cloneUrl = sanitizeUrl(repo.clone_url);
-    const privateBadge = repo.private ? '<i data-lucide="lock" class="w-4 h-4 text-error" title="Privado"></i>' : '';
     const safeRepoName = escapeHtml(repo.name).replace(/"/g, '&quot;');
+    const privateBadge = repo.private 
+        ? `<div class="flex items-center gap-1 border border-error/50 bg-error/10 text-error px-2 py-0.5 rounded text-[10px] font-bold tracking-wider"><span class="material-symbols-outlined text-[12px]">lock</span> PRIVADO</div>`
+        : '';
 
     return `
-        <div class="flex justify-between items-start mb-auto">
-            <div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shrink-0">
-                <i data-lucide="folder" class="text-on-surface-variant w-5 h-5"></i>
-            </div>
-            <div class="flex items-center gap-2">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col gap-3">
+                <div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">folder</span>
+                </div>
                 ${privateBadge}
-                ${repo.language ? `<div class="flex items-center gap-1 text-on-surface-variant bg-surface-container/50 px-2 py-1 rounded-full text-xs font-medium border border-outline-variant/10"><span class="w-2 h-2 rounded-full" style="background-color: ${langColor};"></span>${escapeHtml(repo.language)}</div>` : ''}
+            </div>
+            
+            <div class="flex flex-col items-end gap-3">
+                <div class="flex items-center gap-1">
+                    <button class="repo-card__clone-btn w-7 h-7 flex items-center justify-center hover:bg-surface-variant rounded border border-transparent transition-colors text-on-surface-variant" data-clone-url="${cloneUrl}" title="Copiar clone URL">
+                        <span class="material-symbols-outlined text-[16px]">file_copy</span>
+                    </button>
+                    ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 text-[9px] font-bold bg-tertiary-container/30 border border-tertiary-fixed/30 text-tertiary-fixed px-1.5 py-1 rounded hover:bg-tertiary-container/50 transition-colors" title="Sitio Web"><span class="material-symbols-outlined text-[14px]">language</span> WEB</a>` : ''}
+                    <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="w-7 h-7 flex items-center justify-center hover:bg-surface-variant rounded transition-colors text-on-surface-variant" title="Abrir en GitHub">
+                        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                    </a>
+                    <a href="vscode://vscode.git/clone?url=${encodeURIComponent(cloneUrl)}" class="flex items-center gap-1 text-[9px] font-bold bg-[#007AFF]/20 border border-[#007AFF]/50 text-[#007AFF] px-2 py-1 rounded hover:bg-[#007AFF]/30 transition-colors" title="Abrir en VS Code">
+                        &lt;/&gt; VS CODE
+                    </a>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="repo-card__toggle-visibility-btn w-7 h-7 flex items-center justify-center hover:text-white transition-colors text-on-surface-variant" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}">
+                        <span class="material-symbols-outlined text-[16px]">${repo.private ? 'lock_open' : 'lock'}</span>
+                    </button>
+                    <button class="repo-card__delete-btn w-7 h-7 flex items-center justify-center hover:text-error transition-colors text-on-surface-variant" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar">
+                        <span class="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                </div>
             </div>
         </div>
-        <div>
-            <h3 class="font-headline-md text-on-surface group-hover:text-primary transition-colors truncate">${name}</h3>
-            <p class="font-label-sm text-on-surface-variant mt-1 line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${desc}</p>
-            
-            <div class="flex items-center justify-between mt-4 pt-4 border-t border-outline-variant/10 font-label-sm text-on-surface-variant">
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> ${repo.stargazers_count}</div>
-                    <div class="flex items-center gap-1"><i data-lucide="git-fork" class="w-3 h-3"></i> ${repo.forks_count}</div>
-                </div>
-                
-                <!-- Acciones ocultas que se muestran en hover -->
-                <div class="hidden group-hover:flex items-center gap-2 bg-surface-container-high/80 rounded-full px-2 py-1 absolute bottom-4 right-4 backdrop-blur-sm border border-outline-variant/30">
-                    <button class="repo-card__clone-btn hover:text-white" data-clone-url="${cloneUrl}" title="Copiar clone URL"><i data-lucide="clipboard-copy" class="w-4 h-4"></i></button>
-                    ${hasWeb ? `<a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-white" title="Sitio Web"><i data-lucide="globe" class="w-4 h-4"></i></a>` : ''}
-                    <a href="${htmlUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-white" title="Abrir en GitHub"><i data-lucide="external-link" class="w-4 h-4"></i></a>
-                    <button class="repo-card__toggle-visibility-btn hover:text-white" data-repo-name="${safeRepoName}" data-repo-private="${repo.private}" onclick="event.stopPropagation(); window.toggleRepoVisibilityGlobal(this.getAttribute('data-repo-name'), this.getAttribute('data-repo-private') === 'true')" title="${repo.private ? 'Hacer Público' : 'Hacer Privado'}"><i data-lucide="${repo.private ? 'unlock' : 'lock'}" class="w-4 h-4"></i></button>
-                    <button class="repo-card__delete-btn text-error/80 hover:text-error" data-repo-name="${safeRepoName}" onclick="event.stopPropagation(); window.deleteRepoGlobal(this.getAttribute('data-repo-name'))" title="Eliminar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
 
-                <div class="text-xs group-hover:opacity-0 transition-opacity ml-auto">${updateBadge}</div>
+        <div class="mt-2 flex flex-col gap-1 flex-1">
+            <div class="flex items-center gap-1 text-[10px] text-on-surface-variant mb-1">
+                <span class="material-symbols-outlined text-[12px]">schedule</span> ${updateBadge}
+            </div>
+            <h3 class="font-headline-md text-[15px] font-bold text-on-surface group-hover:text-primary transition-colors truncate uppercase tracking-wide">${name}</h3>
+            <p class="font-label-sm text-xs text-on-surface-variant mt-1 line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${desc}</p>
+        </div>
+
+        <div class="flex items-center justify-between mt-4 pt-4 border-t border-outline-variant/10 font-label-sm text-on-surface-variant mt-auto">
+            <div class="flex items-center gap-1.5 text-[11px] font-medium">
+                ${repo.language ? `<span class="w-2.5 h-2.5 rounded-full" style="background-color: ${langColor};"></span> ${escapeHtml(repo.language)}` : ''}
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-[12px]" title="Estrellas"><span class="material-symbols-outlined text-[14px]">star</span> ${repo.stargazers_count}</div>
+                <div class="flex items-center gap-1 text-[12px]" title="Forks"><span class="material-symbols-outlined text-[14px]">fork_right</span> ${repo.forks_count}</div>
             </div>
         </div>
     `;
@@ -422,18 +442,30 @@ function generateFileHtml(item, repoName, branch) {
 }
 
 export function prepareRepoViewer(repoName) {
-    const modal = document.getElementById('modal');
-    modal.classList.remove('hidden', 'closing');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('modal-title').textContent = repoName;
-    document.getElementById('file-tree').innerHTML = '<div class="modal__loading--pulse">Cargando estructura...</div>';
-    const viewer = document.getElementById('code-viewer');
-    viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Buscando README...</p></div>';
+    const mainView = document.getElementById('main-content');
+    const ideView = document.getElementById('ide-view');
+    
+    if (mainView) mainView.classList.add('hidden');
+    if (ideView) {
+        ideView.classList.remove('hidden');
+        // Pequeño timeout para la transición de opacidad
+        setTimeout(() => ideView.classList.remove('opacity-0'), 50);
+    }
+    
+    const pathEl = document.getElementById('ide-repo-path');
+    if (pathEl) pathEl.textContent = repoName;
+    
+    const treeEl = document.getElementById('ide-file-tree');
+    if (treeEl) treeEl.innerHTML = '<div class="p-4 text-sm text-on-surface-variant">Cargando estructura...</div>';
+    
+    const viewer = document.getElementById('ide-editor-container');
+    if (viewer) viewer.innerHTML = '<div class="absolute inset-0 flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-4xl animate-spin mb-2">refresh</span><p>Buscando README...</p></div>';
+    
     if (window.lucide) window.lucide.createIcons();
 }
 
 export function renderRepoTree(repo, treeData, onFileClick, branch) {
-    const fileTree = document.getElementById('file-tree');
+    const fileTree = document.getElementById('ide-file-tree');
     const blobs = treeData.tree.filter(i => i.type === 'blob');
     const hierarchy = buildHierarchy(blobs);
     fileTree.innerHTML = generateTreeHTML(hierarchy, repo.name, branch || repo.default_branch || 'main');
@@ -443,7 +475,7 @@ export function renderRepoTree(repo, treeData, onFileClick, branch) {
 }
 
 function setupFileTreeListeners(onFileClick) {
-    const tree = document.getElementById('file-tree');
+    const tree = document.getElementById('ide-file-tree');
     tree.onclick = (e) => {
         const fileNode = e.target.closest('.file-node');
         if (fileNode) onFileClick(fileNode);
@@ -451,8 +483,8 @@ function setupFileTreeListeners(onFileClick) {
 }
 
 export function showFileLoading() {
-    const viewer = document.getElementById('code-viewer');
-    viewer.innerHTML = `<div class="modal__loading"><div class="loading-spinner-small" style="width:1.5rem;height:1.5rem;border:2px solid var(--color-primary);border-top-color:transparent;border-radius:9999px;animation:spin 1s linear infinite"></div></div>`;
+    const viewer = document.getElementById('ide-editor-container');
+    viewer.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>`;
 }
 
 let currentEditor = null;
@@ -472,10 +504,10 @@ export function renderFileContent(content, path, element) {
     document.querySelectorAll('.file-node').forEach(d => d.classList.remove('tree-file--active'));
     if (element) element.classList.add('tree-file--active');
     
-    const viewer = document.getElementById('code-viewer');
+    const viewer = document.getElementById('ide-editor-container');
     
     // Show save button
-    const actionsContainer = document.getElementById('modal-actions-container');
+    const actionsContainer = document.getElementById('ide-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'flex';
 
     // Carga perezosa del motor Monaco si aún no está iniciado
@@ -485,7 +517,7 @@ export function renderFileContent(content, path, element) {
         viewer.innerHTML = '<div id="monaco-container" class="monaco-editor-container"></div>';
         initMonaco(content, path);
     } else {
-        viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Cargando editor...</p></div>';
+        viewer.innerHTML = '<div class="absolute inset-0 flex flex-col items-center justify-center text-on-surface-variant"><i data-lucide="loader-2" class="animate-spin mb-2"></i><p>Cargando editor...</p></div>';
         if (window.lucide) window.lucide.createIcons();
         
         let attempts = 0;
@@ -501,7 +533,7 @@ export function renderFileContent(content, path, element) {
                 clearInterval(monacoCheckInterval);
                 monacoCheckInterval = null;
                 const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
-                viewer.innerHTML = `<div class="modal__error">Error cargando el editor avanzado.</div><pre class="code-content">${escaped}</pre>`;
+                viewer.innerHTML = `<div class="p-4 text-error">Error cargando el editor avanzado.</div><pre class="p-4 overflow-auto">${escaped}</pre>`;
             }
         }, 100);
     }
@@ -579,31 +611,21 @@ export function getCurrentEditorContent() {
     return currentEditor ? currentEditor.getValue() : null;
 }
 
-export function showViewerError(message, type = 'error') {
-    const viewer = document.getElementById('code-viewer');
-    const colorClass = type === 'warning' ? 'modal__message--warning' : 'modal__error';
-    viewer.replaceChildren();
-
-    const container = document.createElement('div');
-    container.className = colorClass;
-    if (type !== 'warning') {
-        const icon = document.createElement('i');
-        icon.setAttribute('data-lucide', 'alert-triangle');
-        container.appendChild(icon);
-    }
-    container.appendChild(document.createTextNode(message));
-    viewer.appendChild(container);
-
+export function showViewerError(msg, type = 'error') {
+    const viewer = document.getElementById('ide-editor-container');
+    const colorClass = type === 'warning' ? 'text-tertiary' : 'text-error';
+    const icon = type === 'warning' ? 'alert-triangle' : 'x-circle';
+    viewer.innerHTML = `<div class="absolute inset-0 flex flex-col items-center justify-center ${colorClass}"><i data-lucide="${icon}" class="w-12 h-12 mb-4"></i><p class="text-lg font-medium">${msg}</p></div>`;
     if (window.lucide) window.lucide.createIcons();
 }
 
 export async function renderReadme(content) {
-    const viewer = document.getElementById('code-viewer');
+    const viewer = document.getElementById('ide-editor-container');
     if (!window.marked) await importDynamicMarked();
     if (!window.DOMPurify) await importDynamicDOMPurify();
     viewer.innerHTML = `
-        <div class="h-full overflow-auto custom-scroll">
-            <div class="markdown-body">
+        <div class="h-full overflow-auto custom-scroll p-8">
+            <div class="markdown-body max-w-4xl mx-auto">
                 ${window.DOMPurify.sanitize(window.marked.parse(content))}
             </div>
         </div>`;
@@ -630,10 +652,21 @@ function importDynamicDOMPurify() {
 }
 
 export function closeModal() {
-    const modal = document.getElementById('modal');
-    modal.classList.add('closing');
+    const ideView = document.getElementById('ide-view');
+    const mainView = document.getElementById('main-content');
     
-    const actionsContainer = document.getElementById('modal-actions-container');
+    if (ideView && !ideView.classList.contains('hidden')) {
+        ideView.classList.add('opacity-0');
+        setTimeout(() => {
+            ideView.classList.add('hidden');
+            if (mainView) {
+                mainView.classList.remove('hidden');
+                setTimeout(() => mainView.classList.remove('opacity-0'), 50);
+            }
+        }, 300);
+    }
+    
+    const actionsContainer = document.getElementById('ide-actions-container');
     if (actionsContainer) actionsContainer.style.display = 'none';
     
     if (monacoCheckInterval) {

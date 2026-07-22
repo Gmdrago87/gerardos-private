@@ -1139,6 +1139,7 @@ function initDockActions() {
 
 function exposeGlobals() {
     window.closeModal = closeModal;
+    window.closeIdeView = closeModal;
     window.applySorting = handleSortClick;
     window.filterByLang = handleFilterClick;
     window.forceRefreshData = () => {
