@@ -1,6 +1,7 @@
 /**
  * Logout Handler
- * Clears the session cookie
+ * Clears the session cookie and any related cookies
+ * Enhanced with better security
  */
 
 import { jsonResponse } from "../_shared/http.js";
@@ -13,21 +14,24 @@ export async function onRequestGet(context) {
     const isProduction = context.env.NODE_ENV === "production";
     const responseHeaders = new Headers();
     
-    // Clear session cookie
-    clearCookie(responseHeaders, "session", {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'Strict',
-        secure: isProduction || url.protocol === 'https:'
-    });
+    // Clear all session-related cookies
+    const cookiesToClear = [
+        { name: "session", options: { path: '/', httpOnly: true, sameSite: 'Strict' } },
+        { name: "oauth_state", options: { path: '/', httpOnly: true, sameSite: 'Lax' } },
+        { name: "session_token", options: { path: '/', httpOnly: true, sameSite: 'Strict' } }
+    ];
     
-    // Clear state cookie
-    clearCookie(responseHeaders, "oauth_state", {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'Lax',
-        secure: isProduction || url.protocol === 'https:'
-    });
+    for (const cookie of cookiesToClear) {
+        clearCookie(responseHeaders, cookie.name, {
+            ...cookie.options,
+            secure: isProduction || url.protocol === 'https:'
+        });
+    }
+    
+    // Add security headers
+    responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    responseHeaders.set("Pragma", "no-cache");
+    responseHeaders.set("Expires", "0");
     
     responseHeaders.set("Location", "/");
     
@@ -35,4 +39,9 @@ export async function onRequestGet(context) {
         status: 302,
         headers: responseHeaders
     });
+}
+
+export async function onRequestPost(context) {
+    // Also handle POST requests for logout
+    return onRequestGet(context);
 }

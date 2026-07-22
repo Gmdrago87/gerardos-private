@@ -1,14 +1,18 @@
 /**
  * Service Worker for GerardOS Private
  * Handles caching and offline functionality
+ * Enhanced with better caching strategies and error handling
  */
 
-const CACHE_NAME = 'gerardos-private-v2';
+const CACHE_NAME = 'gerardos-private-v3';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/style.css',
+    '/style.min.css',
     '/app.js',
+    '/bundle.js',
+    '/bundle.js.map',
     '/manifest.json',
     '/modules/utils.js',
     '/modules/state.js',
@@ -24,17 +28,19 @@ const ASSETS_TO_CACHE = [
 const EXTERNAL_RESOURCES = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
     'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap',
-    'https://cdnjs.cloudflare.com/ajax/libs/lucide/1.0.0/lucide.min.js',
-    'https://cdn.jsdelivr.net/npm/lucide@1.0.0/dist/lucide.min.js'
+    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap'
 ];
 
 // API cache configuration
-const API_CACHE_NAME = 'gerardos-api-v1';
+const API_CACHE_NAME = 'gerardos-api-v2';
 const API_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Maximum cache size (in number of entries)
+const MAX_CACHE_ENTRIES = 100;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...');
+    console.log('[SW] Installing service worker v3...');
     
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -54,7 +60,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker...');
+    console.log('[SW] Activating service worker v3...');
     
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -75,6 +81,148 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+/**
+ * Handle API request caching
+ * @param {FetchEvent} event - Fetch event
+ * @returns {Promise<Response>} Response
+ */
+async function handleApiRequest(event) {
+    const url = new URL(event.request.url);
+    const requestPath = url.pathname;
+    
+    // Don't cache POST, PUT, DELETE, PATCH requests
+    if (event.request.method !== 'GET') {
+        return fetch(event.request);
+    }
+    
+    // Don't cache session or auth endpoints
+    const noCacheEndpoints = [
+        '/api/session',
+        '/api/logout',
+        '/api/oauth/login',
+        '/api/oauth/callback'
+    ];
+    
+    if (noCacheEndpoints.some(endpoint => requestPath.startsWith(endpoint))) {
+        return fetch(event.request);
+    }
+    
+    // Try to serve from API cache
+    const apiCache = await caches.open(API_CACHE_NAME);
+    const cachedResponse = await apiCache.match(event.request);
+    
+    if (cachedResponse) {
+        console.log(`[SW] Serving API from cache: ${requestPath}`);
+        return cachedResponse;
+    }
+    
+    // Fetch from network
+    try {
+        const response = await fetch(event.request);
+        
+        // Only cache successful responses
+        if (response.ok && response.status === 200) {
+            // Clone the response to cache it
+            const responseClone = response.clone();
+            
+            // Enforce cache size limit
+            const keys = await apiCache.keys();
+            if (keys.length >= MAX_CACHE_ENTRIES) {
+                // Delete oldest entry
+                const oldestKey = keys[0];
+                await apiCache.delete(oldestKey);
+            }
+            
+            await apiCache.put(event.request, responseClone);
+            console.log(`[SW] Cached API response: ${requestPath}`);
+        }
+        
+        return response;
+    } catch (error) {
+        console.error(`[SW] Network error for ${requestPath}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Handle static asset requests
+ * @param {FetchEvent} event - Fetch event
+ * @returns {Promise<Response>} Response
+ */
+async function handleStaticRequest(event) {
+    const url = new URL(event.request.url);
+    const requestPath = url.pathname;
+    
+    // Try to serve from cache first
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(event.request);
+    
+    if (cachedResponse) {
+        console.log(`[SW] Serving from cache: ${requestPath}`);
+        return cachedResponse;
+    }
+    
+    // Fallback to network
+    try {
+        const response = await fetch(event.request);
+        
+        // Cache successful responses
+        if (response.ok) {
+            const responseClone = response.clone();
+            await cache.put(event.request, responseClone);
+        }
+        
+        return response;
+    } catch (error) {
+        console.error(`[SW] Network error for ${requestPath}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Handle external resource requests
+ * @param {FetchEvent} event - Fetch event
+ * @returns {Promise<Response>} Response
+ */
+async function handleExternalRequest(event) {
+    const url = new URL(event.request.url);
+    
+    // Check if this is an external resource we want to cache
+    const isExternalResource = EXTERNAL_RESOURCES.some(resource => 
+        url.href.startsWith(resource) || 
+        (resource.includes('fonts.googleapis.com') && url.href.includes('fonts.googleapis.com'))
+    );
+    
+    if (!isExternalResource) {
+        return fetch(event.request);
+    }
+    
+    // Try to serve from cache
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(event.request);
+    
+    if (cachedResponse) {
+        console.log(`[SW] Serving external from cache: ${url.href}`);
+        return cachedResponse;
+    }
+    
+    // Fetch from network
+    try {
+        const response = await fetch(event.request);
+        
+        if (response.ok) {
+            const responseClone = response.clone();
+            // Cache external resources for 1 day
+            await cache.put(event.request, responseClone);
+        }
+        
+        return response;
+    } catch (error) {
+        console.error(`[SW] Network error for external resource:`, error);
+        throw error;
+    }
+}
+
 // Fetch event - serve cached assets when offline
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
@@ -86,117 +234,28 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // Skip non-GET requests or non-http(s) schemes (e.g., chrome-extension://)
+    // Skip non-GET requests or non-http(s) schemes
     if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) {
         return;
     }
     
-    // Try to serve from cache first
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                if (response) {
-                    console.log(`[SW] Serving from cache: ${requestPath}`);
-                    return response;
-                }
-                
-                // If not in cache, fetch from network and cache it
-                console.log(`[SW] Fetching from network: ${requestPath}`);
-                return fetch(event.request)
-                    .then((response) => {
-                        // Clone the response to cache it
-                        const responseClone = response.clone();
-                        
-                        // Cache only successful responses for static assets
-                        if (response.ok && isCacheable(requestPath) && url.protocol.startsWith('http')) {
-                            caches.open(CACHE_NAME)
-                                .then((cache) => {
-                                    cache.put(event.request, responseClone).catch(() => {});
-                                })
-                                .catch(() => {});
-                        }
-                        
-                        return response;
-                    })
-                    .catch((error) => {
-                        console.error(`[SW] Network error for ${requestPath}:`, error);
-                        // Return a fallback response for HTML files
-                        if (requestPath.endsWith('.html') || requestPath === '/') {
-                            return caches.match('/index.html');
-                        }
-                        throw error;
-                    });
-            })
-    );
+    // Handle external resources
+    if (!url.origin.includes('gerardos-private') && !url.origin.includes('localhost')) {
+        event.respondWith(handleExternalRequest(event));
+        return;
+    }
+    
+    // Handle static assets
+    event.respondWith(handleStaticRequest(event));
 });
-
-// Handle API requests with caching
-async function handleApiRequest(event) {
-    const url = new URL(event.request.url);
-    const requestPath = url.pathname;
-    
-    // Don't cache mutable requests
-    if (event.request.method !== 'GET') {
-        return fetch(event.request);
-    }
-    
-    // Check if we have a cached response
-    const cache = await caches.open(API_CACHE_NAME);
-    const cachedResponse = await cache.match(event.request);
-    
-    if (cachedResponse) {
-        // Check if cached response is still valid
-        const cachedTime = cachedResponse.headers.get('X-Cache-Time');
-        if (cachedTime && (Date.now() - parseInt(cachedTime) < API_CACHE_DURATION)) {
-            console.log(`[SW] Serving API from cache: ${requestPath}`);
-            return cachedResponse;
-        }
-    }
-    
-    // Fetch from network
-    try {
-        const response = await fetch(event.request);
-        
-        // Cache successful responses
-        if (response.ok) {
-            const responseClone = response.clone();
-            const newHeaders = new Headers(response.headers);
-            newHeaders.set('X-Cache-Time', Date.now().toString());
-            
-            const newResponse = new Response(responseClone.body, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: newHeaders
-            });
-            
-            cache.put(event.request, newResponse);
-        }
-        
-        return response;
-    } catch (error) {
-        console.error(`[SW] API request failed: ${requestPath}`, error);
-        // Return cached response if available (stale-while-revalidate)
-        if (cachedResponse) {
-            console.log(`[SW] Serving stale API response: ${requestPath}`);
-            return cachedResponse;
-        }
-        throw error;
-    }
-}
-
-// Check if a path should be cached
-function isCacheable(path) {
-    const cacheableExtensions = ['.html', '.css', '.js', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.ico'];
-    return cacheableExtensions.some(ext => path.endsWith(ext)) || path === '/';
-}
 
 // Message event - handle messages from clients
 self.addEventListener('message', (event) => {
-    if (event.data.action === 'skipWaiting') {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
     
-    if (event.data.action === 'clearCache') {
+    if (event.data && event.data.type === 'CLEAR_CACHE') {
         caches.keys().then((cacheNames) => {
             cacheNames.forEach((cacheName) => {
                 caches.delete(cacheName);
@@ -205,25 +264,7 @@ self.addEventListener('message', (event) => {
     }
 });
 
-// Push notification support (if enabled)
-self.addEventListener('push', (event) => {
-    const data = event.data?.json();
-    if (data) {
-        event.waitUntil(
-            self.registration.showNotification(data.title, {
-                body: data.body,
-                icon: data.icon || '/favicon.ico',
-                data: data.url ? { url: data.url } : undefined
-            })
-        );
-    }
-});
-
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    if (event.notification.data?.url) {
-        event.waitUntil(
-            clients.openWindow(event.notification.data.url)
-        );
-    }
+// Error event - log errors
+self.addEventListener('error', (errorEvent) => {
+    console.error('[SW] Error:', errorEvent.error);
 });

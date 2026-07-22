@@ -1,19 +1,69 @@
 /**
  * Authentication module for GerardOS Private Dashboard
+ * Enhanced with better session management and error handling
  */
 
-import { checkSession as apiCheckSession, login as apiLogin, logout as apiLogout } from './api.js';
+import { checkSession as apiCheckSession, login as apiLogin, logout as apiLogout, getVersion } from './api.js';
 import { clearCache, clearAllStorage } from './api.js';
+
+// Session state
+let sessionState = {
+    authenticated: false,
+    user: null,
+    expiration: null,
+    isExpiring: false,
+    lastChecked: 0
+};
+
+// Session check interval (5 minutes)
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
+
+// Session warning threshold (5 minutes before expiration)
+const SESSION_WARNING_THRESHOLD = 5 * 60 * 1000;
 
 /**
  * Check if user is authenticated
+ * @param {boolean} forceCheck - Force a new check
  * @returns {Promise<boolean>} True if authenticated
  */
-export async function checkSession() {
+export async function checkSession(forceCheck = false) {
+    const now = Date.now();
+    
+    // Use cached state if it's recent and not forced
+    if (!forceCheck && now - sessionState.lastChecked < SESSION_CHECK_INTERVAL) {
+        return sessionState.authenticated;
+    }
+    
     try {
         const session = await apiCheckSession();
-        return session.authenticated === true;
+        const authenticated = session.authenticated === true;
+        const user = authenticated ? session.user : null;
+        const expiration = authenticated && session.user?.expiresAt ? new Date(session.user.expiresAt) : null;
+        const isExpiring = expiration && (expiration - now) < SESSION_WARNING_THRESHOLD;
+        
+        // Update session state
+        sessionState = {
+            authenticated,
+            user,
+            expiration,
+            isExpiring,
+            lastChecked: now
+        };
+        
+        // If session is about to expire, schedule a check sooner
+        if (isExpiring) {
+            setTimeout(() => checkSession(true), SESSION_WARNING_THRESHOLD);
+        }
+        
+        return authenticated;
     } catch (e) {
+        sessionState = {
+            authenticated: false,
+            user: null,
+            expiration: null,
+            isExpiring: false,
+            lastChecked: now
+        };
         return false;
     }
 }
@@ -23,12 +73,8 @@ export async function checkSession() {
  * @returns {Promise<Object|null>} User object or null
  */
 export async function getCurrentUser() {
-    try {
-        const session = await apiCheckSession();
-        return session.authenticated ? session.user : null;
-    } catch (e) {
-        return null;
-    }
+    const authenticated = await checkSession();
+    return authenticated ? sessionState.user : null;
 }
 
 /**
@@ -36,15 +82,8 @@ export async function getCurrentUser() {
  * @returns {Promise<Date|null>} Expiration date or null
  */
 export async function getSessionExpiration() {
-    try {
-        const session = await apiCheckSession();
-        if (session.authenticated && session.user?.expiresAt) {
-            return new Date(session.user.expiresAt);
-        }
-        return null;
-    } catch (e) {
-        return null;
-    }
+    await checkSession();
+    return sessionState.expiration;
 }
 
 /**
@@ -52,17 +91,21 @@ export async function getSessionExpiration() {
  * @returns {Promise<boolean>} True if session is about to expire
  */
 export async function isSessionExpiringSoon() {
-    const expiration = await getSessionExpiration();
-    if (!expiration) return false;
-    
-    const now = new Date();
-    const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-    
-    return (expiration - now) < fiveMinutes;
+    await checkSession();
+    return sessionState.isExpiring;
+}
+
+/**
+ * Get session state
+ * @returns {Object} Current session state
+ */
+export function getSessionState() {
+    return { ...sessionState };
 }
 
 /**
  * Initiate login flow
+ * @returns {void}
  */
 export function login() {
     apiLogin();
@@ -70,11 +113,21 @@ export function login() {
 
 /**
  * Logout and clear session
+ * @returns {Promise<void>}
  */
 export async function logout() {
     // Clear local storage
     clearCache();
     clearAllStorage();
+    
+    // Clear session state
+    sessionState = {
+        authenticated: false,
+        user: null,
+        expiration: null,
+        isExpiring: false,
+        lastChecked: 0
+    };
     
     // Call logout API
     await apiLogout();
@@ -86,9 +139,9 @@ export async function logout() {
  */
 export async function refreshSession() {
     try {
-        // For now, just check session - in future, could implement refresh token
-        const session = await apiCheckSession();
-        return session.authenticated === true;
+        // Force a new session check
+        const authenticated = await checkSession(true);
+        return authenticated;
     } catch (e) {
         return false;
     }
@@ -99,42 +152,99 @@ export async function refreshSession() {
  * @returns {Promise<Object>} Authentication state
  */
 export async function getAuthState() {
-    try {
-        const session = await apiCheckSession();
-        const expiration = session.authenticated ? new Date(session.user?.expiresAt) : null;
-        const isExpiring = expiration && (expiration - new Date()) < (5 * 60 * 1000);
-        
-        return {
-            authenticated: session.authenticated,
-            user: session.user,
-            expiration,
-            isExpiring
-        };
-    } catch (e) {
-        return {
-            authenticated: false,
-            user: null,
-            expiration: null,
-            isExpiring: false
-        };
+    await checkSession();
+    
+    return {
+        authenticated: sessionState.authenticated,
+        user: sessionState.user,
+        expiration: sessionState.expiration,
+        isExpiring: sessionState.isExpiring
+    };
+}
+
+/**
+ * Start session monitoring
+ * Automatically checks session status periodically
+ * @returns {void}
+ */
+export function startSessionMonitoring() {
+    // Check session every 5 minutes
+    setInterval(() => {
+        checkSession();
+    }, SESSION_CHECK_INTERVAL);
+    
+    // Initial check
+    checkSession();
+}
+
+/**
+ * Stop session monitoring
+ * @returns {void}
+ */
+export function stopSessionMonitoring() {
+    // Clear all intervals (simple approach)
+    const intervals = window.sessionIntervals || [];
+    if (intervals.length > 0) {
+        intervals.forEach(interval => clearInterval(interval));
     }
 }
 
 /**
- * Store session token (if needed for client-side auth)
- * @param {string} token - Session token
+ * Handle session expiration warning
+ * Shows a warning when session is about to expire
+ * @param {Function} onExpiring - Callback when session is expiring
+ * @returns {void}
  */
-export function storeSessionToken(token) {
-    // Note: In this implementation, we don't store the token client-side
-    // as we use HttpOnly cookies for security
-    // This is just a placeholder for future use
+export function onSessionExpiring(onExpiring) {
+    setInterval(async () => {
+        const isExpiring = await isSessionExpiringSoon();
+        if (isExpiring) {
+            onExpiring();
+        }
+    }, 60 * 1000); // Check every minute
 }
 
 /**
- * Clear session token
+ * Get CSRF token for forms
+ * @returns {string} CSRF token
  */
-export function clearSessionToken() {
-    // Clear any client-side session storage
-    sessionStorage.removeItem('session_token');
-    localStorage.removeItem('session_token');
+export function getCsrfToken() {
+    // Generate a random token for client-side CSRF protection
+    return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+}
+
+/**
+ * Store CSRF token in session
+ * @param {string} token - CSRF token
+ * @returns {void}
+ */
+export function storeCsrfToken(token) {
+    sessionStorage.setItem('csrf_token', token);
+}
+
+/**
+ * Get stored CSRF token
+ * @returns {string|null} CSRF token or null
+ */
+export function getStoredCsrfToken() {
+    return sessionStorage.getItem('csrf_token');
+}
+
+/**
+ * Clear CSRF token
+ * @returns {void}
+ */
+export function clearCsrfToken() {
+    sessionStorage.removeItem('csrf_token');
+}
+
+// Initialize session monitoring when module is loaded
+if (typeof window !== 'undefined') {
+    // Store interval for cleanup
+    window.sessionIntervals = [];
+    
+    // Start monitoring after a short delay to allow page to load
+    setTimeout(() => {
+        startSessionMonitoring();
+    }, 1000);
 }
