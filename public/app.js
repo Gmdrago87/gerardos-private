@@ -264,12 +264,12 @@ window.closeIdeView = function() {
 
 async function handleLoginSubmit(e) {
     if (e) e.preventDefault();
-    const btn = document.getElementById('mac-login-github-btn') || document.getElementById('login-github-btn');
+    const btn = document.getElementById('login-github-btn') || document.getElementById('mac-login-github-btn');
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<span class="login-spinner"></span> Redirigiendo a GitHub...';
     }
-    login(); // redirect to OAuth
+    login();
 }
 
 function handleCachedSuccess(cached) {
@@ -319,7 +319,6 @@ function handleCriticalError(error) {
 }
 
 function processData(user, repos, source) {
-    // Pre-indexar timestamps y cadenas en minúscula para eliminar alocaciones en búsquedas y ordenamientos
     const indexedRepos = repos.map(repo => ({
         ...repo,
         _lowerName: repo.name ? repo.name.toLowerCase() : '',
@@ -400,7 +399,6 @@ async function handleCardClick(repo) {
     currentFilePath = null;
     prepareRepoViewer(repo.name);
 
-    // Cargar ramas
     try {
         const branches = await fetchBranches(repo.name);
         renderBranchDropdown(repo, branches);
@@ -421,7 +419,6 @@ async function loadRepoTreeAndReadme(repo, branch) {
         }
         const blobs = renderRepoTree(repo, data, (fileNode) => handleFileClick(fileNode, branch), branch);
 
-        // Cargar commits
         loadCommitsList(repo.name, branch);
 
         const readmeNode = blobs.find(f => f.path.toLowerCase() === 'readme.md');
@@ -439,7 +436,6 @@ function renderBranchDropdown(repo, branches) {
     const titleRow = document.querySelector('.modal__title-row') || document.getElementById('ide-header');
     if (!titleRow) return;
 
-    // Quitar dropdown viejo si existe
     document.getElementById('branch-select-container')?.remove();
 
     const container = document.createElement('div');
@@ -468,8 +464,7 @@ function renderBranchDropdown(repo, branches) {
     select.onchange = async (e) => {
         currentBranch = e.target.value;
         const viewer = document.getElementById('code-viewer');
-        viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Cargando rama...</p></div>';
-        if (window.lucide) window.lucide.createIcons();
+        viewer.innerHTML = '<div class="modal__loading"><span class="material-symbols-outlined" style="font-size: 2rem; animation: spin 1s linear infinite;">progress_activity</span><p class="modal__loading-text">Cargando rama...</p></div>';
         await loadRepoTreeAndReadme(repo, currentBranch);
     };
 }
@@ -478,7 +473,6 @@ async function loadCommitsList(repoName, branch) {
     const codeArea = document.getElementById('code-container');
     if (!codeArea) return;
 
-    // Quitar panel de commits viejo si existe
     document.getElementById('commits-sidebar')?.remove();
 
     const commitsSidebar = document.createElement('div');
@@ -486,7 +480,6 @@ async function loadCommitsList(repoName, branch) {
     commitsSidebar.className = 'commits-sidebar';
     commitsSidebar.innerHTML = '<div class="commits-loading">Cargando historial...</div>';
 
-    // Insertarlo en el modal body junto al code-area
     const modalBody = document.querySelector('.modal__body') || document.getElementById('ide-view');
     if (modalBody) {
         modalBody.appendChild(commitsSidebar);
@@ -494,7 +487,7 @@ async function loadCommitsList(repoName, branch) {
 
     try {
         const commits = await fetchCommits(repoName, branch);
-        let listHtml = '<div class="commits-title"><i data-lucide="history"></i> Commits</div><div class="commits-list">';
+        let listHtml = '<div class="commits-title"><span class="material-symbols-outlined">history</span> Commits</div><div class="commits-list">';
 
         commits.forEach(c => {
             const date = new Date(c.commit.author.date).toLocaleDateString();
@@ -504,14 +497,13 @@ async function loadCommitsList(repoName, branch) {
                     ${avatar}
                     <div class="commit-info">
                         <p class="commit-msg">${escapeHtml(c.commit.message)}</p>
-                        <p class="commit-meta">${escapeHtml(c.commit.author.name)}  b7 ${date}</p>
+                        <p class="commit-meta">${escapeHtml(c.commit.author.name)} · ${date}</p>
                     </div>
                 </div>
             `;
         });
         listHtml += '</div>';
         commitsSidebar.innerHTML = listHtml;
-        if (window.lucide) window.lucide.createIcons();
     } catch (e) {
         commitsSidebar.innerHTML = '<div class="commits-error">Error al cargar commits</div>';
     }
@@ -552,7 +544,6 @@ function handleCloneClick(url, btn) {
     copyCloneCommand(url, btn);
 }
 
-
 async function handleSaveFile() {
     if (!currentRepoInfo || !currentFilePath) return;
 
@@ -571,13 +562,12 @@ async function handleSaveFile() {
         cancelText: 'Cancelar'
     });
 
-    if (!message) return; // Cancelled
+    if (!message) return;
 
     btn.classList.add('is-saving');
     btn.disabled = true;
 
     try {
-        // Necesitamos el SHA actual del archivo para actualizarlo
         const treeData = await getCachedTree(`${currentRepoInfo.name}:${currentBranch}`);
         let sha = null;
         if (treeData) {
@@ -587,20 +577,16 @@ async function handleSaveFile() {
 
         await saveFileContent(currentRepoInfo.name, currentBranch, currentFilePath, content, message, sha);
 
-        // Actualizar la cache
         const cacheKey = `${currentRepoInfo.name}:${currentBranch}:${currentFilePath}`;
         await setCachedFile(cacheKey, content);
 
-        btn.innerHTML = '<i data-lucide="check"></i> Guardado';
-        if (window.lucide) window.lucide.createIcons();
+        btn.innerHTML = '<span class="material-symbols-outlined">check</span> Guardado';
         setTimeout(() => {
             btn.innerHTML = originalContent;
             btn.classList.remove('is-saving');
             btn.disabled = false;
-            if (window.lucide) window.lucide.createIcons();
         }, 2000);
 
-        // Refrescar el historial de commits
         loadCommitsList(currentRepoInfo.name, currentBranch);
         showToast('Guardado', `Cambios en '${currentFilePath}' guardados con éxito.`, 'success');
 
@@ -614,10 +600,8 @@ async function handleSaveFile() {
         btn.innerHTML = originalContent;
         btn.classList.remove('is-saving');
         btn.disabled = false;
-        if (window.lucide) window.lucide.createIcons();
     }
 }
-
 
 async function handleNewFile() {
     if (!currentRepoInfo) return;
@@ -633,11 +617,8 @@ async function handleNewFile() {
 
     try {
         await saveFileContent(currentRepoInfo.name, currentBranch, path, "// Nuevo archivo creado desde GerardOS\n", "Create " + path, null);
-
-        // Invalidar cache del árbol para forzar recarga
         const cacheKey = `${currentRepoInfo.name}:${currentBranch}`;
         await setCachedTree(cacheKey, null);
-
         await loadRepoTreeAndReadme(currentRepoInfo, currentBranch);
         showToast('Archivo Creado', `El archivo '${path}' ha sido creado con éxito.`, 'success');
     } catch (err) {
@@ -690,13 +671,10 @@ async function handleDeleteFile() {
         }
 
         await deleteFile(currentRepoInfo.name, currentBranch, currentFilePath, "Delete " + currentFilePath, sha);
-
-        // Invalidar caches
         await setCachedTree(`${currentRepoInfo.name}:${currentBranch}`, null);
         await setCachedFile(`${currentRepoInfo.name}:${currentBranch}:${currentFilePath}`, null);
 
-        document.getElementById('code-viewer').innerHTML = '<i data-lucide="mouse-pointer"></i><p>Selecciona un archivo</p>';
-        if (window.lucide) window.lucide.createIcons();
+        document.getElementById('code-viewer').innerHTML = '<span class="material-symbols-outlined">mouse_pointer</span><p>Selecciona un archivo</p>';
         currentFilePath = null;
 
         await loadRepoTreeAndReadme(currentRepoInfo, currentBranch);
@@ -728,10 +706,8 @@ async function loadKanbanIssues() {
         doneContainer.innerHTML = '';
 
         issues.forEach(issue => {
-            // No mostrar Pull Requests
             if (issue.pull_request) return;
 
-            // Determinar columna basada en labels o estado
             let col = todoContainer;
             if (issue.state === 'closed') {
                 col = doneContainer;
@@ -748,7 +724,7 @@ async function loadKanbanIssues() {
                 <div class="kanban-card-title">${escapeHtml(issue.title)}</div>
                 <div class="kanban-card-meta">
                     <span>#${issue.number}</span>
-                    <span>${issue.comments} </span>
+                    <span>${issue.comments} 💬</span>
                 </div>
             `;
 
@@ -822,7 +798,6 @@ function setupKanbanDragAndDrop() {
                 } else if (state === 'in-progress') {
                     await updateIssue(currentRepoInfo.name, number, 'open', ['in-progress']);
                 } else {
-                    // back to open / todo
                     await updateIssue(currentRepoInfo.name, number, 'open', []);
                 }
             } catch (err) {
@@ -832,7 +807,7 @@ function setupKanbanDragAndDrop() {
                     message: `No se pudo actualizar el estado de la tarea: ${err.message}`,
                     type: 'error'
                 });
-                if (dragging && originalParent) originalParent.appendChild(dragging); // Revert UI
+                if (dragging && originalParent) originalParent.appendChild(dragging);
             }
         });
     });
@@ -882,7 +857,6 @@ async function loadPreview() {
         let cssContent = "";
         let jsContent = "";
 
-        // Buscar index.html, style.css, script.js
         for (const file of treeData.tree) {
             if (file.type !== 'blob') continue;
             const path = file.path.toLowerCase();
@@ -913,7 +887,6 @@ async function loadPreview() {
             return;
         }
 
-        // Inyectar CSS y JS en el HTML
         let finalHtml = htmlContent;
         if (cssContent) {
             finalHtml = finalHtml.replace('</head>', `<style>${cssContent}</style></head>`);
@@ -956,20 +929,18 @@ function initCommandPalette() {
         let html = '';
         let count = 0;
 
-        // Buscar repositorios
         repos.forEach(r => {
             if (count > 5) return;
             if (r.name.toLowerCase().includes(query)) {
                 html += `
                 <div class="palette-item" data-repo-name="${escapeHtml(r.name).replace(/\"/g, '&quot;')}" onclick="window.openRepoFromPalette(this.getAttribute('data-repo-name'))">
-                    <i data-lucide="book" class="palette-item-icon" style="width:16px;height:16px"></i>
+                    <span class="material-symbols-outlined palette-item-icon" style="width:16px;height:16px">book</span>
                     <span class="palette-item-title">${escapeHtml(r.name)}</span>
                 </div>`;
                 count++;
             }
         });
 
-        // Comandos de sistema
         const commands = [
             { id: 'settings', icon: 'settings', title: 'Abrir Ajustes' },
             { id: 'new-repo', icon: 'plus', title: 'Crear Repositorio' }
@@ -979,18 +950,17 @@ function initCommandPalette() {
             if (c.title.toLowerCase().includes(query)) {
                 html += `
                 <div class="palette-item" onclick="window.runCommandFromPalette('${c.id}')">
-                    <i data-lucide="${c.icon}" class="palette-item-icon" style="width:16px;height:16px"></i>
+                    <span class="material-symbols-outlined palette-item-icon" style="width:16px;height:16px">${c.icon}</span>
                     <span class="palette-item-title">${c.title}</span>
                 </div>`;
             }
         });
 
         resultsContainer.innerHTML = html;
-        if (window.lucide) window.lucide.createIcons();
     });
 }
 
-// Exponer funciones globales para el Command Palette (ya que usan onclick HTML)
+// Exponer funciones globales para el Command Palette
 window.openRepoFromPalette = (repoName) => {
     document.getElementById('command-palette').classList.add('hidden');
     const s = getState();
@@ -1049,7 +1019,6 @@ async function handleCreateRepoSubmit(e) {
         hideCreateRepoModal();
         showToast('Repositorio Creado', `El repo '${name}' se ha creado correctamente.`, 'success');
 
-        // Actualización optimista
         const state = getState();
         if (state.allRepos) {
             const updatedAll = [newRepo, ...state.allRepos];
@@ -1067,7 +1036,7 @@ async function handleCreateRepoSubmit(e) {
     }
 }
 
-// Modal Eliminar Repo (Doble Confirmación)
+// Modal Eliminar Repo
 async function triggerDeleteRepo(repoName) {
     const confirmName = await showCustomPrompt({
         title: 'Eliminar Repositorio',
@@ -1094,7 +1063,6 @@ async function triggerDeleteRepo(repoName) {
         await deleteRepo(repoName, confirmName);
         showToast('Repositorio Eliminado', `El repo '${repoName}' ha sido eliminado.`, 'success');
 
-        // Actualización optimista
         const state = getState();
         if (state.allRepos) {
             const updatedAll = state.allRepos.filter(r => r.name !== repoName);
@@ -1145,7 +1113,6 @@ async function triggerToggleVisibility(repoName, isCurrentlyPrivate) {
         const updatedRepo = await updateRepoVisibility(repoName, newPrivateState);
         showToast('Repositorio Actualizado', `El repo '${repoName}' ahora es ${newPrivateState ? 'privado' : 'público'}.`, 'success');
 
-        // Actualización optimista del estado local para reflejar el cambio de inmediato
         const state = getState();
         if (state.allRepos) {
             const updatedAll = state.allRepos.map(r => r.name === repoName ? updatedRepo : r);
@@ -1223,13 +1190,13 @@ function initStaticListeners() {
 
     initCommandPalette();
 
-    const loginBtn = document.getElementById('mac-login-github-btn') || document.getElementById('login-github-btn');
+    const loginBtn = document.getElementById('login-github-btn') || document.getElementById('mac-login-github-btn');
     if (loginBtn) loginBtn.onclick = handleLoginSubmit;
 
-    const logoutBtn = document.getElementById('mac-logout-btn') || document.getElementById('logout-btn');
+    const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) logoutBtn.onclick = logout;
 
-    const logoutBtnDesktop = document.getElementById('mac-logout-btn-desktop');
+    const logoutBtnDesktop = document.getElementById('logout-btn-desktop');
     if (logoutBtnDesktop) logoutBtnDesktop.onclick = logout;
 
     const openCreateBtn = document.getElementById('btn-open-create-repo');
@@ -1240,6 +1207,28 @@ function initStaticListeners() {
 
     const createForm = document.getElementById('create-repo-form');
     if (createForm) createForm.onsubmit = handleCreateRepoSubmit;
+
+    // Initialize scroll to top button
+    initScrollToTop();
+}
+
+function initScrollToTop() {
+    const scrollBtn = document.getElementById('scroll-to-top');
+    if (!scrollBtn) return;
+
+    scrollBtn.onclick = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    let timeout;
+    window.addEventListener('scroll', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            const scrollY = window.scrollY;
+            scrollBtn.style.opacity = scrollY > 300 ? '1' : '0';
+            scrollBtn.style.pointerEvents = scrollY > 300 ? 'auto' : 'none';
+        }, 100);
+    });
 }
 
 function exposeGlobals() {

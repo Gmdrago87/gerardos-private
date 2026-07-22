@@ -5,7 +5,8 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>DevRepo - Enterprise</title>
     
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS - For development only. In production, use PostCSS plugin or Tailwind CLI -->
+    <!-- For production: npm install -D tailwindcss postcss autoprefixer and configure postcss.config.js -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
     <!-- Google Fonts & Material Symbols -->
@@ -108,10 +109,10 @@
         }
     </script>
 
-    <!-- Non-blocking External Scripts -->
-    <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js" defer></script>
-    <script src="https://d3js.org/d3.v7.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <!-- Non-blocking External Scripts - Using jsdelivr for CORS-friendly CDNs -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.400.0/dist/umd/lucide.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
     
     <!-- Custom CSS Styles -->
@@ -541,6 +542,11 @@
             <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
     </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="fixed bottom-6 right-6 z-[400] w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-on-primary shadow-lg transition-all duration-300 opacity-0 pointer-events-none hover:scale-110">
+        <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
 
 </body>
 </html>
