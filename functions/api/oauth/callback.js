@@ -42,9 +42,15 @@ export async function onRequestGet(context) {
     const jwtSecret = env.JWT_SECRET;
     const githubUsername = env.GITHUB_USERNAME;
 
-    if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
-        console.error("[API] Error: Faltan variables OAuth en env.");
-        return new Response("El servidor no está configurado correctamente (faltan variables OAuth).", { status: 500 });
+    const missingVars = [];
+    if (!clientId) missingVars.push("GITHUB_CLIENT_ID");
+    if (!clientSecret) missingVars.push("GITHUB_CLIENT_SECRET");
+    if (!jwtSecret) missingVars.push("JWT_SECRET");
+    if (!githubUsername) missingVars.push("GITHUB_USERNAME");
+
+    if (missingVars.length > 0) {
+        console.error(`[API] Error: Faltan variables OAuth en env: ${missingVars.join(", ")}`);
+        return new Response(`El servidor no está configurado correctamente. Faltan las variables de entorno en Cloudflare Pages: ${missingVars.join(", ")}. Por favor configúralas en el panel de Cloudflare Pages (Settings > Environment variables).`, { status: 500 });
     }
 
     try {
