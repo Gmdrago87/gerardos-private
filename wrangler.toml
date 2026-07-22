@@ -7,7 +7,6 @@ compatibility_flags = ["nodejs_compat"]
 # [[kv_namespaces]]
 # binding = "CACHE_KV"
 # id = "tu-id-de-kv"
-# preview_id = "tu-id-de-kv-preview"
 
 # Variables de entorno (DEBEN configurarse en Cloudflare Pages, no en este archivo)
 # GITHUB_CLIENT_ID = "tu_client_id"
@@ -15,20 +14,3 @@ compatibility_flags = ["nodejs_compat"]
 # JWT_SECRET = "tu_jwt_secret_seguro"
 # GITHUB_USERNAME = "tu_usuario_github"
 # NODE_ENV = "production"
-
-# Configuraci\u00f3n de build
-[build]
-command = "npm run build:all"
-
-[build.upload]
-format = "service-worker"
-
-# Configuraci\u00f3n de desarrollo
-[dev]
-port = 8789
-local_protocol = "https"
-
-# Configuraci\u00f3n de despliegue
-[pages]
-# Habilitar para usar el directorio public
-build_output_dir = "./public"
