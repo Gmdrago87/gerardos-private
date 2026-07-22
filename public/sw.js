@@ -4,15 +4,13 @@
  * Fixed: No longer caches external CDNs that have CORS issues
  */
 
-const CACHE_NAME = 'gerardos-private-v6';
+const CACHE_NAME = 'gerardos-private-v7';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/style.css',
     '/style.min.css',
     '/app.js',
-    '/bundle.js',
-    '/bundle.js.map',
     '/manifest.json',
     '/modules/utils.js',
     '/modules/state.js',
@@ -33,7 +31,7 @@ const MAX_CACHE_ENTRIES = 100;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker v6...');
+    console.log('[SW] Installing service worker v7...');
     
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -53,7 +51,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker v6...');
+    console.log('[SW] Activating service worker v7...');
     
     event.waitUntil(
         caches.keys().then((cacheNames) => {
