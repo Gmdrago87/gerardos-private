@@ -1,10 +1,10 @@
 /**
  * Service Worker for GerardOS Private
  * Handles caching and offline functionality
- * Enhanced with better caching strategies and error handling
+ * Fixed: No longer caches external CDNs that have CORS issues
  */
 
-const CACHE_NAME = 'gerardos-private-v4';
+const CACHE_NAME = 'gerardos-private-v5';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -24,15 +24,8 @@ const ASSETS_TO_CACHE = [
     '/modules/futuristic.js'
 ];
 
-// External resources to cache
-const EXTERNAL_RESOURCES = [
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-    'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap',
-    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap'
-];
-
 // API cache configuration
-const API_CACHE_NAME = 'gerardos-api-v2';
+const API_CACHE_NAME = 'gerardos-api-v3';
 const API_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Maximum cache size (in number of entries)
@@ -40,7 +33,7 @@ const MAX_CACHE_ENTRIES = 100;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker v3...');
+    console.log('[SW] Installing service worker v5...');
     
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -60,7 +53,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker v3...');
+    console.log('[SW] Activating service worker v5...');
     
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -181,23 +174,32 @@ async function handleStaticRequest(event) {
 
 /**
  * Handle external resource requests
+ * Fixed: No longer caches external CDNs to avoid CORS issues
  * @param {FetchEvent} event - Fetch event
  * @returns {Promise<Response>} Response
  */
 async function handleExternalRequest(event) {
     const url = new URL(event.request.url);
     
-    // Check if this is an external resource we want to cache
-    const isExternalResource = EXTERNAL_RESOURCES.some(resource => 
-        url.href.startsWith(resource) || 
-        (resource.includes('fonts.googleapis.com') && url.href.includes('fonts.googleapis.com'))
-    );
+    // List of allowed external domains for caching
+    const allowedDomains = [
+        'fonts.googleapis.com',
+        'fonts.gstatic.com',
+        'cdnjs.cloudflare.com',
+        'unpkg.com',
+        'cdn.jsdelivr.net'
+    ];
     
-    if (!isExternalResource) {
+    // Check if this is an external resource from allowed domains
+    const isAllowedExternal = allowedDomains.some(domain => url.hostname.includes(domain));
+    
+    if (!isAllowedExternal) {
+        // For all other external resources (like d3js.org), just fetch from network
+        // Don't cache them to avoid CORS issues
         return fetch(event.request);
     }
     
-    // Try to serve from cache
+    // For allowed domains, try to serve from cache
     const cache = await caches.open(CACHE_NAME);
     const cachedResponse = await cache.match(event.request);
     
@@ -210,61 +212,51 @@ async function handleExternalRequest(event) {
     try {
         const response = await fetch(event.request);
         
-        if (response.ok) {
+        // Only cache successful responses with CORS headers
+        if (response.ok && response.headers.get('access-control-allow-origin')) {
             const responseClone = response.clone();
-            // Cache external resources for 1 day
             await cache.put(event.request, responseClone);
+            console.log(`[SW] Cached external resource: ${url.href}`);
         }
         
         return response;
     } catch (error) {
-        console.error(`[SW] Network error for external resource:`, error);
+        console.error(`[SW] Network error for external resource ${url.href}:`, error);
         throw error;
     }
 }
 
-// Fetch event - serve cached assets when offline
+/**
+ * Main fetch event handler
+ */
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     const requestPath = url.pathname;
     
-    // Skip API requests (handle separately)
+    // Skip non-GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
+    
+    // Handle API requests
     if (requestPath.startsWith('/api/')) {
         event.respondWith(handleApiRequest(event));
         return;
     }
     
-    // Skip non-GET requests or non-http(s) schemes
-    if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) {
+    // Handle static assets from our origin
+    if (url.origin === self.location.origin) {
+        event.respondWith(handleStaticRequest(event));
         return;
     }
     
     // Handle external resources
-    if (!url.origin.includes('gerardos-private') && !url.origin.includes('localhost')) {
-        event.respondWith(handleExternalRequest(event));
-        return;
-    }
-    
-    // Handle static assets
-    event.respondWith(handleStaticRequest(event));
+    event.respondWith(handleExternalRequest(event));
 });
 
-// Message event - handle messages from clients
+// Listen for messages from clients (e.g., to skip waiting)
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-    
-    if (event.data && event.data.type === 'CLEAR_CACHE') {
-        caches.keys().then((cacheNames) => {
-            cacheNames.forEach((cacheName) => {
-                caches.delete(cacheName);
-            });
-        });
-    }
-});
-
-// Error event - log errors
-self.addEventListener('error', (errorEvent) => {
-    console.error('[SW] Error:', errorEvent.error);
 });
