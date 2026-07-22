@@ -1,7 +1,7 @@
 name = "gerardos-private"
 pages_build_output_dir = "./public"
 compatibility_date = "2025-01-01"
-compatibility_flags = ["nodejs_compat_v4"]
+compatibility_flags = ["nodejs_compat"]
 
 # KV Namespace para cache (descomentar cuando se configure en Cloudflare)
 # [[kv_namespaces]]
