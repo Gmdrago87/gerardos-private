@@ -43,7 +43,8 @@ export function showError(msg) {
 }
 
 export function renderProfile(user) {
-    const avatarImg = document.getElementById('avatar');
+    const avatarSummary = document.getElementById('avatar-summary');
+    if (avatarSummary && user.avatar_url) avatarSummary.src = user.avatar_url;
     if (avatarImg) {
         avatarImg.src = user.avatar_url || 'https://avatars.githubusercontent.com/u/195803064?v=4';
         avatarImg.alt = `${user.name || user.login || 'Gerard'} - Avatar`;

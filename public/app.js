@@ -27,7 +27,152 @@ async function loadVersionInfo() {
     }
 }
 
+function initShaderBackground() {
+    const canvas = document.getElementById('shader-canvas-bg');
+    if (!canvas) return;
+
+    function syncSize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+        }
+    }
+    window.addEventListener('resize', syncSize);
+    syncSize();
+
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return;
+
+    const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+    const fs = `precision highp float;
+varying vec2 v_texCoord;
+uniform float u_time;
+uniform vec2 u_resolution;
+
+void main() {
+    vec2 uv = v_texCoord;
+    float time = u_time * 0.15;
+    
+    vec2 p = uv * 2.0 - 1.0;
+    p.x *= u_resolution.x / u_resolution.y;
+    
+    float noise = 0.0;
+    for(float i = 1.0; i < 4.0; i++) {
+        p += vec2(sin(p.y * 1.5 + time * i), cos(p.x * 1.5 + time * i)) * 0.5;
+        noise += abs(sin(p.x + p.y + time)) / i;
+    }
+    
+    vec3 color1 = vec3(0.055, 0.055, 0.06);
+    vec3 color2 = vec3(0.075, 0.075, 0.08);
+    vec3 accent = vec3(0.0, 0.48, 1.0) * 0.15;
+    
+    vec3 finalColor = mix(color1, color2, noise * 0.5);
+    finalColor += accent * (sin(time + uv.y * 2.0) * 0.5 + 0.5);
+    
+    gl_FragColor = vec4(finalColor, 1.0);
+}`;
+
+    function cs(type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+    }
+    const prog = gl.createProgram();
+    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const pos = gl.getAttribLocation(prog, 'a_position');
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+
+    function render(t) {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        if (uTime) gl.uniform1f(uTime, t * 0.001);
+        if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+}
+
+function initThreeJsHero() {
+    const container = document.getElementById('threejs-hero-canvas');
+    if (!container || !window.THREE) return;
+    container.innerHTML = '';
+
+    const width = container.clientWidth || 600;
+    const height = container.clientHeight || 250;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    container.appendChild(renderer.domElement);
+
+    const geometry = new THREE.IcosahedronGeometry(1.2, 12);
+    const material = new THREE.MeshPhysicalMaterial({
+        color: 0x007aff,
+        metalness: 0.85,
+        roughness: 0.15,
+        transmission: 0.4,
+        thickness: 0.5,
+        clearcoat: 1.0
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    const light = new THREE.DirectionalLight(0x4b8eff, 1.5);
+    light.position.set(2, 2, 5);
+    scene.add(light);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    camera.position.z = 2.8;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const time = Date.now() * 0.001;
+        mesh.rotation.y += 0.005;
+        mesh.rotation.z += 0.003;
+        mesh.scale.setScalar(1 + Math.sin(time) * 0.04);
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        if (!container) return;
+        const w = container.clientWidth || 600;
+        const h = container.clientHeight || 250;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+    });
+
+    animate();
+}
+
 async function initApp() {
+    initShaderBackground();
+    setTimeout(() => initThreeJsHero(), 300);
     initShortcuts();
     initAI();
     initFuturisticEngine();

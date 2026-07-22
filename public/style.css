@@ -5,85 +5,192 @@
 
 /* ===== 1. DESIGN TOKENS ===== */
 :root {
-  /* Glassmorphism Colors */
+  /* DevRepo Apple Edition Theme Palette */
+  --bg-surface-lowest: #0e0e0f;
+  --bg-surface: #131314;
+  --bg-surface-low: #1c1b1c;
+  --bg-surface-container: #201f20;
+  --bg-surface-high: #2a2a2b;
+  --bg-surface-highest: #353436;
+  
+  --color-primary: #adc6ff;
+  --color-primary-container: #4b8eff;
+  --color-electric-blue: #007aff;
+  --color-emerald-green: #34c759;
+  --color-secondary: #53e16f;
+  --color-tertiary: #ffb4aa;
+  --color-tertiary-container: #ff5545;
+  
+  --text-on-surface: #e5e2e3;
+  --text-on-surface-variant: #c1c6d7;
+  --text-outline: #8b90a0;
+  --text-outline-variant: #414755;
+  
+  /* Legacy compatibility maps */
   --glass-purple: #6366f1;
-  --glass-blue: #3b82f6;
-  --glass-cyan: #06b6d4;
-  --glass-pink: #ec4899;
-  --glass-violet: #8b5cf6;
-
-  /* Theme Colors */
-  --color-primary: #00f2ea;
-  --color-secondary: #ff0050;
-
-  /* Palette */
-  --purple-400: #a78bfa;
-  --purple-500: #8b5cf6;
-  --purple-600: #7c3aed;
-  --blue-400: #60a5fa;
-  --blue-500: #3b82f6;
-  --blue-600: #2563eb;
-  --cyan-500: #06b6d4;
+  --glass-blue: #007aff;
+  --glass-cyan: #4b8eff;
+  --glass-pink: #ff5545;
+  --glass-violet: #adc6ff;
+  
+  --purple-400: #adc6ff;
+  --purple-500: #4b8eff;
+  --purple-600: #007aff;
+  --blue-400: #adc6ff;
+  --blue-500: #007aff;
+  --blue-600: #005bc1;
+  --cyan-500: #4b8eff;
   --yellow-400: #facc15;
-  --green-400: #4ade80;
-  --green-500: #22c55e;
-  --green-600: #16a34a;
-  --pink-400: #f472b6;
-  --pink-500: #ec4899;
-  --red-400: #f87171;
+  --green-400: #53e16f;
+  --green-500: #34c759;
+  --green-600: #05b046;
+  --pink-400: #ffb4aa;
+  --pink-500: #ff5545;
+  --red-400: #ffb4ab;
   --red-500: #ef4444;
   --orange-400: #fb923c;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
+  --gray-300: #e5e2e3;
+  --gray-400: #c1c6d7;
+  --gray-500: #8b90a0;
 
   /* Text (dark theme defaults) */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.75);
-  --text-muted: rgba(255, 255, 255, 0.55);
-  --text-faint: rgba(255, 255, 255, 0.6);
-  --text-ghost: rgba(255, 255, 255, 0.2);
+  --text-primary: #e5e2e3;
+  --text-secondary: rgba(229, 226, 227, 0.75);
+  --text-muted: rgba(193, 198, 215, 0.6);
+  --text-faint: rgba(193, 198, 215, 0.4);
+  --text-ghost: rgba(255, 255, 255, 0.1);
 
   /* Backgrounds */
-  --bg-body: #0f0a1f;
-  --bg-body-alt: #1a0b2e;
+  --bg-body: #0e0e0f;
+  --bg-body-alt: #131314;
 
   /* Glass */
-  --glass-bg: rgba(139, 92, 246, 0.1);
-  --glass-bg-hover: rgba(139, 92, 246, 0.15);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-border-inner: rgba(255, 255, 255, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-hover: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-inner: rgba(255, 255, 255, 0.2);
 
   /* Shadows */
   --shadow-glass:
-    0 8px 32px 0 rgba(99, 102, 241, 0.2),
-    0 2px 8px 0 rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    0 4px 24px -1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   --shadow-glass-hover:
-    0 16px 48px 0 rgba(99, 102, 241, 0.3),
-    0 4px 16px 0 rgba(0, 0, 0, 0.15),
-    inset 0 2px 0 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.1);
+    0 12px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
 
   /* Blur */
   --blur-strong: 40px;
   --blur-medium: 24px;
   --blur-soft: 12px;
 
-  /* Radius */
+  /* Radius (Squircles) */
   --radius-bubble: 50px;
-  --radius-card: 32px;
-  --radius-pill: 999px;
+  --radius-card: 24px;
+  --radius-sm: 12px;
+  --radius-pill: 9999px;
 
   /* Easings */
-  --ease-liquid: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-liquid: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Fonts */
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-display: 'Archivo Black', 'Inter', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', 'Archivo Black', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ===== ADVANCED GLASSMORPHISM & SQUIRCLE UTILITIES ===== */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px) scale(1.005);
+}
+
+.squircle {
+  border-radius: 24px !important;
+}
+
+.squircle-sm {
+  border-radius: 12px !important;
+}
+
+.squircle-full {
+  border-radius: 9999px !important;
+}
+
+.magnetic-hover {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.magnetic-hover:hover {
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+.kbd-shortcut {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-on-surface-variant);
+}
+
+.status-dot-success {
+  box-shadow: 0 0 8px 1px #34C759 !important;
+  background-color: #34C759 !important;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.ai-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(173,198,255,0.15) 50%, rgba(255,255,255,0.02) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+@keyframes flow1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(5%, -5%) scale(1.1); }
+  66% { transform: translate(-5%, 5%) scale(0.9); }
+}
+
+@keyframes flow2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-10%, 10%) scale(0.95); }
+  66% { transform: translate(10%, -10%) scale(1.05); }
+}
+
+.ambient-blob-1 {
+  animation: flow1 20s infinite ease-in-out;
+  background: radial-gradient(circle, rgba(0,91,193,0.25) 0%, rgba(0,0,0,0) 70%);
+}
+
+.ambient-blob-2 {
+  animation: flow2 25s infinite ease-in-out reverse;
+  background: radial-gradient(circle, rgba(75,142,255,0.18) 0%, rgba(0,0,0,0) 70%);
+}
+
+.global-shader-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ===== 2. RESET & BASE ===== */

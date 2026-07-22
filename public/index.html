@@ -1,26 +1,26 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source de GitHub.">
-    <meta name="theme-color" content="#8b5cf6">
+    <meta name="description" content="DevRepo - Enterprise Mainframe GitHub Portfolio con diseño Apple Glassmorphism de alto rendimiento.">
+    <meta name="theme-color" content="#0e0e0f">
     <meta name="author" content="GerardMaestre">
-    <meta name="keywords" content="portfolio, github, glassmorphism, web development, open source">
+    <meta name="keywords" content="portfolio, github, devrepo, apple-edition, glassmorphism, web development, open source">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gerardos-private.pages.dev/">
-    <meta property="og:title" content="GerardMaestre | Portfolio Web">
-    <meta property="og:description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source.">
+    <meta property="og:title" content="GerardMaestre | DevRepo Enterprise Mainframe">
+    <meta property="og:description" content="DevRepo Enterprise Mainframe - Explorador de repositorios de alta velocidad.">
     <meta property="og:image" content="https://avatars.githubusercontent.com/u/195803064?v=4">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://gerardos-private.pages.dev/">
-    <meta property="twitter:title" content="GerardMaestre | Portfolio Web">
-    <meta property="twitter:description" content="Portafolio GitHub con diseño web moderno para explorar proyectos open source.">
+    <meta property="twitter:title" content="GerardMaestre | DevRepo Enterprise Mainframe">
+    <meta property="twitter:description" content="DevRepo Enterprise Mainframe - Explorador de repositorios de alta velocidad.">
     <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/195803064?v=4">
     
     <!-- Manifest -->
@@ -38,7 +38,7 @@
     }
     </script>
     
-    <title>Gerard Maestre — Portafolio</title>
+    <title>DevRepo — Enterprise Mainframe</title>
     
     <!-- Preload & DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,7 +51,7 @@
     <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
     
-    <!-- Non-blocking External Scripts (defer para desbloquear el renderizado FCP/LCP) -->
+    <!-- Non-blocking External Scripts -->
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js" defer></script>
     <script src="https://d3js.org/d3.v7.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
@@ -74,410 +74,428 @@
     <script type="module" src="/app.js"></script>    
 </head>
 
-<body class="web-mode">
+<body class="web-mode bg-[#0e0e0f] text-[#e5e2e3] antialiased overflow-hidden w-screen h-screen flex flex-col font-sans">
 
-    <!-- macOS Desktop -->
-    <div class="mac-desktop">
+    <!-- Global Shader Background Canvas -->
+    <canvas id="shader-canvas-bg" class="global-shader-canvas"></canvas>
 
-        <!-- macOS Wallpaper layer -->
-        <div class="mac-wallpaper"></div>
+    <!-- App Container -->
+    <div class="mac-desktop flex flex-col w-full h-full relative z-10">
 
-        <!-- ===== macOS Menu Bar ===== -->
-        <nav class="mac-menubar" role="menubar" aria-label="Barra de menú macOS">
-            <div class="mac-menubar__left">
-                <span class="mac-menubar__apple" aria-label="Apple">&#63743;</span>
-                <span class="mac-menubar__app-name">GerardOS</span>
-                <span class="mac-menubar__item">Archivo</span>
-                <span class="mac-menubar__item">Edición</span>
-                <span class="mac-menubar__item">Visualización</span>
-                <span class="mac-menubar__item">Ventana</span>
-                <span class="mac-menubar__item">Ayuda</span>
+        <!-- Top Navigation Bar -->
+        <nav class="mac-menubar fixed top-0 w-full z-50 bg-white/5 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6 h-16 shadow-none" role="menubar" aria-label="Barra de navegación principal">
+            <div class="flex items-center gap-4">
+                <span class="mac-menubar__apple font-bold text-xl text-white tracking-tight flex items-center gap-2">
+                    <i data-lucide="terminal" class="text-[#007aff] w-5 h-5"></i>
+                    DevRepo
+                </span>
+                <span class="text-xs font-mono text-white/50 bg-white/5 px-2.5 py-1 squircle-sm border border-white/10 hidden sm:inline-block">Enterprise Mainframe</span>
             </div>
-            <div class="mac-menubar__right">
-                <span class="mac-menubar__status-icon" title="Sesión Segura" style="color: #22c55e;">
-                    <i data-lucide="shield-check"></i>
-                </span>
-                <span class="mac-menubar__status-icon" title="Cerrar Sesión" id="mac-logout-btn" style="cursor: pointer; color: #f87171;">
-                    <i data-lucide="log-out"></i>
-                </span>
-                <span class="mac-menubar__status-icon" title="Wi-Fi">
-                    <i data-lucide="wifi"></i>
-                </span>
-                <span class="mac-menubar__status-icon" title="Batería">
-                    <i data-lucide="battery-full"></i>
-                </span>
-                <span class="mac-menubar__status-icon" title="Brillo">
-                    <i data-lucide="sun"></i>
-                </span>
-                <span id="mac-clock" class="mac-menubar__clock" aria-live="polite"></span>
+
+            <!-- Search / Command Palette Trigger -->
+            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 squircle-full glass-panel cursor-pointer hover:bg-white/10 transition-colors" onclick="document.getElementById('command-palette').classList.remove('hidden'); document.getElementById('cmd-input').focus();">
+                <i data-lucide="search" class="w-4 h-4 text-[#c1c6d7]"></i>
+                <span class="text-xs text-[#c1c6d7] mx-2">Buscar repositorios, acciones...</span>
+                <kbd class="kbd-shortcut px-1.5 py-0.5 rounded flex items-center gap-1 font-mono text-[11px] text-[#c1c6d7]">⌘K</kbd>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button class="relative w-8 h-8 flex items-center justify-center squircle-full hover:bg-white/10 transition-colors text-[#c1c6d7]" title="Estado del Sistema">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-[#34c759]"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 rounded-full status-dot-success"></span>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center squircle-full hover:bg-white/10 transition-colors text-[#c1c6d7]" id="mac-logout-btn" title="Cerrar Sesión">
+                    <i data-lucide="log-out" class="w-4 h-4 text-[#f87171]"></i>
+                </button>
+                <div class="w-8 h-8 squircle-full overflow-hidden border border-white/10 ml-2">
+                    <img id="avatar" alt="Avatar" class="w-full h-full object-cover" src="https://avatars.githubusercontent.com/u/195803064?v=4">
+                </div>
+                <span id="mac-clock" class="text-xs font-mono text-white/70 hidden lg:inline-block" aria-live="polite"></span>
             </div>
         </nav>
 
-        <!-- ===== Desktop Window Area ===== -->
-        <div class="mac-window-area">
+        <!-- Main Workspace Container -->
+        <div class="flex flex-1 pt-16 w-full h-full overflow-hidden relative z-10">
 
-            <!-- Pantalla de Carga (overlay fixed) -->
-            <div id="loading" class="loading-screen">
-                <div class="loading-content">
-                    <div class="loading-spinner">
-                        <div class="spinner-ring spinner-ring--outer"></div>
-                        <div class="spinner-ring spinner-ring--middle"></div>
-                        <div class="spinner-ring spinner-ring--inner"></div>
-                    </div>
-                    <div class="loading-info">
-                        <p id="loading-text" class="loading-label">
-                            <span class="loading-gradient-text">Cargando portafolio</span>
-                        </p>
-                        <p id="loading-status" class="loading-status">Preparando interfaz...</p>
-                        <div class="loading-dots">
-                            <span class="loading-dot loading-dot--purple"></span>
-                            <span class="loading-dot loading-dot--blue"></span>
-                            <span class="loading-dot loading-dot--cyan"></span>
-                        </div>
-                    </div>
+            <!-- Side Navigation Bar -->
+            <aside class="fixed left-0 top-16 bottom-0 w-20 border-r border-white/10 bg-white/5 backdrop-blur-xl flex flex-col items-center py-6 h-[calc(100vh-4rem)] z-40">
+                <!-- Header Logo/Avatar -->
+                <div class="mb-8 w-10 h-10 squircle-sm overflow-hidden border border-white/20 glass-panel flex items-center justify-center">
+                    <i data-lucide="box" class="w-5 h-5 text-[#007aff]"></i>
                 </div>
-            </div>
-
-            <!-- Notificación Toast (overlay fixed) -->
-            <div id="toast" class="toast hidden">
-                <div class="toast__panel glass-panel">
-                    <div class="toast__content">
-                        <div class="toast__icon-wrapper">
-                            <i data-lucide="wifi-off"></i>
-                        </div>
-                        <div class="toast__text">
-                            <p class="toast__title">Modo Caché</p>
-                            <p class="toast__message">Datos almacenados localmente</p>
-                        </div>
-                        <button class="toast__close" onclick="document.getElementById('toast').classList.add('hidden')">
-                            <i data-lucide="x"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botón Volver Arriba -->
-            <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
-                <i data-lucide="arrow-up"></i>
-            </button>
-
-            <!-- ===== macOS Window ===== -->
-            <div class="mac-window" id="mac-main-window">
-
-                <!-- Window Title Bar -->
-                <div class="mac-window__titlebar" id="mac-window-titlebar">
-                    <div class="mac-window__controls">
-                        <span class="mac-window__btn mac-window__btn--close" id="mac-btn-close" title="Cerrar">
-                            <svg viewBox="0 0 10 10" width="6" height="6" class="mac-window__btn-icon"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                        </span>
-                        <span class="mac-window__btn mac-window__btn--minimize" id="mac-btn-minimize" title="Minimizar">
-                            <svg viewBox="0 0 10 10" width="8" height="2" class="mac-window__btn-icon"><path d="M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                        </span>
-                        <span class="mac-window__btn mac-window__btn--maximize" id="mac-btn-maximize" title="Ampliar">
-                            <svg viewBox="0 0 10 10" width="7" height="7" class="mac-window__btn-icon"><path d="M1 9l8-8M9 9V1H1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                    </div>
-                    <div class="mac-window__title">
-                        <i data-lucide="github" class="mac-window__title-icon"></i>
-                        Gerard Maestre — Portafolio
-                    </div>
+                
+                <!-- Primary Navigation Tabs -->
+                <div class="flex flex-col gap-4 flex-1 w-full items-center">
+                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#adc6ff] bg-[#007aff]/20 transition-all duration-200 relative group" href="#" title="Hub Central">
+                        <div class="absolute left-0 top-2 bottom-2 w-[2px] bg-[#007aff] rounded-r-full"></div>
+                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Hub</div>
+                    </a>
+                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="#" title="AI Assistant" onclick="document.getElementById('ai-modal').classList.remove('hidden');">
+                        <i data-lucide="bot" class="w-5 h-5 text-[#a78bfa]"></i>
+                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">GerardOS AI</div>
+                    </a>
+                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="#" title="Motor 3D" id="side-btn-futuristic" onclick="document.getElementById('btn-futuristic-engine').click();">
+                        <i data-lucide="hexagon" class="w-5 h-5 text-[#c084fc]"></i>
+                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Motor 3D</div>
+                    </a>
+                    <a class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="#" title="Nuevo Repositorio" onclick="document.getElementById('btn-open-create-repo').click();">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-[#00f2ea]"></i>
+                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Nuevo Repo</div>
+                    </a>
                 </div>
 
-                <!-- Window Content (scrollable) -->
-                <div class="mac-window__content" id="mac-window-content">
+                <!-- Footer Navigation Tabs -->
+                <div class="flex flex-col gap-4 mt-auto w-full items-center">
+                    <a id="github-link" class="w-12 h-12 flex items-center justify-center squircle-sm text-[#c1c6d7] hover:text-white hover:bg-white/5 transition-all duration-200 relative group" href="https://github.com/GerardMaestre" target="_blank" rel="noopener noreferrer" title="Ver GitHub">
+                        <i data-lucide="github" class="w-5 h-5"></i>
+                        <div class="absolute left-14 bg-[#2a2a2b] px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Perfil GitHub</div>
+                    </a>
+                </div>
+            </aside>
 
-                    <!-- Contenido Principal -->
-                    <main class="main-content" id="main-content">
+            <!-- Main Canvas Area -->
+            <main class="flex-1 ml-20 p-8 overflow-y-auto w-full h-full custom-scroll relative" id="main-content">
+
+                <!-- 3D Interactive Mainframe Header / Hero -->
+                <header class="w-full h-64 mb-8 relative squircle glass-panel overflow-hidden flex items-end p-8 border border-white/10 shadow-2xl">
+                    <!-- 3D Scene Background -->
+                    <div id="threejs-hero-canvas" class="absolute inset-0 z-0 opacity-70"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0f]/90 via-[#0e0e0f]/40 to-transparent"></div>
+
+                    <div class="relative z-10 w-full flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                        <div>
+                            <span class="text-xs font-mono text-[#007aff] uppercase tracking-widest font-semibold mb-1 block">Enterprise Operations</span>
+                            <h1 class="font-display text-3xl lg:text-4xl text-white mb-2 tracking-tight">Mainframe Enterprise</h1>
+                            <p class="text-sm text-[#c1c6d7] max-w-xl">High-performance repository management & portfolio intelligence cockpit.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <button id="btn-open-create-repo" class="bg-[#007AFF] text-white px-5 py-2.5 squircle-sm font-mono text-xs font-semibold hover:bg-[#007AFF]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#007AFF]/20">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                Nuevo Repositorio
+                            </button>
+                            <button id="btn-futuristic-engine" class="glass-panel text-[#c084fc] px-4 py-2.5 squircle-sm font-mono text-xs font-semibold hover:bg-white/10 transition-all flex items-center gap-2 border border-[#8b5cf6]/40">
+                                <i data-lucide="hexagon" class="w-4 h-4"></i>
+                                Motor 3D
+                            </button>
+                            <button id="refresh-data-btn" onclick="forceRefreshData()" class="glass-panel text-white px-4 py-2.5 squircle-sm font-mono text-xs font-semibold hover:bg-white/10 transition-all flex items-center gap-2">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                Refrescar
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Bento Grid Layout -->
+                <div class="grid grid-cols-12 gap-6 h-full pb-20">
+
+                    <!-- Active Repositories Column (Spans 8 cols) -->
+                    <section class="col-span-12 lg:col-span-8 flex flex-col gap-6">
                         
-                        <!-- Cabecera -->
-                        <header class="header-layout">
-                            
-                            <!-- Barra Lateral - Perfil -->
-                            <aside class="sidebar">
-                                <div class="profile-card glass-panel">
-                                    <div class="avatar-container">
-                                        <div class="avatar-frame">
-                                            <img id="avatar" src="https://avatars.githubusercontent.com/u/195803064?v=4" alt="Gerard Maestre" width="80" height="80" loading="lazy" class="avatar-img">
-                                        </div>
-                                        <div class="avatar-status">
-                                            <i data-lucide="zap"></i>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="profile-info">
-                                        <h1 id="name" class="profile-name"></h1>
-                                        <p id="username" class="profile-username"></p>
-                                    </div>
-                                    
-                                    <a id="github-link" href="#" target="_blank" rel="noopener noreferrer" class="profile-github-btn">
-                                        <span class="shimmer-overlay"></span>
-                                        <span class="btn-inner">
-                                            <i data-lucide="github"></i>
-                                            Ver perfil completo
-                                        </span>
-                                    </a>
-
-                                    <div class="profile-counters">
-                                        <div class="counter-card glass-panel">
-                                            <div class="counter-icon counter-icon--purple">
-                                                <i data-lucide="users"></i>
-                                            </div>
-                                            <p id="followers" class="counter-value">0</p>
-                                            <p class="counter-label">Followers</p>
-                                        </div>
-
-                                        <div class="counter-card glass-panel">
-                                            <div class="counter-icon counter-icon--blue">
-                                                <i data-lucide="user-plus"></i>
-                                            </div>
-                                            <p id="following" class="counter-value">0</p>
-                                            <p class="counter-label">Following</p>
-                                        </div>
-                                    </div>
-                                </div> 
-                            </aside>
-
-                            <!-- Contenido Principal de Cabecera -->
-                            <div class="header-content">
-                                <!-- Hero -->
-                                <div class="hero-banner glass-panel">
-                                    <div class="hero-glow"></div>
-                                    <div class="hero-body">
-                                        <h2 class="hero-title">
-                                            <span>Portafolio</span>
-                                            <span>Gerard Maestre</span>
-                                        </h2>
-                                        <p class="hero-description">
-                                            Explorá mis proyectos open source de manera mas estructurada y con varias opciones dinamicas
-                                        </p>
-                                    </div>
+                        <!-- Filter & Search Controls Header -->
+                        <div class="glass-panel squircle p-4 flex flex-col gap-4">
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                        <i data-lucide="code-2" class="w-5 h-5 text-[#007aff]"></i>
+                                        Active Repositories
+                                    </h2>
                                 </div>
 
-                                <!-- Panel de inteligencia estratégica -->
-                                <section class="portfolio-intelligence glass-panel" aria-labelledby="portfolio-intelligence-title">
-                                    <div class="intelligence-header">
-                                        <div>
-                                            <p class="eyebrow-label">Next level cockpit</p>
-                                            <h3 id="portfolio-intelligence-title">Radar de evolución del portfolio</h3>
-                                        </div>
-                                        <span id="portfolio-score" class="intelligence-score">0</span>
-                                    </div>
-                                    <div class="intelligence-grid" id="portfolio-intelligence-grid">
-                                        <div class="intelligence-metric">
-                                            <span>Actividad 90d</span>
-                                            <strong id="metric-activity">0%</strong>
-                                        </div>
-                                        <div class="intelligence-metric">
-                                            <span>Diversidad tech</span>
-                                            <strong id="metric-diversity">0</strong>
-                                        </div>
-                                        <div class="intelligence-metric">
-                                            <span>Repos launch-ready</span>
-                                            <strong id="metric-launch-ready">0</strong>
-                                        </div>
-                                    </div>
-                                    <p id="portfolio-next-move" class="intelligence-next-move">Analizando señales de GitHub...</p>
-                                </section>
-
-                                <!-- Cuadrícula de Estadísticas -->
-                                <div class="stats-grid">
-                                    <div class="stat-card glass-panel">
-                                        <div class="stat-icon stat-icon--purple">
-                                            <i data-lucide="code-2"></i>
-                                        </div>
-                                        <h3 id="total-repos" class="stat-value">0</h3>
-                                        <p class="stat-label">Repositorios</p>
-                                    </div>
-                                    <div class="stat-card glass-panel">
-                                        <div class="stat-icon stat-icon--yellow">
-                                            <i data-lucide="star"></i>
-                                        </div>
-                                        <h3 id="total-stars" class="stat-value">0</h3>
-                                        <p class="stat-label">Estrellas</p>
-                                    </div>
-                                    <div class="stat-card glass-panel">
-                                        <div class="stat-icon stat-icon--blue">
-                                            <i data-lucide="git-fork"></i>
-                                        </div>
-                                        <h3 id="total-forks" class="stat-value">0</h3>
-                                        <p class="stat-label">Forks</p>
-                                    </div>
-                                    <div class="stat-card glass-panel">
-                                        <div class="stat-icon stat-icon--pink">
-                                            <i data-lucide="terminal"></i>
-                                        </div>
-                                        <h3 id="top-lang" class="stat-value stat-value--small">...</h3>
-                                        <p class="stat-label">Top Lenguaje</p>
-                                    </div>
+                                <!-- Search Field -->
+                                <div class="relative w-full sm:w-72">
+                                    <i data-lucide="search" class="w-4 h-4 text-[#8b90a0] absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="search-input" aria-label="Buscar proyectos" placeholder="Buscar repositorios..." class="w-full bg-[#1c1b1c]/80 border border-white/10 squircle-sm pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-[#007aff] transition-all">
                                 </div>
                             </div>
-                        </header>
 
-                        <!-- Barra de Búsqueda -->
-                        <div class="search-wrapper">
-                            <div class="glass-search-bar">
-                                <div class="search-form">
-                                    <div class="search-row">
-                                        <div class="search-field">
-                                            <i data-lucide="search" class="search-field__icon"></i>
-                                            <input type="text" 
-                                                   id="search-input" 
-                                                   aria-label="Buscar proyectos"
-                                                   placeholder="Buscar proyectos...">
-                                        </div>
-                                        <button id="toggle-filters-btn" class="btn-filter" title="Mostrar/Ocultar Filtros">
-                                            <i data-lucide="sliders-horizontal"></i>
-                                        </button>
-                                        <button id="refresh-data-btn" 
-                                                class="btn-refresh"
-                                                title="Refrescar datos desde GitHub API"
-                                                onclick="forceRefreshData()">
-                                            <i data-lucide="refresh-cw"></i>
-                                            <span class="btn-refresh__label">Refrescar</span>
-                                        </button>
-                                        <button id="btn-open-create-repo" class="btn-refresh" style="background: rgba(0, 242, 234, 0.15); color: #00f2ea; border: 1px solid rgba(0, 242, 234, 0.3);" title="Nuevo Repositorio">
-                                            <i data-lucide="plus-circle"></i>
-                                            <span class="btn-refresh__label">Nuevo</span>
-                                        </button>
-                                        <button id="btn-futuristic-engine" class="btn-refresh" style="background: rgba(139, 92, 246, 0.2); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.5); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);" title="Activar Motor Futurista">
-                                            <i data-lucide="hexagon"></i>
-                                            <span class="btn-refresh__label">Motor 3D</span>
-                                        </button>
-                                    </div>
-                                    
-                                    <div id="data-source-indicator" class="data-source hidden">
-                                        <i data-lucide="info"></i>
-                                        <span id="data-source-text">Fuente de datos: API</span>
-                                        <span id="cache-age-text"></span>
-                                    </div>
-                                    
-                                    <div id="filters-row" class="filters-row hidden">
-                                        <div class="sort-group">
-                                            <span class="sort-group__label">Ordenar:</span>
-                                            <button class="sort-btn active-sort" data-sort="updated" onclick="applySorting('updated')">
-                                                <i data-lucide="clock"></i> Recientes
-                                            </button>
-                                            <button class="sort-btn" data-sort="stars" onclick="applySorting('stars')">
-                                                <i data-lucide="star"></i> Estrellas
-                                            </button>
-                                            <button class="sort-btn" data-sort="forks" onclick="applySorting('forks')">
-                                                <i data-lucide="git-fork"></i> Forks
-                                            </button>
-                                            <button class="sort-btn" data-sort="name" onclick="applySorting('name')">
-                                                <i data-lucide="arrow-down-a-z"></i> A-Z
-                                            </button>
-                                        </div>
-                                        <div class="language-group scrollbar-hide" id="filter-container">
-                                            <button class="filter-btn filter-btn--active" data-filter="all" onclick="filterByLang('all', this)">
-                                                Todos
-                                            </button>
-                                        </div>
-                                    </div>
+                            <!-- Sorting & Language Filters -->
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/5">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs font-mono text-[#8b90a0]">Ordenar:</span>
+                                    <button class="sort-btn active-sort px-2.5 py-1 rounded text-xs font-mono bg-[#007aff]/20 text-[#adc6ff] border border-[#007aff]/30" data-sort="updated" onclick="applySorting('updated')">Recientes</button>
+                                    <button class="sort-btn px-2.5 py-1 rounded text-xs font-mono text-[#c1c6d7] hover:bg-white/5 transition-all" data-sort="stars" onclick="applySorting('stars')">Estrellas</button>
+                                    <button class="sort-btn px-2.5 py-1 rounded text-xs font-mono text-[#c1c6d7] hover:bg-white/5 transition-all" data-sort="forks" onclick="applySorting('forks')">Forks</button>
+                                    <button class="sort-btn px-2.5 py-1 rounded text-xs font-mono text-[#c1c6d7] hover:bg-white/5 transition-all" data-sort="name" onclick="applySorting('name')">A-Z</button>
+                                </div>
+                                <button id="toggle-filters-btn" class="text-xs text-[#c1c6d7] hover:text-white flex items-center gap-1">
+                                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Filtros
+                                </button>
+                            </div>
+
+                            <!-- Hidden Filters Row for Languages -->
+                            <div id="filters-row" class="filters-row hidden pt-2 border-t border-white/5">
+                                <div class="flex flex-wrap gap-2" id="filter-container">
+                                    <button class="filter-btn filter-btn--active" data-filter="all">Todos</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Cuadrícula de Repositorios -->
-                        <div id="repos-grid" class="repos-grid">
-                            <!-- Rellenado por JS -->
+                        <!-- Repositories Grid Container -->
+                        <div id="repos-grid" class="repos-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Populated dynamically by UI module -->
                         </div>
 
-                        <!-- Cargar Más -->
-                        <div class="load-more-section">
-                            <button id="load-more-btn" class="btn-load-more hidden">
-                                <span class="btn-load-more__inner">
-                                    <i data-lucide="chevrons-down"></i>
-                                    Cargar más proyectos
-                                    <i data-lucide="chevrons-down"></i>
-                                </span>
+                        <!-- Load More Section -->
+                        <div class="load-more-section flex flex-col items-center gap-2 py-4">
+                            <button id="load-more-btn" class="btn-load-more glass-panel px-6 py-2.5 squircle-sm text-xs font-mono text-white hover:bg-white/10 transition-all hidden">
+                                Cargar más proyectos
                             </button>
-                            <p id="showing-count" class="results-count"></p>
+                            <p id="showing-count" class="text-xs font-mono text-[#8b90a0]"></p>
+                        </div>
+                    </section>
+
+                    <!-- Sidebar Modules (Spans 4 cols) -->
+                    <section class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+
+                        <!-- Radar de Evolución / Portfolio Cockpit -->
+                        <div class="glass-panel squircle p-6 flex flex-col gap-4 border border-white/10">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-[11px] font-mono text-[#007aff] uppercase tracking-wider">Strategic Radar</span>
+                                    <h3 class="text-base font-semibold text-white">Evolución Portfolio</h3>
+                                </div>
+                                <div id="portfolio-score" class="w-12 h-12 squircle-sm bg-[#007aff]/20 border border-[#007aff]/40 flex items-center justify-center text-lg font-bold text-[#adc6ff]">0</div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
+                                <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
+                                    <span class="text-[10px] font-mono text-[#8b90a0] block">Actividad 90d</span>
+                                    <strong id="metric-activity" class="text-xs text-white font-mono">0%</strong>
+                                </div>
+                                <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
+                                    <span class="text-[10px] font-mono text-[#8b90a0] block">Stacks</span>
+                                    <strong id="metric-diversity" class="text-xs text-white font-mono">0</strong>
+                                </div>
+                                <div class="bg-black/30 p-2.5 squircle-sm border border-white/5 text-center">
+                                    <span class="text-[10px] font-mono text-[#8b90a0] block">Launch-ready</span>
+                                    <strong id="metric-launch-ready" class="text-xs text-white font-mono">0</strong>
+                                </div>
+                            </div>
+                            <p id="portfolio-next-move" class="text-xs text-[#c1c6d7] bg-[#007aff]/10 p-3 squircle-sm border border-[#007aff]/20">Analizando métricas...</p>
                         </div>
 
-                        <!-- Pie de Página -->
-                        <footer class="site-footer">
-                            <div class="footer-content">
-                                <p class="footer-author">Diseñado y desarrollado por Gerard Maestre</p>
-                                <p class="footer-copyright">&copy; <span id="year"></span> GerardMaestre</p>
-                                <p id="footer-version" class="footer-version" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px; opacity: 0.7;">v1.1.0</p>
+                        <!-- GitAI Assistant Embedded Panel -->
+                        <div class="glass-panel squircle relative overflow-hidden flex flex-col h-80 border border-white/10 shadow-lg">
+                            <div class="absolute inset-0 ai-shimmer opacity-30 z-0 pointer-events-none"></div>
+                            <div class="p-4 border-b border-white/5 flex items-center justify-between z-10 bg-white/5 backdrop-blur-md">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="bot" class="w-4 h-4 text-[#a78bfa] animate-pulse"></i>
+                                    <h3 class="text-sm font-semibold text-white">GitAI Assistant</h3>
+                                </div>
+                                <button class="text-xs text-[#a78bfa] hover:underline font-mono" onclick="document.getElementById('ai-modal').classList.remove('hidden')">Modal ↗</button>
                             </div>
-                        </footer>
-                    </main>
 
-                    <!-- Motor Futurista (Oculto por defecto) -->
-                    <div id="futuristic-engine" class="futuristic-engine hidden">
-                        <div id="futuristic-canvas-container" class="futuristic-canvas-container"></div>
-                        <div id="futuristic-overlay" class="futuristic-overlay">
-                            <h2 class="futuristic-title">Visualización Espacial Activa</h2>
-                            <button id="btn-close-futuristic" class="btn-refresh" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">
-                                <i data-lucide="x-circle"></i>
-                                Salir del Motor 3D
-                            </button>
-                            <div class="futuristic-controls">
-                                <button id="btn-view-topology" class="futuristic-tab active">Topología 3D</button>
-                                <button id="btn-view-graph" class="futuristic-tab">Grafo Infinito</button>
-                                <button id="btn-view-commits" class="futuristic-tab">Timeline Commits</button>
+                            <!-- Messages Area -->
+                            <div class="flex-1 p-4 z-10 flex flex-col gap-3 overflow-y-auto custom-scroll" id="ai-messages">
+                                <div class="flex gap-2.5">
+                                    <div class="w-6 h-6 rounded-full bg-[#8b5cf6]/20 flex-shrink-0 flex items-center justify-center border border-[#8b5cf6]/30 mt-0.5">
+                                        <i data-lucide="bot" class="w-3.5 h-3.5 text-[#a78bfa]"></i>
+                                    </div>
+                                    <div class="bg-[#2a2a2b]/70 p-3 squircle-sm border border-white/5 text-xs text-[#e5e2e3]">
+                                        Hola, soy GerardOS AI. Hazme preguntas sobre tu código o repositorios.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Input Area -->
+                            <div class="p-3 z-10 border-t border-white/5 bg-black/30 flex gap-2">
+                                <input type="text" id="ai-input" placeholder="Pregunta a la IA..." class="flex-1 bg-black/40 border border-white/10 squircle-sm px-3 py-2 text-xs text-white focus:outline-none focus:border-[#a78bfa]">
+                                <button id="ai-send-btn" class="bg-[#8b5cf6] text-white px-3 py-2 squircle-sm hover:bg-[#7c3aed] transition-colors flex items-center justify-center">
+                                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                </div><!-- /mac-window__content -->
-            </div><!-- /mac-window -->
+                        <!-- System Compute Metrics -->
+                        <div class="glass-panel squircle p-5 flex flex-col gap-4 border border-white/10">
+                            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="cpu" class="w-4 h-4 text-[#8b90a0]"></i>
+                                Global Compute & Infrastructure
+                            </h3>
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <div class="flex justify-between font-mono text-[#8b90a0] mb-1">
+                                        <span>CPU Usage</span>
+                                        <span class="text-white">42%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-[#353436] rounded-full overflow-hidden">
+                                        <div class="h-full bg-[#007aff] rounded-full w-[42%]"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between font-mono text-[#8b90a0] mb-1">
+                                        <span>Memory Allocation</span>
+                                        <span class="text-white">78%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-[#353436] rounded-full overflow-hidden">
+                                        <div class="h-full bg-[#ff5545] rounded-full w-[78%]"></div>
+                                    </div>
+                                </div>
+                                <div id="data-source-indicator" class="pt-2 border-t border-white/5 text-[11px] font-mono text-[#8b90a0] flex items-center justify-between">
+                                    <span id="data-source-text">Fuente: API</span>
+                                    <span id="cache-age-text"></span>
+                                </div>
+                            </div>
+                        </div>
 
-        </div><!-- /mac-window-area -->
+                        <!-- Profile Summary & Counters -->
+                        <div class="glass-panel squircle p-5 flex flex-col gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 squircle-sm overflow-hidden border border-white/10">
+                                    <img id="avatar-summary" src="https://avatars.githubusercontent.com/u/195803064?v=4" class="w-full h-full object-cover" alt="Profile Avatar">
+                                </div>
+                                <div>
+                                    <h4 id="name" class="text-sm font-bold text-white">GerardMaestre</h4>
+                                    <p id="username" class="text-xs font-mono text-[#8b90a0]">@GerardMaestre</p>
+                                </div>
+                            </div>
 
-        <!-- ===== macOS Dock ===== -->
-        <div class="mac-dock-container" role="toolbar" aria-label="Dock">
-            <div class="mac-dock">
-                <div class="mac-dock__item" title="Inicio" id="dock-home">
-                    <div class="mac-dock__icon mac-dock__icon--home">
-                        <i data-lucide="home"></i>
-                    </div>
-                    <span class="mac-dock__label">Inicio</span>
+                            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                    <p id="followers" class="font-bold text-white text-sm">0</p>
+                                    <span class="text-[10px] font-mono text-[#8b90a0]">Followers</span>
+                                </div>
+                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                    <p id="following" class="font-bold text-white text-sm">0</p>
+                                    <span class="text-[10px] font-mono text-[#8b90a0]">Following</span>
+                                </div>
+                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                    <p id="total-repos" class="font-bold text-white text-sm">0</p>
+                                    <span class="text-[10px] font-mono text-[#8b90a0]">Repos</span>
+                                </div>
+                                <div class="bg-black/30 p-2 squircle-sm border border-white/5">
+                                    <p id="total-stars" class="font-bold text-white text-sm">0</p>
+                                    <span class="text-[10px] font-mono text-[#8b90a0]">Estrellas</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-xs font-mono pt-2 border-t border-white/5">
+                                <span class="text-[#8b90a0]">Top Lenguaje:</span>
+                                <span id="top-lang" class="text-[#007aff] font-bold">...</span>
+                            </div>
+                        </div>
+
+                    </section>
+
                 </div>
-                <div class="mac-dock__item" title="Perfil" id="dock-profile">
-                    <div class="mac-dock__icon mac-dock__icon--profile">
-                        <i data-lucide="user"></i>
+
+                <!-- Footer -->
+                <footer class="site-footer py-6 text-center text-xs text-[#8b90a0]">
+                    <p>Diseñado y desarrollado por Gerard Maestre</p>
+                    <p class="mt-1">&copy; <span id="year"></span> GerardMaestre · DevRepo Enterprise Mainframe</p>
+                    <p id="footer-version" class="mt-1 font-mono text-[11px] opacity-70">v1.2.0</p>
+                </footer>
+            </main>
+
+            <!-- Motor Futurista (Oculto por defecto) -->
+            <div id="futuristic-engine" class="futuristic-engine hidden">
+                <div id="futuristic-canvas-container" class="futuristic-canvas-container"></div>
+                <div id="futuristic-overlay" class="futuristic-overlay">
+                    <h2 class="futuristic-title">Visualización Espacial Activa</h2>
+                    <button id="btn-close-futuristic" class="btn-refresh" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5);">
+                        <i data-lucide="x-circle"></i>
+                        Salir del Motor 3D
+                    </button>
+                    <div class="futuristic-controls">
+                        <button id="btn-view-topology" class="futuristic-tab active">Topología 3D</button>
+                        <button id="btn-view-graph" class="futuristic-tab">Grafo Infinito</button>
+                        <button id="btn-view-commits" class="futuristic-tab">Timeline Commits</button>
                     </div>
-                    <span class="mac-dock__label">Perfil</span>
                 </div>
-                <div class="mac-dock__item" title="Buscar" id="dock-search">
-                    <div class="mac-dock__icon mac-dock__icon--search">
-                        <i data-lucide="search"></i>
-                    </div>
-                    <span class="mac-dock__label">Buscar</span>
-                </div>
-                <div class="mac-dock__item" title="Repositorios" id="dock-repos">
-                    <div class="mac-dock__icon mac-dock__icon--repos">
-                        <i data-lucide="code-2"></i>
-                    </div>
-                    <span class="mac-dock__label">Repos</span>
-                </div>
-                <div class="mac-dock__item" title="Asistente IA" id="dock-ai">
-                    <div class="mac-dock__icon mac-dock__icon--ai">
-                        <i data-lucide="bot"></i>
-                    </div>
-                    <span class="mac-dock__label">GerardOS AI</span>
-                </div>
-                <div class="mac-dock__item" title="Ajustes" id="dock-settings" onclick="document.getElementById('settings-modal').classList.remove('hidden')">
-                    <div class="mac-dock__icon mac-dock__icon--settings">
-                        <i data-lucide="settings"></i>
-                    </div>
-                    <span class="mac-dock__label">Ajustes</span>
-                </div>
-                <div class="mac-dock__separator"></div>
-                <a class="mac-dock__item" title="GitHub" id="dock-github" href="https://github.com/GerardMaestre" target="_blank" rel="noopener noreferrer">
-                    <div class="mac-dock__icon mac-dock__icon--github">
-                        <i data-lucide="github"></i>
-                    </div>
-                    <span class="mac-dock__label">GitHub</span>
-                </a>
+            </div>
+
+        </div><!-- /Main Workspace -->
+
+    </div><!-- /App Container -->
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner-ring spinner-ring--outer"></div>
+                <div class="spinner-ring spinner-ring--middle"></div>
+                <div class="spinner-ring spinner-ring--inner"></div>
+            </div>
+            <div class="loading-info">
+                <p id="loading-text" class="loading-label">
+                    <span class="loading-gradient-text">DevRepo Mainframe</span>
+                </p>
+                <p id="loading-status" class="loading-status">Cargando módulos y sesión...</p>
             </div>
         </div>
+    </div>
 
-    </div><!-- /mac-desktop -->
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <div class="toast__panel glass-panel">
+            <div class="toast__content">
+                <div class="toast__icon-wrapper">
+                    <i data-lucide="wifi-off"></i>
+                </div>
+                <div class="toast__text">
+                    <p class="toast__title">Modo Caché</p>
+                    <p class="toast__message">Datos almacenados localmente</p>
+                </div>
+                <button class="toast__close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Modal Asistente de IA -->
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
+        <i data-lucide="arrow-up"></i>
+    </button>
+
+    <!-- Apple DevRepo Edition Login Screen -->
+    <div id="mac-login-screen" class="login-screen hidden">
+        <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full ambient-blob-1 mix-blend-screen blur-3xl"></div>
+            <div class="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full ambient-blob-2 mix-blend-screen blur-3xl"></div>
+        </div>
+        <main class="relative z-10 w-full max-w-md px-4">
+            <div class="glass-panel squircle p-8 flex flex-col items-center text-center shadow-2xl border border-white/10">
+                <div class="mb-8 flex flex-col items-center">
+                    <div class="w-16 h-16 squircle-sm glass-panel flex items-center justify-center mb-6 border border-white/20">
+                        <i data-lucide="terminal" class="w-8 h-8 text-[#007aff]"></i>
+                    </div>
+                    <h1 class="font-display text-2xl font-bold text-white mb-2 tracking-tight">Welcome to DevRepo</h1>
+                    <p class="text-sm text-[#c1c6d7] max-w-[280px]">Sign in to manage your enterprise repositories with high performance</p>
+                </div>
+                <div class="w-full space-y-4 mb-6" id="mac-login-form">
+                    <button type="button" id="mac-login-github-btn" class="w-full h-14 bg-[#007AFF] text-white squircle-sm font-semibold flex items-center justify-center gap-3 hover:bg-[#005bc1] transition-all shadow-lg shadow-[#007AFF]/25">
+                        <i data-lucide="github" class="w-5 h-5"></i>
+                        <span class="text-base">Sign in with GitHub</span>
+                    </button>
+                </div>
+                <div class="mt-4 border-t border-white/10 pt-6 w-full text-center">
+                    <p class="text-xs font-mono text-[#8b90a0] flex items-center justify-center gap-2">
+                        <i data-lucide="lock" class="w-4 h-4 text-[#34c759]"></i>
+                        <span>Secure OAuth login. Encrypted session tokens.</span>
+                    </p>
+                    <p class="login-version-tag mt-3 text-[11px] font-mono text-[#8b90a0] opacity-60">v1.2.0</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Command Palette (Global Search ⌘K) -->
+    <div id="command-palette" class="command-palette hidden">
+        <div class="palette-backdrop" onclick="document.getElementById('command-palette').classList.add('hidden')"></div>
+        <div class="palette-container glass-panel">
+            <div class="palette-search-row">
+                <i data-lucide="search" style="color:var(--text-secondary); width:20px; height:20px;"></i>
+                <input type="text" id="cmd-input" class="palette-input" aria-label="Buscar comandos" placeholder="Buscar repositorios, comandos... (Esc para salir)" autocomplete="off">
+            </div>
+            <div id="palette-results" class="palette-results">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal GerardOS AI Assistant -->
     <div id="ai-modal" class="modal hidden">
         <div class="modal__backdrop" onclick="document.getElementById('ai-modal').classList.add('hidden')"></div>
         <div class="modal__container glass-panel ai-modal-container">
@@ -522,7 +540,7 @@
         </div>
     </div>
 
-    <!-- Modal Visor de Código (fixed overlay, outside window) -->
+    <!-- Modal IDE / Visor de Código -->
     <div id="modal" class="modal hidden">
         <div class="modal__backdrop" onclick="closeModal()"></div>
         <div class="modal__container glass-panel">
@@ -534,7 +552,7 @@
                     <h3 id="modal-title" class="modal__title">Repository</h3>
                 </div>
                 <div id="modal-actions-container" style="display: none; margin-right: 15px;">
-                    <button id="modal-save-btn" class="btn-submit" style="padding: 6px 12px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.5);">
+                    <button id="modal-save-btn" class="btn-submit" style="padding: 6px 12px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; background: rgba(0, 122, 255, 0.2); border: 1px solid rgba(0, 122, 255, 0.5);">
                         <i data-lucide="save" style="width: 16px; height: 16px;"></i> Guardar
                     </button>
                 </div>
@@ -543,7 +561,7 @@
                 </button>
             </div>
             <div class="modal__tabs" style="display: flex; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); padding: 0 15px;">
-                <button class="modal-tab active" data-tab="code" style="background: none; border: none; color: var(--text-primary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid var(--color-primary); font-weight: 500;">
+                <button class="modal-tab active" data-tab="code" style="background: none; border: none; color: var(--text-primary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid var(--color-electric-blue); font-weight: 500;">
                     <i data-lucide="code-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:5px;"></i> Código
                 </button>
                 <button class="modal-tab" data-tab="kanban" style="background: none; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.2s;">
@@ -569,12 +587,12 @@
                         </button>
                     </div>
                     <div id="file-tree" style="overflow-y: auto; flex: 1;">
-                    <div class="modal__placeholder">
-                        <div class="modal__placeholder-inner">
-                            <i data-lucide="folder"></i>
-                            <p class="modal__placeholder-text">Cargando...</p>
+                        <div class="modal__placeholder">
+                            <div class="modal__placeholder-inner">
+                                <i data-lucide="folder"></i>
+                                <p class="modal__placeholder-text">Cargando...</p>
+                            </div>
                         </div>
-                    </div>
                     </div>
                 </div>
                 <div class="modal__code-area" id="code-container">
@@ -627,42 +645,7 @@
         </div>
     </div>
 
-    <!-- Pantalla de Login (macOS Lock Screen style) -->
-    <div id="mac-login-screen" class="login-screen hidden">
-        <div class="login-backdrop"></div>
-        <div class="login-card glass-panel">
-            <div class="login-avatar-container">
-                <div class="login-avatar-frame">
-                    <img src="https://avatars.githubusercontent.com/u/195803064?v=4" alt="Gerard" class="login-avatar-img">
-                </div>
-            </div>
-            <h2 class="login-title">Gerard Maestre</h2>
-            <p class="login-subtitle">Inicia sesión con tu cuenta de GitHub</p>
-            <div id="mac-login-form" class="login-form">
-                <button type="button" id="mac-login-github-btn" class="login-submit-btn" style="background: #24292e; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <i data-lucide="github"></i>
-                    Continuar con GitHub
-                </button>
-            </div>
-            <p class="login-version-tag" style="margin-top: 1.25rem; font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8;">v1.1.0</p>
-        </div>
-    </div>
-
-    <!-- Command Palette (Global Search) -->
-    <div id="command-palette" class="command-palette hidden">
-        <div class="palette-backdrop" onclick="document.getElementById('command-palette').classList.add('hidden')"></div>
-        <div class="palette-container glass-panel">
-            <div class="palette-search-row">
-                <i data-lucide="search" style="color:var(--text-secondary); width:20px; height:20px;"></i>
-                <input type="text" id="cmd-input" class="palette-input" aria-label="Buscar comandos" placeholder="Buscar repositorios, comandos... (Esc para salir)" autocomplete="off">
-            </div>
-            <div id="palette-results" class="palette-results">
-                <!-- Se rellena por JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Crear Repositorio (fixed overlay) -->
+    <!-- Modal Crear Repositorio -->
     <div id="create-repo-modal" class="modal hidden">
         <div class="modal__backdrop" onclick="document.getElementById('create-repo-modal').classList.add('hidden')"></div>
         <div class="modal__container modal__container--small glass-panel">
@@ -691,79 +674,11 @@
                     </label>
                 </div>
                 <p id="create-repo-error" class="form-error-msg"></p>
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" id="create-repo-cancel-btn">Cancelar</button>
-                    <button type="submit" id="create-repo-submit-btn" class="btn-submit">Crear</button>
+                <div class="modal__actions">
+                    <button type="button" class="btn-cancel" onclick="document.getElementById('create-repo-modal').classList.add('hidden')">Cancelar</button>
+                    <button type="submit" class="btn-submit">Crear Repositorio</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Cargador Dinámico de Monaco Editor (Lazy Loading sin colisiones AMD/UMD) -->
-    <script>
-        window.loadMonacoEditor = function() {
-            if (window.monacoReady || window.monacoLoading) return;
-            window.monacoLoading = true;
-            
-            window.require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs' } };
-            
-            var loaderScript = document.createElement('script');
-            loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js';
-            loaderScript.onload = function() {
-                window.MonacoEnvironment = {
-                    getWorkerUrl: function(workerId, label) {
-                        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-                            self.MonacoEnvironment = {
-                                baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/'
-                            };
-                            importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/base/worker/workerMain.js');`
-                        )}`;
-                    }
-                };
-                if (window.require) {
-                    window.require(['vs/editor/editor.main'], function () {
-                        window.monacoReady = true;
-                        console.log("[Monaco] Editor cargado dinámicamente.");
-                    });
-                }
-            };
-            document.head.appendChild(loaderScript);
-        };
-    </script>
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal__backdrop" onclick="document.getElementById('settings-modal').classList.add('hidden')"></div>
-        <div class="modal__container glass-panel" style="max-width: 500px; width: 90%;">
-            <div class="modal__header">
-                <div class="modal__title-row">
-                    <div class="modal__icon">
-                        <i data-lucide="settings"></i>
-                    </div>
-                    <h3 class="modal__title">Ajustes del Sistema</h3>
-                </div>
-                <button class="modal__close" onclick="document.getElementById('settings-modal').classList.add('hidden')">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="modal__body" style="padding: 20px; flex-direction: column; gap: 15px;">
-                <p style="color: var(--text-secondary); margin-bottom: 10px;">Personaliza tu entorno GerardOS Ultimate.</p>
-                
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <h4 style="color: var(--text-primary); margin-bottom: 10px;">Fondo de Pantalla</h4>
-                    <select id="bg-selector" aria-label="Seleccionar fondo de pantalla" class="modal__input" style="width: 100%;" onchange="document.body.style.backgroundImage = 'url(' + this.value + ')'">
-                        <option value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop">Liquid Abstract (Defecto)</option>
-                        <option value="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2564&auto=format&fit=crop">Neon City</option>
-                        <option value="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2342&auto=format&fit=crop">Deep Space</option>
-                        <option value="https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=2487&auto=format&fit=crop">Minimalist Wave</option>
-                    </select>
-                </div>
-                
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <h4 style="color: var(--text-primary); margin-bottom: 10px;">Memoria y Caché</h4>
-                    <button onclick="window.clearAppCache()" class="modal__btn" style="width: 100%; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5);">Borrar Caché (IndexedDB)</button>
-                </div>
-                
-            </div>
         </div>
     </div>
 
