@@ -37,12 +37,17 @@ async function getCryptoKey(secret) {
     );
 }
 
-export async function signJwt(payload, secret) {
+export async function signJwt(payload, secret, issuer = "gerardos-private", audience = "gerardos-client") {
     const header = { alg: "HS256", typ: "JWT" };
     const encoder = new TextEncoder();
+    const fullPayload = {
+        ...payload,
+        iss: issuer,
+        aud: audience
+    };
     
     const part1 = base64UrlEncode(encoder.encode(JSON.stringify(header)));
-    const part2 = base64UrlEncode(encoder.encode(JSON.stringify(payload)));
+    const part2 = base64UrlEncode(encoder.encode(JSON.stringify(fullPayload)));
     
     const key = await getCryptoKey(secret);
     const signature = await crypto.subtle.sign(
@@ -55,7 +60,7 @@ export async function signJwt(payload, secret) {
     return `${part1}.${part2}.${part3}`;
 }
 
-export async function verifyJwt(token, secret) {
+export async function verifyJwt(token, secret, expectedIssuer = "gerardos-private", expectedAudience = "gerardos-client") {
     try {
         const parts = token.split(".");
         if (parts.length !== 3) return null;
@@ -92,6 +97,9 @@ export async function verifyJwt(token, secret) {
         if (typeof payload.sub !== "string" || payload.sub.length === 0) {
             return null;
         }
+        
+        if (payload.iss !== expectedIssuer) return null;
+        if (payload.aud !== expectedAudience) return null;
         
         return payload;
     } catch (e) {

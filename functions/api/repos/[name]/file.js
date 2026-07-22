@@ -62,13 +62,19 @@ export async function onRequestGet(context) {
             const bytes = base64ToUint8(data.content);
             const fileContent = new TextDecoder().decode(bytes);
             
+            const contentType = data.name && data.name.endsWith(".html") ? "text/html" : "text/plain";
+            const headers = { 
+                "Content-Type": `${contentType}; charset=utf-8`,
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff"
+            };
+            if (contentType === "text/html") {
+                headers["Content-Disposition"] = "attachment";
+            }
+            
             return new Response(fileContent, {
                 status: 200,
-                headers: { 
-                    "Content-Type": "text/plain; charset=utf-8",
-                    "Cache-Control": "no-store",
-                    "X-Content-Type-Options": "nosniff"
-                }
+                headers
             });
         }
         

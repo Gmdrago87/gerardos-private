@@ -8,14 +8,17 @@ export async function onRequestGet(context) {
     const headers = getGitHubHeaders(context);
     
     try {
-        const [userRes, reposRes] = await Promise.all([
-            fetch("https://api.github.com/user", { headers }),
-            fetch("https://api.github.com/user/repos?per_page=100&sort=updated&type=all", { headers })
-        ]);
-        
-        if (!userRes.ok || !reposRes.ok) {
-            return jsonResponse({ error: "Error al comunicarse con GitHub" }, 502);
+        const userRes = await fetch("https://api.github.com/user", { headers });
+        if (!userRes.ok) {
+            return jsonResponse({ error: "Error al obtener usuario de GitHub" }, userRes.status);
         }
+
+        const reposRes = await fetch("https://api.github.com/user/repos?per_page=100&sort=updated&type=all", { headers });
+        if (!reposRes.ok) {
+            return jsonResponse({ error: "Error al obtener repositorios de GitHub" }, reposRes.status);
+        }
+        
+        // Comprobaciones realizadas secuencialmente arriba
         
         const [user, repos] = await Promise.all([userRes.json(), reposRes.json()]);
         return jsonResponse({ user, repos });

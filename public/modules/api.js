@@ -1,5 +1,9 @@
 import { USERNAME, CACHE_KEY_USER, CACHE_KEY_REPOS, CACHE_KEY_TIME, CACHE_DURATION } from './utils.js';
 
+const DEFAULT_HEADERS = {
+    "User-Agent": "GerardOS-Private-Frontend/1.1.0"
+};
+
 export function getCachedData() {
     try {
         const timestamp = localStorage.getItem(CACHE_KEY_TIME);
@@ -49,24 +53,34 @@ export function clearCache() {
     }
 }
 
-// Llama a nuestro backend en Cloudflare Pages
 export async function fetchApiData() {
-    const res = await fetch("/api/repos", { credentials: "include" });
-    if (res.status === 401) {
-        throw new Error("UNAUTHORIZED");
+    try {
+        const res = await fetch("/api/repos", { credentials: "include", headers: DEFAULT_HEADERS });
+        if (res.status === 401) {
+            throw new Error("UNAUTHORIZED");
+        }
+        if (!res.ok) {
+            throw new Error(`Error API: ${res.status}`);
+        }
+        return await res.json();
+    } catch (e) {
+        if (e.name === "TypeError" && e.message.includes("Failed to fetch")) {
+            throw new Error("NETWORK_ERROR");
+        }
+        throw e;
     }
-    if (!res.ok) {
-        throw new Error("Error API");
-    }
-    return await res.json(); // Devuelve { user, repos }
 }
 
 export async function fetchFallbackData() {
-    // Si la API falla, intentamos usar una base de datos local estática
-    const res = await fetch('./database.json');
-    if (!res.ok) throw new Error('No local database');
-    const data = await res.json();
-    return { user: data.user, repos: data.repos };
+    try {
+        const res = await fetch('./database.json');
+        if (!res.ok) throw new Error('No local database');
+        const data = await res.json();
+        return { user: data.user, repos: data.repos };
+    } catch (e) {
+        console.error("Error al cargar datos de fallback:", e);
+        return { user: null, repos: [] };
+    }
 }
 
 function repoPath(repoName) {

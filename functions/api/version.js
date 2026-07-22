@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
                 sha = ghData.sha || "";
             }
         } catch (err) {
-            console.error("Error fetching fallback commit from GitHub:", err);
+            console.error("Error al obtener fallback commit from GitHub:", err.message);
         }
     }
 

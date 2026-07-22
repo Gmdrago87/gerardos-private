@@ -2,11 +2,12 @@ import { verifyJwt } from "../_shared/jwt.js";
 
 function getCookie(request, name) {
     const cookieHeader = request.headers.get("Cookie");
-    if (!cookieHeader) return null;
+    if (!cookieHeader || cookieHeader.trim() === "") return null;
     
     const cookies = cookieHeader.split(";");
     for (let cookie of cookies) {
         const trimmed = cookie.trim();
+        if (trimmed === "") continue;
         const eqIdx = trimmed.indexOf("=");
         if (eqIdx !== -1) {
             const key = trimmed.substring(0, eqIdx);

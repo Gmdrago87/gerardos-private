@@ -30,15 +30,20 @@ export const LANG_COLORS = {
 
 export function debounce(func, wait) {
     let timeout;
-    return function(...args) {
+    const debounced = function(...args) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
+    debounced.cancel = () => clearTimeout(timeout);
+    return debounced;
 }
 
 const htmlMap = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"};
 export function escapeHtml(str) {
     if (!str) return '';
+    if (window.DOMPurify) {
+        return window.DOMPurify.sanitize(str, { ALLOWED_TAGS: [] });
+    }
     return String(str).replace(/[&<>"']/g, m => htmlMap[m]);
 }
 

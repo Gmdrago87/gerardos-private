@@ -739,7 +739,9 @@ async function loadPreview() {
         }
         
         const previewCsp = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'">`;
-        iframe.srcdoc = finalHtml.includes('<head>') ? finalHtml.replace('<head>', `<head>${previewCsp}`) : `${previewCsp}${finalHtml}`;
+        let dirtyHtml = finalHtml.includes('<head>') ? finalHtml.replace('<head>', `<head>${previewCsp}`) : `${previewCsp}${finalHtml}`;
+        
+        iframe.srcdoc = window.DOMPurify ? window.DOMPurify.sanitize(dirtyHtml, { USE_PROFILES: { html: true } }) : dirtyHtml;
         
     } catch (e) {
         iframe.srcdoc = '<h3>Error al cargar preview.</h3>';

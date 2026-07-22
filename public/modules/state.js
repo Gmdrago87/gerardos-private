@@ -1,6 +1,6 @@
 import { ITEMS_PER_PAGE } from './utils.js';
 
-const state = {
+let state = {
     user: null,
     allRepos: [],
     filteredRepos: [],
@@ -9,13 +9,12 @@ const state = {
     currentSort: 'updated'
 };
 
-// Zero-cost state getter (evita structuredClone profundo en hot paths)
 export function getState() {
-    return state;
+    return structuredClone ? structuredClone(state) : JSON.parse(JSON.stringify(state));
 }
 
 export function setState(update) {
-    Object.assign(state, update);
+    state = { ...state, ...update };
 }
 
 // Caching con IndexedDB

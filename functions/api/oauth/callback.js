@@ -9,10 +9,12 @@ export async function onRequestGet(context) {
     // Función auxiliar para obtener cookies
     function getCookie(request, name) {
         const cookieHeader = request.headers.get("Cookie");
-        if (!cookieHeader) return null;
+        if (!cookieHeader || cookieHeader.trim() === "") return null;
+        
         const cookies = cookieHeader.split(";");
         for (let cookie of cookies) {
             const trimmed = cookie.trim();
+            if (trimmed === "") continue;
             const eqIdx = trimmed.indexOf("=");
             if (eqIdx !== -1) {
                 const key = trimmed.substring(0, eqIdx);
@@ -26,22 +28,27 @@ export async function onRequestGet(context) {
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
     const storedState = getCookie(request, "oauth_state");
-    console.log(`[API] Código extraído: ${code ? "SÍ (oculto)" : "NO"}`);
 
     if (!code) {
         console.error("[API] Error: Falta el código de autorización.");
         return new Response("Falta el código de autorización.", { status: 400 });
     }
 
-    if (!state || state !== storedState) {
-        console.error("[API] Error: Token CSRF (state) inválido o expirado.");
+    // Validar que state sea un UUID válido
+    if (!state || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(state)) {
+        console.error("[API] Error: Token CSRF (state) inválido.");
+        return new Response("Error de seguridad: la sesión de login es inválida.", { status: 403 });
+    }
+
+    if (state !== storedState) {
+        console.error("[API] Error: Token CSRF (state) no coincide o expirado.");
         return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
     }
 
-    const clientId = env.GITHUB_CLIENT_ID || "Ov23liZt2GrRqM6MBcHa";
-    const clientSecret = env.GITHUB_CLIENT_SECRET || "05225febfd12ff3be4787a49b8cb69d1a1b85743";
-    const jwtSecret = env.JWT_SECRET || "super_secreto_para_probar_localmente";
-    const githubUsername = env.GITHUB_USERNAME || "GerardMaestre";
+    const clientId = env.GITHUB_CLIENT_ID;
+    const clientSecret = env.GITHUB_CLIENT_SECRET;
+    const jwtSecret = env.JWT_SECRET;
+    const githubUsername = env.GITHUB_USERNAME;
 
     if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
         console.error("[API] Error: Faltan variables OAuth en env.");
@@ -70,8 +77,12 @@ export async function onRequestGet(context) {
             return new Response(`Error al autenticar con GitHub. Por favor, inténtalo de nuevo.`, { status: 400 });
         }
 
+        if (tokenData.scope !== "repo workflow delete_repo") {
+            console.error(`[API] Error: Scope inesperado: ${tokenData.scope}`);
+            return new Response("Error de autenticación: permisos insuficientes.", { status: 403 });
+        }
+
         const accessToken = tokenData.access_token;
-        console.log("[API] Access token recibido correctamente.");
 
         console.log("[API] Verificando identidad del usuario en GitHub...");
         // 2. Verificar la identidad del usuario en GitHub
@@ -101,21 +112,15 @@ export async function onRequestGet(context) {
             sub: userData.login,
             github_token: accessToken,
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos de sesión
+            exp: Math.floor(Date.now() / 1000) + (60 * 15) // 15 minutos de sesión
         };
         
-        const jwt = await signJwt(payload, jwtSecret);
-        console.log("[API] Sesión generada correctamente. Redirigiendo al inicio.");
+        const jwt = await signJwt(payload, jwtSecret, "gerardos-private", "gerardos-client");
 
-        // 5. Establecer la cookie (con expiración de 30 minutos) y redirigir al inicio, además de limpiar oauth_state
+        // 5. Establecer la cookie (con expiración de 15 minutos) y redirigir al inicio, además de limpiar oauth_state
         const isProduction = env.NODE_ENV === "production";
-        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 30}`;
-        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
-        
-        if (isProduction || request.url.startsWith("https://")) {
-            cookieString += "; Secure";
-            clearStateCookie += "; Secure";
-        }
+        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 15}; Secure`;
+        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Secure`;
 
         const responseHeaders = new Headers();
         responseHeaders.set("Location", "/");
