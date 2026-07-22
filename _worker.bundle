@@ -1,0 +1,2078 @@
+------formdata-undici-059852027428
+Content-Disposition: form-data; name="metadata"
+
+{"main_module":"functionsWorker-0.7311690215020806.js"}
+------formdata-undici-059852027428
+Content-Disposition: form-data; name="functionsWorker-0.7311690215020806.js"; filename="functionsWorker-0.7311690215020806.js"
+Content-Type: application/javascript+module
+
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// _shared/http.js
+function jsonResponse(data, status = 200, headers = {}) {
+  const body = JSON.stringify(data, null, 2);
+  return new Response(body, {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+      ...headers
+    }
+  });
+}
+__name(jsonResponse, "jsonResponse");
+
+// _shared/errors.js
+var ApiError2 = class extends Error {
+  static {
+    __name(this, "ApiError");
+  }
+  constructor(message, statusCode = 500, details = {}, code = null) {
+    super(message);
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+    this.details = details;
+    this.code = code || this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+};
+var AuthError = class extends ApiError2 {
+  static {
+    __name(this, "AuthError");
+  }
+  constructor(message = "No autorizado", details = {}) {
+    super(message, 401, details, "AUTH_ERROR");
+  }
+};
+var ValidationError2 = class extends ApiError2 {
+  static {
+    __name(this, "ValidationError");
+  }
+  constructor(message = "Datos inv\xE1lidos", details = {}) {
+    super(message, 400, details, "VALIDATION_ERROR");
+  }
+};
+var NotFoundError = class extends ApiError2 {
+  static {
+    __name(this, "NotFoundError");
+  }
+  constructor(message = "Recurso no encontrado", details = {}) {
+    super(message, 404, details, "NOT_FOUND");
+  }
+};
+function handleError(error, context) {
+  console.error("Error:", {
+    message: error.message,
+    stack: false ? error.stack : void 0,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  if (error instanceof ApiError2) {
+    return jsonResponse({
+      error: error.message,
+      code: error.code,
+      ...error.details
+    }, error.statusCode);
+  }
+  if (error.message.includes("JWT") || error.message.includes("token")) {
+    return jsonResponse({
+      error: "Sesi\xF3n inv\xE1lida o expirada",
+      code: "INVALID_SESSION"
+    }, 401);
+  }
+  if (error.message.includes("GitHub") || error.message.includes("API")) {
+    return jsonResponse({
+      error: "Error al comunicarse con GitHub",
+      code: "GITHUB_API_ERROR"
+    }, 502);
+  }
+  return jsonResponse({
+    error: "Error interno del servidor",
+    code: "INTERNAL_ERROR"
+  }, 500);
+}
+__name(handleError, "handleError");
+
+// _shared/github.js
+var REPO_NAME_REGEX = /^(?!\.)(?!.*\.git$)[A-Za-z0-9._-]{1,100}$/;
+var GIT_REF_REGEX = /^(?!\/)(?!.*\.\.)(?!.*@\{)(?!.*\\)(?!.*\/\/)(?!.*\.$)[A-Za-z0-9._\/-]{1,255}$/;
+var BASE_GITHUB_HEADERS = Object.freeze({
+  "Accept": "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+  "User-Agent": "GerardOS-Private-Dashboard"
+});
+function getGitHubHeaders(context, withContentType = false) {
+  const token = context.data?.session?.github_token;
+  if (!token) {
+    throw new AuthError("No GitHub token available");
+  }
+  return {
+    ...BASE_GITHUB_HEADERS,
+    "Authorization": `Bearer ${token}`,
+    ...withContentType ? { "Content-Type": "application/json" } : {}
+  };
+}
+__name(getGitHubHeaders, "getGitHubHeaders");
+function validateRepoName(name) {
+  return typeof name === "string" && REPO_NAME_REGEX.test(name) && !name.endsWith(".");
+}
+__name(validateRepoName, "validateRepoName");
+function validateGitRef(ref) {
+  return typeof ref === "string" && GIT_REF_REGEX.test(ref);
+}
+__name(validateGitRef, "validateGitRef");
+function validateFilePath(path) {
+  if (typeof path !== "string" || path.length < 1 || path.length > 4096) return false;
+  if (path.includes("\0") || path.includes("\\") || path.startsWith("/") || path.endsWith("/") || path.includes("//") || path.includes("/./") || path.includes("/../")) return false;
+  return true;
+}
+__name(validateFilePath, "validateFilePath");
+function encodeGitHubPath(path) {
+  return path.split("/").map(encodeURIComponent).join("/");
+}
+__name(encodeGitHubPath, "encodeGitHubPath");
+function getRepoOwner(context) {
+  return context.data?.session?.sub || context.env.GITHUB_USERNAME?.split(",")[0]?.trim() || "Gmdrago87";
+}
+__name(getRepoOwner, "getRepoOwner");
+function isAllowedUser(username, env) {
+  if (typeof username !== "string" || !username) return false;
+  const allowed = (env.GITHUB_USERNAME || "Gmdrago87,GerardMaestre").split(",").map((u) => u.trim().toLowerCase());
+  return allowed.includes(username.toLowerCase());
+}
+__name(isAllowedUser, "isAllowedUser");
+function requireAuth(context) {
+  if (!context.data?.session?.github_token) {
+    throw new AuthError("Sesi\xF3n no v\xE1lida");
+  }
+  return null;
+}
+__name(requireAuth, "requireAuth");
+
+// api/repos/[name]/actions.js
+async function onRequestPost(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    const url = new URL(request.url);
+    const branch = url.searchParams.get("branch") || "main";
+    const filePath = url.searchParams.get("path") || "";
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    if (!validateGitRef(branch)) {
+      throw new ValidationError2("Rama inv\xE1lida");
+    }
+    if (filePath && !validateFilePath(filePath)) {
+      throw new ValidationError2("Ruta de archivo inv\xE1lida");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    headers["Content-Type"] = "application/json";
+    const { content, message = "Add file" } = await request.json();
+    if (!content) {
+      throw new ValidationError2("El contenido es obligatorio");
+    }
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeGitHubPath(filePath)}`;
+    const branchRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/branches/${encodeURIComponent(branch)}`, {
+      headers
+    });
+    if (!branchRes.ok) {
+      throw new Error("No se pudo obtener informaci\xF3n de la rama");
+    }
+    const branchData = await branchRes.json();
+    const body = {
+      message,
+      content: btoa(content),
+      branch
+    };
+    try {
+      const fileRes = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, {
+        headers
+      });
+      if (fileRes.ok) {
+        const fileData = await fileRes.json();
+        body.sha = fileData.sha;
+      }
+    } catch (e) {
+    }
+    const res = await fetch(apiUrl, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Error al guardar el archivo");
+    }
+    const result = await res.json();
+    return jsonResponse({
+      success: true,
+      commit: {
+        sha: result.commit.sha,
+        message: result.commit.message,
+        url: result.commit.html_url
+      },
+      content: {
+        path: result.content.path,
+        htmlUrl: result.content.html_url
+      }
+    }, 201);
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestPost, "onRequestPost");
+async function onRequestDelete(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    const url = new URL(request.url);
+    const branch = url.searchParams.get("branch") || "main";
+    const filePath = url.searchParams.get("path");
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    if (!validateGitRef(branch)) {
+      throw new ValidationError2("Rama inv\xE1lida");
+    }
+    if (!filePath || !validateFilePath(filePath)) {
+      throw new ValidationError2("Ruta de archivo inv\xE1lida");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    headers["Content-Type"] = "application/json";
+    const { message = "Delete file", confirm = false } = await request.json();
+    if (!confirm) {
+      throw new ValidationError2("Debes confirmar la eliminaci\xF3n");
+    }
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeGitHubPath(filePath)}?ref=${encodeURIComponent(branch)}`;
+    const fileRes = await fetch(apiUrl, {
+      headers
+    });
+    if (!fileRes.ok) {
+      if (fileRes.status === 404) {
+        throw new NotFoundError("Archivo no encontrado");
+      }
+      throw new Error("Error al obtener informaci\xF3n del archivo");
+    }
+    const fileData = await fileRes.json();
+    const res = await fetch(apiUrl, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({
+        message,
+        sha: fileData.sha,
+        branch
+      })
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Error al eliminar el archivo");
+    }
+    return jsonResponse({
+      success: true,
+      message: "Archivo eliminado correctamente"
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestDelete, "onRequestDelete");
+
+// api/repos/[name]/branches.js
+async function onRequestGet(context) {
+  try {
+    requireAuth(context);
+    const { params } = context;
+    const repoName = params.name;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/branches`;
+    const res = await fetch(apiUrl, {
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Repositorio no encontrado");
+      }
+      throw new Error(`Error al obtener ramas: ${res.status}`);
+    }
+    const branches = await res.json();
+    const processedBranches = branches.map((branch) => ({
+      name: branch.name,
+      sha: branch.commit.sha,
+      message: branch.commit.commit.message,
+      date: branch.commit.commit.author?.date || branch.commit.commit.committer?.date || "",
+      isDefault: branch.name === "main" || branch.name === "master"
+    }));
+    return jsonResponse({
+      repo: repoName,
+      branches: processedBranches
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet, "onRequestGet");
+
+// api/repos/[name]/commits.js
+async function onRequestGet2(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    const url = new URL(request.url);
+    const branch = url.searchParams.get("branch") || "main";
+    const perPage = parseInt(url.searchParams.get("per_page")) || 30;
+    const page = parseInt(url.searchParams.get("page")) || 1;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    if (!validateGitRef(branch)) {
+      throw new ValidationError2("Rama inv\xE1lida");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/commits?sha=${encodeURIComponent(branch)}&per_page=${perPage}&page=${page}`;
+    const res = await fetch(apiUrl, {
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Repositorio no encontrado");
+      }
+      throw new Error(`Error al obtener commits: ${res.status}`);
+    }
+    const commits = await res.json();
+    const processedCommits = commits.map((commit) => ({
+      sha: commit.sha,
+      message: commit.commit.message,
+      author: commit.commit.author?.name || "Unknown",
+      authorEmail: commit.commit.author?.email || "",
+      date: commit.commit.author?.date || commit.commit.committer?.date || "",
+      url: commit.html_url,
+      avatar: commit.author?.avatar_url || commit.committer?.avatar_url || null
+    }));
+    return jsonResponse({
+      repo: repoName,
+      branch,
+      commits: processedCommits,
+      page,
+      perPage
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet2, "onRequestGet");
+
+// api/repos/[name]/file.js
+async function onRequestGet3(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    const url = new URL(request.url);
+    const branch = url.searchParams.get("branch") || "main";
+    const filePath = url.searchParams.get("path");
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    if (!validateGitRef(branch)) {
+      throw new ValidationError2("Rama inv\xE1lida");
+    }
+    if (!filePath || !validateFilePath(filePath)) {
+      throw new ValidationError2("Ruta de archivo inv\xE1lida");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    headers["Accept"] = "application/vnd.github.v3.raw";
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeGitHubPath(filePath)}?ref=${encodeURIComponent(branch)}`;
+    const res = await fetch(apiUrl, {
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Archivo no encontrado");
+      }
+      throw new Error(`Error al obtener el archivo: ${res.status}`);
+    }
+    const contentType = res.headers.get("Content-Type");
+    let content;
+    if (contentType?.includes("application/json")) {
+      const fileInfo = await res.json();
+      if (fileInfo.encoding === "base64") {
+        content = atob(fileInfo.content);
+      } else {
+        content = fileInfo.content || "";
+      }
+    } else {
+      content = await res.text();
+    }
+    return jsonResponse({
+      repo: repoName,
+      branch,
+      path: filePath,
+      content,
+      encoding: "utf-8"
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet3, "onRequestGet");
+
+// api/repos/[name]/issues.js
+async function onRequestGet4(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    const url = new URL(request.url);
+    const state = url.searchParams.get("state") || "all";
+    const perPage = parseInt(url.searchParams.get("per_page")) || 30;
+    const page = parseInt(url.searchParams.get("page")) || 1;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/issues?state=${state}&per_page=${perPage}&page=${page}`;
+    const res = await fetch(apiUrl, {
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Repositorio no encontrado");
+      }
+      throw new Error(`Error al obtener issues: ${res.status}`);
+    }
+    const issues = await res.json();
+    const processedIssues = issues.map((issue) => ({
+      id: issue.id,
+      number: issue.number,
+      title: issue.title,
+      body: issue.body,
+      state: issue.state,
+      labels: issue.labels.map((l) => l.name),
+      author: issue.user?.login || "Unknown",
+      authorAvatar: issue.user?.avatar_url || null,
+      createdAt: issue.created_at,
+      updatedAt: issue.updated_at,
+      comments: issue.comments,
+      htmlUrl: issue.html_url,
+      isPullRequest: !!issue.pull_request
+    }));
+    return jsonResponse({
+      repo: repoName,
+      issues: processedIssues,
+      page,
+      perPage
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet4, "onRequestGet");
+async function onRequestPost2(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    headers["Content-Type"] = "application/json";
+    const { title, body, labels = [], assignees = [] } = await request.json();
+    if (!title) {
+      throw new ValidationError2("El t\xEDtulo es obligatorio");
+    }
+    const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/issues`;
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        title,
+        body,
+        labels,
+        assignees
+      })
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Error al crear issue");
+    }
+    const newIssue = await res.json();
+    return jsonResponse({
+      success: true,
+      issue: {
+        id: newIssue.id,
+        number: newIssue.number,
+        title: newIssue.title,
+        htmlUrl: newIssue.html_url
+      }
+    }, 201);
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestPost2, "onRequestPost");
+
+// api/repos/[name]/tree.js
+async function onRequestGet5(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    const url = new URL(request.url);
+    const branch = url.searchParams.get("branch") || "main";
+    const path = url.searchParams.get("path") || "";
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    if (!validateGitRef(branch)) {
+      throw new ValidationError2("Rama inv\xE1lida");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    let apiUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${encodeGitHubPath(path)}?ref=${encodeURIComponent(branch)}`;
+    const res = await fetch(apiUrl, {
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Ruta no encontrada");
+      }
+      throw new Error(`Error al obtener el \xE1rbol: ${res.status}`);
+    }
+    let tree = await res.json();
+    if (tree.type !== "dir" && !Array.isArray(tree)) {
+      tree = [tree];
+    }
+    const processedTree = Array.isArray(tree) ? tree.map((item) => ({
+      name: item.name,
+      path: item.path,
+      type: item.type,
+      size: item.size,
+      sha: item.sha,
+      url: item.download_url || item.git_url || item.html_url,
+      isDir: item.type === "dir"
+    })) : {
+      name: tree.name,
+      path: tree.path,
+      type: tree.type,
+      size: tree.size,
+      sha: tree.sha,
+      url: tree.download_url || tree.git_url || tree.html_url,
+      isDir: tree.type === "dir"
+    };
+    return jsonResponse({
+      repo: repoName,
+      branch,
+      path,
+      tree: processedTree
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet5, "onRequestGet");
+
+// _shared/jwt.js
+var keyCache = /* @__PURE__ */ new Map();
+function base64UrlEncode(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const len = bytes.byteLength;
+  let binary = "";
+  const CHUNK_SIZE = 32768;
+  for (let i = 0; i < len; i += CHUNK_SIZE) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK_SIZE));
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+__name(base64UrlEncode, "base64UrlEncode");
+function base64UrlDecode(str) {
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = base64.length % 4;
+  if (pad) {
+    base64 += "=".repeat(4 - pad);
+  }
+  const binary = atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+__name(base64UrlDecode, "base64UrlDecode");
+async function getCryptoKey(secret) {
+  const cacheKey = `jwt_${secret.length}`;
+  let key = keyCache.get(cacheKey);
+  if (!key) {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    key = await crypto.subtle.importKey(
+      "raw",
+      keyData,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign", "verify"]
+    );
+    keyCache.set(cacheKey, key);
+  }
+  return key;
+}
+__name(getCryptoKey, "getCryptoKey");
+async function signJwt(payload, secret, expiresIn = 1800) {
+  const header = { alg: "HS256", typ: "JWT" };
+  const encoder = new TextEncoder();
+  const now = Math.floor(Date.now() / 1e3);
+  const finalPayload = {
+    iat: now,
+    exp: now + expiresIn,
+    ...payload
+  };
+  const part1 = base64UrlEncode(encoder.encode(JSON.stringify(header)));
+  const part2 = base64UrlEncode(encoder.encode(JSON.stringify(finalPayload)));
+  const key = await getCryptoKey(secret);
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(`${part1}.${part2}`)
+  );
+  const part3 = base64UrlEncode(signature);
+  return `${part1}.${part2}.${part3}`;
+}
+__name(signJwt, "signJwt");
+async function verifyJwt(token, secret) {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const [part1, part2, part3] = parts;
+    const encoder = new TextEncoder();
+    const key = await getCryptoKey(secret);
+    const signatureBytes = base64UrlDecode(part3);
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      signatureBytes,
+      encoder.encode(`${part1}.${part2}`)
+    );
+    if (!isValid) return null;
+    const payloadJson = new TextDecoder().decode(base64UrlDecode(part2));
+    const payload = JSON.parse(payloadJson);
+    const now = Math.floor(Date.now() / 1e3);
+    if (!Number.isInteger(payload.exp) || payload.exp <= now) {
+      return null;
+    }
+    if (!Number.isInteger(payload.iat) || payload.iat > now + 60) {
+      return null;
+    }
+    if (payload.nbf && (!Number.isInteger(payload.nbf) || payload.nbf > now + 60)) {
+      return null;
+    }
+    if (typeof payload.sub !== "string" || payload.sub.length === 0) {
+      return null;
+    }
+    return payload;
+  } catch (e) {
+    console.error("JWT verification error:", e.message);
+    return null;
+  }
+}
+__name(verifyJwt, "verifyJwt");
+
+// _shared/cookies.js
+function getCookie(request, name) {
+  const cookieHeader = request.headers.get("Cookie");
+  if (!cookieHeader) return null;
+  return cookieHeader.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${name}=`))?.split("=")[1] || null;
+}
+__name(getCookie, "getCookie");
+function setCookie(headers, name, value, options = {}) {
+  const {
+    maxAge = 0,
+    path = "/",
+    secure = false,
+    httpOnly = true,
+    sameSite = "Strict"
+  } = options;
+  let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+  cookie += `; Path=${path}`;
+  cookie += `; HttpOnly=${httpOnly}`;
+  cookie += `; SameSite=${sameSite}`;
+  if (maxAge > 0) {
+    cookie += `; Max-Age=${maxAge}`;
+  }
+  if (secure) {
+    cookie += "; Secure";
+  }
+  headers.append("Set-Cookie", cookie);
+}
+__name(setCookie, "setCookie");
+function clearCookie(headers, name, options = {}) {
+  const {
+    path = "/",
+    secure = false,
+    sameSite = "Lax"
+  } = options;
+  let cookie = `${encodeURIComponent(name)}=; Path=${path}; SameSite=${sameSite}; Max-Age=0`;
+  if (secure) {
+    cookie += "; Secure";
+  }
+  headers.append("Set-Cookie", cookie);
+}
+__name(clearCookie, "clearCookie");
+
+// api/oauth/callback.js
+var STATE_COOKIE_NAME = "oauth_state";
+var SESSION_COOKIE_NAME = "session";
+var SESSION_DURATION = 60 * 30;
+async function onRequestGet6(context) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  console.log(`[API] OAuth Callback recibido en: ${url.pathname}`);
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const storedState = getCookie(request, STATE_COOKIE_NAME);
+  console.log(`[API] C\xF3digo extra\xEDdo: ${code ? "S\xED (oculto)" : "NO"}`);
+  if (!code) {
+    console.error("[API] Error: Falta el c\xF3digo de autorizaci\xF3n.");
+    return new Response("Falta el c\xF3digo de autorizaci\xF3n.", { status: 400 });
+  }
+  if (!state || state !== storedState) {
+    console.error("[API] Error: Token CSRF (state) inv\xE1lido o expirado.");
+    return new Response("Error de seguridad: la sesi\xF3n de login expir\xF3 o es inv\xE1lida.", { status: 403 });
+  }
+  const clientId = env.GITHUB_CLIENT_ID;
+  const clientSecret = env.GITHUB_CLIENT_SECRET;
+  const jwtSecret = env.JWT_SECRET;
+  const githubUsername = env.GITHUB_USERNAME;
+  if (!clientId || !clientSecret || !jwtSecret || !githubUsername) {
+    console.error("[API] Error: Faltan variables OAuth en env.");
+    return new Response("El servidor no est\xE1 configurado correctamente (faltan variables OAuth).", { status: 500 });
+  }
+  try {
+    console.log("[API] Intercambiando c\xF3digo por token de acceso...");
+    const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code
+      })
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || tokenData.error || !tokenData.access_token || tokenData.token_type !== "bearer") {
+      console.error(`[API] Error de GitHub OAuth: ${tokenData.error_description || tokenRes.status}`);
+      return new Response(`Error al autenticar con GitHub. Por favor, int\xE9ntalo de nuevo.`, { status: 400 });
+    }
+    const accessToken = tokenData.access_token;
+    console.log("[API] Access token recibido correctamente.");
+    console.log("[API] Verificando identidad del usuario en GitHub...");
+    const userRes = await fetch("https://api.github.com/user", {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "User-Agent": "GerardOS-Private-Dashboard"
+      }
+    });
+    const userData = await userRes.json();
+    if (!userRes.ok || typeof userData.login !== "string") {
+      console.error(`[API] Error verificando usuario en GitHub: ${userRes.status}`);
+      return new Response("No se pudo verificar la identidad en GitHub.", { status: 502 });
+    }
+    console.log(`[API] Usuario de GitHub detectado: ${userData.login}`);
+    if (!isAllowedUser(userData.login, env)) {
+      console.error(`[API] Acceso Denegado. Esperado: ${env.GITHUB_USERNAME}, Recibido: ${userData.login}`);
+      return new Response(`Acceso Denegado. Este panel es privado y no est\xE1s autorizado.`, { status: 403 });
+    }
+    const payload = {
+      sub: userData.login,
+      github_token: accessToken,
+      iat: Math.floor(Date.now() / 1e3),
+      exp: Math.floor(Date.now() / 1e3) + SESSION_DURATION
+    };
+    const jwt = await signJwt(payload, jwtSecret, SESSION_DURATION);
+    console.log("[API] Sesi\xF3n generada correctamente. Redirigiendo al inicio.");
+    const isProduction = env.NODE_ENV === "production";
+    const responseHeaders = new Headers();
+    setCookie(responseHeaders, SESSION_COOKIE_NAME, jwt, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "Strict",
+      maxAge: SESSION_DURATION,
+      secure: isProduction || url.protocol === "https:"
+    });
+    clearCookie(responseHeaders, STATE_COOKIE_NAME, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: isProduction || url.protocol === "https:"
+    });
+    responseHeaders.set("Location", "/");
+    return new Response(null, {
+      status: 302,
+      headers: responseHeaders
+    });
+  } catch (e) {
+    console.error(`[API] Excepci\xF3n procesando el login con GitHub: ${e.message}`);
+    console.error(e.stack);
+    return new Response("Error interno del servidor durante el login.", { status: 500 });
+  }
+}
+__name(onRequestGet6, "onRequestGet");
+
+// api/oauth/login.js
+var STATE_COOKIE_NAME2 = "oauth_state";
+var STATE_DURATION = 60 * 10;
+async function onRequestGet7(context) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  console.log(`[API] OAuth Login iniciado desde: ${url.pathname}`);
+  const clientId = env.GITHUB_CLIENT_ID;
+  const githubUsername = env.GITHUB_USERNAME;
+  if (!clientId || !githubUsername) {
+    console.error("[API] Error: Faltan variables de configuraci\xF3n para OAuth.");
+    return new Response("El servidor no est\xE1 configurado correctamente.", { status: 500 });
+  }
+  try {
+    const state = crypto.randomUUID();
+    const callbackUrl = new URL("/api/oauth/callback", url.origin).toString();
+    const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
+    githubAuthUrl.searchParams.set("client_id", clientId);
+    githubAuthUrl.searchParams.set("redirect_uri", callbackUrl);
+    githubAuthUrl.searchParams.set("state", state);
+    githubAuthUrl.searchParams.set("scope", "repo user");
+    const isProduction = env.NODE_ENV === "production";
+    const responseHeaders = new Headers();
+    setCookie(responseHeaders, STATE_COOKIE_NAME2, state, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+      maxAge: STATE_DURATION,
+      secure: isProduction || url.protocol === "https:"
+    });
+    responseHeaders.set("Location", githubAuthUrl.toString());
+    console.log(`[API] Redirigiendo a GitHub OAuth: ${githubAuthUrl.toString()}`);
+    return new Response(null, {
+      status: 302,
+      headers: responseHeaders
+    });
+  } catch (e) {
+    console.error(`[API] Error iniciando OAuth: ${e.message}`);
+    return new Response("Error al iniciar el proceso de autenticaci\xF3n.", { status: 500 });
+  }
+}
+__name(onRequestGet7, "onRequestGet");
+
+// api/repos/[name]/index.js
+async function onRequestGet8(context) {
+  try {
+    requireAuth(context);
+    const { params } = context;
+    const repoName = params.name;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Repositorio no encontrado");
+      }
+      throw new Error(`Error al obtener repositorio: ${res.status}`);
+    }
+    const repo = await res.json();
+    return jsonResponse(repo);
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet8, "onRequestGet");
+async function onRequestDelete2(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    const body = await request.json();
+    if (!body.confirm) {
+      throw new ValidationError2("Debes confirmar la eliminaci\xF3n");
+    }
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+      method: "DELETE",
+      headers
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Repositorio no encontrado");
+      }
+      throw new Error(`Error al eliminar repositorio: ${res.status}`);
+    }
+    return jsonResponse({ success: true, message: "Repositorio eliminado correctamente" });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestDelete2, "onRequestDelete");
+async function onRequestPatch(context) {
+  try {
+    requireAuth(context);
+    const { params, request } = context;
+    const repoName = params.name;
+    if (!validateRepoName(repoName)) {
+      throw new ValidationError2("Nombre de repositorio inv\xE1lido");
+    }
+    const owner = getRepoOwner(context);
+    const headers = getGitHubHeaders(context);
+    headers["Content-Type"] = "application/json";
+    const body = await request.json();
+    const updateData = {};
+    if (body.name !== void 0) updateData.name = body.name;
+    if (body.description !== void 0) updateData.description = body.description;
+    if (body.private !== void 0) updateData.private = body.private;
+    if (Object.keys(updateData).length === 0) {
+      throw new ValidationError2("No se proporcionaron datos para actualizar");
+    }
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(updateData)
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new NotFoundError("Repositorio no encontrado");
+      }
+      throw new Error(`Error al actualizar repositorio: ${res.status}`);
+    }
+    const updatedRepo = await res.json();
+    return jsonResponse(updatedRepo);
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestPatch, "onRequestPatch");
+
+// api/ai.js
+async function onRequestPost3(context) {
+  try {
+    requireAuth(context);
+    const { request } = context;
+    const { prompt, action, repo, path, branch } = await request.json();
+    if (!prompt) {
+      throw new ValidationError2("El prompt es obligatorio");
+    }
+    const mockResponse = {
+      action,
+      repo,
+      path,
+      branch,
+      response: `He recibido tu solicitud: "${prompt}". Esta es una respuesta de demostraci\xF3n.`,
+      suggestions: [
+        "Revisar la documentaci\xF3n del proyecto",
+        "Analizar el c\xF3digo fuente",
+        "Generar un resumen de cambios"
+      ]
+    };
+    return jsonResponse(mockResponse);
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestPost3, "onRequestPost");
+async function onRequestGet9(context) {
+  try {
+    requireAuth(context);
+    return jsonResponse({
+      available: true,
+      features: [
+        "code_analysis",
+        "documentation",
+        "summarization",
+        "suggestions"
+      ]
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet9, "onRequestGet");
+
+// api/logout.js
+async function onRequestGet10(context) {
+  const { request } = context;
+  const url = new URL(request.url);
+  const isProduction = context.env.NODE_ENV === "production";
+  const responseHeaders = new Headers();
+  clearCookie(responseHeaders, "session", {
+    path: "/",
+    httpOnly: true,
+    sameSite: "Strict",
+    secure: isProduction || url.protocol === "https:"
+  });
+  clearCookie(responseHeaders, "oauth_state", {
+    path: "/",
+    httpOnly: true,
+    sameSite: "Lax",
+    secure: isProduction || url.protocol === "https:"
+  });
+  responseHeaders.set("Location", "/");
+  return new Response(null, {
+    status: 302,
+    headers: responseHeaders
+  });
+}
+__name(onRequestGet10, "onRequestGet");
+
+// api/repos/index.js
+var CACHE_DURATION = 60 * 5;
+var repoCache = /* @__PURE__ */ new Map();
+async function onRequestGet11(context) {
+  try {
+    requireAuth(context);
+    const { env, data } = context;
+    const owner = getRepoOwner(context);
+    const cacheKey = `repos_${owner}`;
+    const cached = repoCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION * 1e3) {
+      return jsonResponse({
+        user: cached.user,
+        repos: cached.repos,
+        cached: true
+      });
+    }
+    const headers = getGitHubHeaders(context);
+    const userRes = await fetch(`https://api.github.com/users/${owner}`, {
+      headers
+    });
+    if (!userRes.ok) {
+      throw new Error(`Failed to fetch user: ${userRes.status}`);
+    }
+    const user = await userRes.json();
+    const reposRes = await fetch(`https://api.github.com/user/repos?visibility=all&affiliation=owner&sort=updated&direction=desc&per_page=100`, {
+      headers
+    });
+    if (!reposRes.ok) {
+      throw new Error(`Failed to fetch repos: ${reposRes.status}`);
+    }
+    let repos = await reposRes.json();
+    repos.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    repoCache.set(cacheKey, {
+      user,
+      repos,
+      timestamp: Date.now()
+    });
+    return jsonResponse({
+      user,
+      repos,
+      cached: false
+    });
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestGet11, "onRequestGet");
+async function onRequestPost4(context) {
+  try {
+    requireAuth(context);
+    const { request, env } = context;
+    const { name, description = "", isPrivate = false } = await request.json();
+    if (!name) {
+      throw new ValidationError("El nombre del repositorio es obligatorio");
+    }
+    const headers = getGitHubHeaders(context);
+    headers["Content-Type"] = "application/json";
+    const body = JSON.stringify({
+      name,
+      description,
+      private: isPrivate
+    });
+    const res = await fetch("https://api.github.com/user/repos", {
+      method: "POST",
+      headers,
+      body
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Error al crear repositorio");
+    }
+    const newRepo = await res.json();
+    const owner = getRepoOwner(context);
+    repoCache.delete(`repos_${owner}`);
+    return jsonResponse(newRepo, 201);
+  } catch (error) {
+    return handleError(error, context);
+  }
+}
+__name(onRequestPost4, "onRequestPost");
+
+// api/session.js
+async function onRequestGet12(context) {
+  const { request, env } = context;
+  const token = getCookie(request, "session");
+  if (!token) {
+    return jsonResponse({
+      authenticated: false,
+      error: "No session"
+    });
+  }
+  if (!env.JWT_SECRET) {
+    return jsonResponse({
+      authenticated: false,
+      error: "Server misconfigured"
+    }, 500);
+  }
+  try {
+    const payload = await verifyJwt(token, env.JWT_SECRET);
+    if (!payload || !payload.github_token || typeof payload.sub !== "string") {
+      return jsonResponse({
+        authenticated: false,
+        error: "Invalid session"
+      });
+    }
+    if (!isAllowedUser(payload.sub, env)) {
+      return jsonResponse({
+        authenticated: false,
+        error: "User not allowed"
+      }, 403);
+    }
+    return jsonResponse({
+      authenticated: true,
+      user: {
+        username: payload.sub,
+        expiresAt: payload.exp * 1e3
+        // Convert to milliseconds
+      }
+    });
+  } catch (e) {
+    console.error("Session verification error:", e.message);
+    return jsonResponse({
+      authenticated: false,
+      error: "Session verification failed"
+    }, 401);
+  }
+}
+__name(onRequestGet12, "onRequestGet");
+
+// api/version.js
+var VERSION_INFO = {
+  version: "1.2.0",
+  fullSha: process.env.CF_PAGES_COMMIT_SHA || null,
+  buildDate: process.env.BUILD_DATE || (/* @__PURE__ */ new Date()).toISOString(),
+  environment: "production"
+};
+async function onRequestGet13(context) {
+  return jsonResponse(VERSION_INFO);
+}
+__name(onRequestGet13, "onRequestGet");
+
+// _shared/rateLimit.js
+var DEFAULT_LIMIT = 60;
+var DEFAULT_WINDOW = 60 * 1e3;
+var rateLimitStore = /* @__PURE__ */ new Map();
+var RateLimitEntry = class {
+  static {
+    __name(this, "RateLimitEntry");
+  }
+  constructor(limit, window) {
+    this.limit = limit;
+    this.window = window;
+    this.requests = [];
+  }
+  addRequest(timestamp) {
+    this.requests = this.requests.filter((req) => timestamp - req < this.window);
+    this.requests.push(timestamp);
+  }
+  getRemaining(timestamp) {
+    this.requests = this.requests.filter((req) => timestamp - req < this.window);
+    return Math.max(0, this.limit - this.requests.length);
+  }
+  isAllowed(timestamp) {
+    this.requests = this.requests.filter((req) => timestamp - req < this.window);
+    return this.requests.length < this.limit;
+  }
+  getResetTime(timestamp) {
+    if (this.requests.length === 0) return timestamp;
+    const oldest = this.requests[0];
+    return oldest + this.window;
+  }
+};
+function getRateLimitKey(ip, endpoint) {
+  return `${ip}:${endpoint}`;
+}
+__name(getRateLimitKey, "getRateLimitKey");
+function checkRateLimit(request, endpoint, options = {}) {
+  const limit = options.limit || DEFAULT_LIMIT;
+  const window = options.window || DEFAULT_WINDOW;
+  const ip = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For")?.split(",")[0] || "unknown";
+  const key = getRateLimitKey(ip, endpoint);
+  const now = Date.now();
+  let entry = rateLimitStore.get(key);
+  if (!entry) {
+    entry = new RateLimitEntry(limit, window);
+    rateLimitStore.set(key, entry);
+  }
+  const isAllowed = entry.isAllowed(now);
+  const remaining = entry.getRemaining(now);
+  const resetTime = entry.getResetTime(now);
+  return {
+    isAllowed,
+    remaining,
+    limit,
+    resetTime,
+    retryAfter: isAllowed ? 0 : Math.ceil((resetTime - now) / 1e3)
+  };
+}
+__name(checkRateLimit, "checkRateLimit");
+function applyRateLimit(request, endpoint, options = {}) {
+  const rateLimit = checkRateLimit(request, endpoint, options);
+  if (!rateLimit.isAllowed) {
+    const retryAfter = rateLimit.retryAfter;
+    return new Response(JSON.stringify({
+      error: "Demasiadas peticiones",
+      code: "RATE_LIMIT_EXCEEDED",
+      retryAfter
+    }), {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": String(retryAfter),
+        "X-RateLimit-Limit": String(rateLimit.limit),
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": String(Math.floor(rateLimit.resetTime / 1e3))
+      }
+    });
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For")?.split(",")[0] || "unknown";
+  const key = getRateLimitKey(ip, endpoint);
+  const entry = rateLimitStore.get(key);
+  if (entry) {
+    entry.addRequest(Date.now());
+  }
+  return null;
+}
+__name(applyRateLimit, "applyRateLimit");
+function getRateLimitHeaders(request, endpoint) {
+  const rateLimit = checkRateLimit(request, endpoint);
+  return {
+    "X-RateLimit-Limit": String(rateLimit.limit),
+    "X-RateLimit-Remaining": String(rateLimit.remaining),
+    "X-RateLimit-Reset": String(Math.floor(rateLimit.resetTime / 1e3))
+  };
+}
+__name(getRateLimitHeaders, "getRateLimitHeaders");
+
+// api/_middleware.js
+var PUBLIC_PATHS = /* @__PURE__ */ new Set([
+  "/api/session",
+  "/api/logout",
+  "/api/oauth/login",
+  "/api/oauth/callback",
+  "/api/version"
+]);
+var SAFE_METHODS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+var ALLOWED_SEC_FETCH_SITE = /* @__PURE__ */ new Set(["same-origin", "same-site", "none"]);
+var RATE_LIMITS = {
+  "/api/oauth/login": { limit: 5, window: 60 * 1e3 },
+  // 5 requests per minute
+  "/api/oauth/callback": { limit: 5, window: 60 * 1e3 },
+  "/api/repos": { limit: 30, window: 60 * 1e3 },
+  "/api/repos/*": { limit: 60, window: 60 * 1e3 },
+  "default": { limit: 100, window: 60 * 1e3 }
+};
+function getRateLimitConfig(path) {
+  for (const [pattern, config] of Object.entries(RATE_LIMITS)) {
+    if (pattern === path) return config;
+    if (pattern.endsWith("*") && path.startsWith(pattern.slice(0, -1))) {
+      return config;
+    }
+  }
+  return RATE_LIMITS.default;
+}
+__name(getRateLimitConfig, "getRateLimitConfig");
+function isSameOriginRequest(request, origin) {
+  const reqOrigin = request.headers.get("Origin");
+  if (reqOrigin && reqOrigin !== origin) return false;
+  const secFetchSite = request.headers.get("Sec-Fetch-Site");
+  if (secFetchSite && !ALLOWED_SEC_FETCH_SITE.has(secFetchSite)) return false;
+  return true;
+}
+__name(isSameOriginRequest, "isSameOriginRequest");
+function getEndpointForRateLimit(path) {
+  if (path.startsWith("/api/repos/")) {
+    return "/api/repos/*";
+  }
+  return path;
+}
+__name(getEndpointForRateLimit, "getEndpointForRateLimit");
+async function onRequest(context) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const endpoint = getEndpointForRateLimit(path);
+  const rateLimitConfig = getRateLimitConfig(endpoint);
+  const rateLimitResponse = applyRateLimit(request, endpoint, rateLimitConfig);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+  if (PUBLIC_PATHS.has(path)) {
+    const response2 = await context.next();
+    const rateLimitHeaders2 = getRateLimitHeaders(request, endpoint);
+    const newResponse2 = new Response(response2.body, response2);
+    for (const [key, value] of Object.entries(rateLimitHeaders2)) {
+      newResponse2.headers.set(key, value);
+    }
+    return newResponse2;
+  }
+  if (!env.JWT_SECRET) {
+    return jsonResponse({
+      error: "Servidor desconfigurado",
+      code: "SERVER_MISCONFIGURED"
+    }, 500);
+  }
+  if (!SAFE_METHODS.has(request.method) && !isSameOriginRequest(request, url.origin)) {
+    return jsonResponse({
+      error: "Origen no permitido",
+      code: "CSRF_INVALID"
+    }, 403);
+  }
+  const token = getCookie(request, "session");
+  if (!token) {
+    return jsonResponse({
+      error: "No autorizado: sesi\xF3n no iniciada",
+      code: "NO_SESSION"
+    }, 401);
+  }
+  let payload;
+  try {
+    payload = await verifyJwt(token, env.JWT_SECRET);
+  } catch (e) {
+    const responseHeaders = new Headers();
+    clearCookie(responseHeaders, "session", {
+      path: "/",
+      secure: url.protocol === "https:",
+      sameSite: "Strict"
+    });
+    return new Response(JSON.stringify({
+      error: "Sesi\xF3n inv\xE1lida o expirada",
+      code: "INVALID_SESSION"
+    }), {
+      status: 401,
+      headers: responseHeaders
+    });
+  }
+  if (!payload || !payload.github_token || typeof payload.sub !== "string" || !isAllowedUser(payload.sub, env)) {
+    const responseHeaders = new Headers();
+    clearCookie(responseHeaders, "session", {
+      path: "/",
+      secure: url.protocol === "https:",
+      sameSite: "Strict"
+    });
+    return jsonResponse({
+      error: "Sesi\xF3n expirada o inv\xE1lida",
+      code: "INVALID_SESSION"
+    }, 401);
+  }
+  context.data = {
+    ...context.data,
+    session: payload,
+    repoOwner: getRepoOwner(context)
+  };
+  const response = await context.next();
+  const rateLimitHeaders = getRateLimitHeaders(request, endpoint);
+  const newResponse = new Response(response.body, response);
+  for (const [key, value] of Object.entries(rateLimitHeaders)) {
+    newResponse.headers.set(key, value);
+  }
+  return newResponse;
+}
+__name(onRequest, "onRequest");
+
+// _middleware.js
+var SECURITY_HEADERS = Object.freeze({
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "0",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+  "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://d3js.org https://static.cloudflareinsights.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://avatars.githubusercontent.com https://raw.githubusercontent.com https://img.shields.io https://images.unsplash.com; connect-src 'self' https://api.github.com https://avatars.githubusercontent.com https://raw.githubusercontent.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://images.unsplash.com ws: wss: https://cloudflareinsights.com; frame-ancestors 'none'; upgrade-insecure-requests;"
+});
+var CONTENT_TYPES = Object.freeze({
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".eot": "application/vnd.ms-fontobject",
+  ".ico": "image/x-icon",
+  ".txt": "text/plain; charset=utf-8"
+});
+async function onRequest2(context) {
+  const response = await context.next();
+  const { headers } = new Response(response.body, response);
+  const urlStr = context.request.url;
+  const url = new URL(urlStr);
+  const path = url.pathname;
+  for (const [ext, contentType] of Object.entries(CONTENT_TYPES)) {
+    if (path.endsWith(ext)) {
+      headers.set("Content-Type", contentType);
+      break;
+    }
+  }
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!headers.has(key)) {
+      headers.set(key, value);
+    }
+  }
+  if (path.startsWith("/") && !path.startsWith("/api/")) {
+    const isHtml = path.endsWith(".html") || path === "/";
+    const cacheDuration = isHtml ? 300 : 3600;
+    headers.set("Cache-Control", `public, max-age=${cacheDuration}`);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+__name(onRequest2, "onRequest");
+
+// ../.wrangler/tmp/pages-NXsPqN/functionsRoutes-0.4810387071864306.mjs
+var routes = [
+  {
+    routePath: "/api/repos/:name/actions",
+    mountPath: "/api/repos/:name",
+    method: "DELETE",
+    middlewares: [],
+    modules: [onRequestDelete]
+  },
+  {
+    routePath: "/api/repos/:name/actions",
+    mountPath: "/api/repos/:name",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost]
+  },
+  {
+    routePath: "/api/repos/:name/branches",
+    mountPath: "/api/repos/:name",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet]
+  },
+  {
+    routePath: "/api/repos/:name/commits",
+    mountPath: "/api/repos/:name",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet2]
+  },
+  {
+    routePath: "/api/repos/:name/file",
+    mountPath: "/api/repos/:name",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet3]
+  },
+  {
+    routePath: "/api/repos/:name/issues",
+    mountPath: "/api/repos/:name",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet4]
+  },
+  {
+    routePath: "/api/repos/:name/issues",
+    mountPath: "/api/repos/:name",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost2]
+  },
+  {
+    routePath: "/api/repos/:name/tree",
+    mountPath: "/api/repos/:name",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet5]
+  },
+  {
+    routePath: "/api/oauth/callback",
+    mountPath: "/api/oauth",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet6]
+  },
+  {
+    routePath: "/api/oauth/login",
+    mountPath: "/api/oauth",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet7]
+  },
+  {
+    routePath: "/api/repos/:name",
+    mountPath: "/api/repos/:name",
+    method: "DELETE",
+    middlewares: [],
+    modules: [onRequestDelete2]
+  },
+  {
+    routePath: "/api/repos/:name",
+    mountPath: "/api/repos/:name",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet8]
+  },
+  {
+    routePath: "/api/repos/:name",
+    mountPath: "/api/repos/:name",
+    method: "PATCH",
+    middlewares: [],
+    modules: [onRequestPatch]
+  },
+  {
+    routePath: "/api/ai",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet9]
+  },
+  {
+    routePath: "/api/ai",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost3]
+  },
+  {
+    routePath: "/api/logout",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet10]
+  },
+  {
+    routePath: "/api/repos",
+    mountPath: "/api/repos",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet11]
+  },
+  {
+    routePath: "/api/repos",
+    mountPath: "/api/repos",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost4]
+  },
+  {
+    routePath: "/api/session",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet12]
+  },
+  {
+    routePath: "/api/version",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet13]
+  },
+  {
+    routePath: "/api",
+    mountPath: "/api",
+    method: "",
+    middlewares: [onRequest],
+    modules: []
+  },
+  {
+    routePath: "/",
+    mountPath: "/",
+    method: "",
+    middlewares: [onRequest2],
+    modules: []
+  }
+];
+
+// ../node_modules/path-to-regexp/dist.es2015/index.js
+function lexer(str) {
+  var tokens = [];
+  var i = 0;
+  while (i < str.length) {
+    var char = str[i];
+    if (char === "*" || char === "+" || char === "?") {
+      tokens.push({ type: "MODIFIER", index: i, value: str[i++] });
+      continue;
+    }
+    if (char === "\\") {
+      tokens.push({ type: "ESCAPED_CHAR", index: i++, value: str[i++] });
+      continue;
+    }
+    if (char === "{") {
+      tokens.push({ type: "OPEN", index: i, value: str[i++] });
+      continue;
+    }
+    if (char === "}") {
+      tokens.push({ type: "CLOSE", index: i, value: str[i++] });
+      continue;
+    }
+    if (char === ":") {
+      var name = "";
+      var j = i + 1;
+      while (j < str.length) {
+        var code = str.charCodeAt(j);
+        if (
+          // `0-9`
+          code >= 48 && code <= 57 || // `A-Z`
+          code >= 65 && code <= 90 || // `a-z`
+          code >= 97 && code <= 122 || // `_`
+          code === 95
+        ) {
+          name += str[j++];
+          continue;
+        }
+        break;
+      }
+      if (!name)
+        throw new TypeError("Missing parameter name at ".concat(i));
+      tokens.push({ type: "NAME", index: i, value: name });
+      i = j;
+      continue;
+    }
+    if (char === "(") {
+      var count = 1;
+      var pattern = "";
+      var j = i + 1;
+      if (str[j] === "?") {
+        throw new TypeError('Pattern cannot start with "?" at '.concat(j));
+      }
+      while (j < str.length) {
+        if (str[j] === "\\") {
+          pattern += str[j++] + str[j++];
+          continue;
+        }
+        if (str[j] === ")") {
+          count--;
+          if (count === 0) {
+            j++;
+            break;
+          }
+        } else if (str[j] === "(") {
+          count++;
+          if (str[j + 1] !== "?") {
+            throw new TypeError("Capturing groups are not allowed at ".concat(j));
+          }
+        }
+        pattern += str[j++];
+      }
+      if (count)
+        throw new TypeError("Unbalanced pattern at ".concat(i));
+      if (!pattern)
+        throw new TypeError("Missing pattern at ".concat(i));
+      tokens.push({ type: "PATTERN", index: i, value: pattern });
+      i = j;
+      continue;
+    }
+    tokens.push({ type: "CHAR", index: i, value: str[i++] });
+  }
+  tokens.push({ type: "END", index: i, value: "" });
+  return tokens;
+}
+__name(lexer, "lexer");
+function parse(str, options) {
+  if (options === void 0) {
+    options = {};
+  }
+  var tokens = lexer(str);
+  var _a = options.prefixes, prefixes = _a === void 0 ? "./" : _a, _b = options.delimiter, delimiter = _b === void 0 ? "/#?" : _b;
+  var result = [];
+  var key = 0;
+  var i = 0;
+  var path = "";
+  var tryConsume = /* @__PURE__ */ __name(function(type) {
+    if (i < tokens.length && tokens[i].type === type)
+      return tokens[i++].value;
+  }, "tryConsume");
+  var mustConsume = /* @__PURE__ */ __name(function(type) {
+    var value2 = tryConsume(type);
+    if (value2 !== void 0)
+      return value2;
+    var _a2 = tokens[i], nextType = _a2.type, index = _a2.index;
+    throw new TypeError("Unexpected ".concat(nextType, " at ").concat(index, ", expected ").concat(type));
+  }, "mustConsume");
+  var consumeText = /* @__PURE__ */ __name(function() {
+    var result2 = "";
+    var value2;
+    while (value2 = tryConsume("CHAR") || tryConsume("ESCAPED_CHAR")) {
+      result2 += value2;
+    }
+    return result2;
+  }, "consumeText");
+  var isSafe = /* @__PURE__ */ __name(function(value2) {
+    for (var _i = 0, delimiter_1 = delimiter; _i < delimiter_1.length; _i++) {
+      var char2 = delimiter_1[_i];
+      if (value2.indexOf(char2) > -1)
+        return true;
+    }
+    return false;
+  }, "isSafe");
+  var safePattern = /* @__PURE__ */ __name(function(prefix2) {
+    var prev = result[result.length - 1];
+    var prevText = prefix2 || (prev && typeof prev === "string" ? prev : "");
+    if (prev && !prevText) {
+      throw new TypeError('Must have text between two parameters, missing text after "'.concat(prev.name, '"'));
+    }
+    if (!prevText || isSafe(prevText))
+      return "[^".concat(escapeString(delimiter), "]+?");
+    return "(?:(?!".concat(escapeString(prevText), ")[^").concat(escapeString(delimiter), "])+?");
+  }, "safePattern");
+  while (i < tokens.length) {
+    var char = tryConsume("CHAR");
+    var name = tryConsume("NAME");
+    var pattern = tryConsume("PATTERN");
+    if (name || pattern) {
+      var prefix = char || "";
+      if (prefixes.indexOf(prefix) === -1) {
+        path += prefix;
+        prefix = "";
+      }
+      if (path) {
+        result.push(path);
+        path = "";
+      }
+      result.push({
+        name: name || key++,
+        prefix,
+        suffix: "",
+        pattern: pattern || safePattern(prefix),
+        modifier: tryConsume("MODIFIER") || ""
+      });
+      continue;
+    }
+    var value = char || tryConsume("ESCAPED_CHAR");
+    if (value) {
+      path += value;
+      continue;
+    }
+    if (path) {
+      result.push(path);
+      path = "";
+    }
+    var open = tryConsume("OPEN");
+    if (open) {
+      var prefix = consumeText();
+      var name_1 = tryConsume("NAME") || "";
+      var pattern_1 = tryConsume("PATTERN") || "";
+      var suffix = consumeText();
+      mustConsume("CLOSE");
+      result.push({
+        name: name_1 || (pattern_1 ? key++ : ""),
+        pattern: name_1 && !pattern_1 ? safePattern(prefix) : pattern_1,
+        prefix,
+        suffix,
+        modifier: tryConsume("MODIFIER") || ""
+      });
+      continue;
+    }
+    mustConsume("END");
+  }
+  return result;
+}
+__name(parse, "parse");
+function match(str, options) {
+  var keys = [];
+  var re = pathToRegexp(str, keys, options);
+  return regexpToFunction(re, keys, options);
+}
+__name(match, "match");
+function regexpToFunction(re, keys, options) {
+  if (options === void 0) {
+    options = {};
+  }
+  var _a = options.decode, decode = _a === void 0 ? function(x) {
+    return x;
+  } : _a;
+  return function(pathname) {
+    var m = re.exec(pathname);
+    if (!m)
+      return false;
+    var path = m[0], index = m.index;
+    var params = /* @__PURE__ */ Object.create(null);
+    var _loop_1 = /* @__PURE__ */ __name(function(i2) {
+      if (m[i2] === void 0)
+        return "continue";
+      var key = keys[i2 - 1];
+      if (key.modifier === "*" || key.modifier === "+") {
+        params[key.name] = m[i2].split(key.prefix + key.suffix).map(function(value) {
+          return decode(value, key);
+        });
+      } else {
+        params[key.name] = decode(m[i2], key);
+      }
+    }, "_loop_1");
+    for (var i = 1; i < m.length; i++) {
+      _loop_1(i);
+    }
+    return { path, index, params };
+  };
+}
+__name(regexpToFunction, "regexpToFunction");
+function escapeString(str) {
+  return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1");
+}
+__name(escapeString, "escapeString");
+function flags(options) {
+  return options && options.sensitive ? "" : "i";
+}
+__name(flags, "flags");
+function regexpToRegexp(path, keys) {
+  if (!keys)
+    return path;
+  var groupsRegex = /\((?:\?<(.*?)>)?(?!\?)/g;
+  var index = 0;
+  var execResult = groupsRegex.exec(path.source);
+  while (execResult) {
+    keys.push({
+      // Use parenthesized substring match if available, index otherwise
+      name: execResult[1] || index++,
+      prefix: "",
+      suffix: "",
+      modifier: "",
+      pattern: ""
+    });
+    execResult = groupsRegex.exec(path.source);
+  }
+  return path;
+}
+__name(regexpToRegexp, "regexpToRegexp");
+function arrayToRegexp(paths, keys, options) {
+  var parts = paths.map(function(path) {
+    return pathToRegexp(path, keys, options).source;
+  });
+  return new RegExp("(?:".concat(parts.join("|"), ")"), flags(options));
+}
+__name(arrayToRegexp, "arrayToRegexp");
+function stringToRegexp(path, keys, options) {
+  return tokensToRegexp(parse(path, options), keys, options);
+}
+__name(stringToRegexp, "stringToRegexp");
+function tokensToRegexp(tokens, keys, options) {
+  if (options === void 0) {
+    options = {};
+  }
+  var _a = options.strict, strict = _a === void 0 ? false : _a, _b = options.start, start = _b === void 0 ? true : _b, _c = options.end, end = _c === void 0 ? true : _c, _d = options.encode, encode = _d === void 0 ? function(x) {
+    return x;
+  } : _d, _e = options.delimiter, delimiter = _e === void 0 ? "/#?" : _e, _f = options.endsWith, endsWith = _f === void 0 ? "" : _f;
+  var endsWithRe = "[".concat(escapeString(endsWith), "]|$");
+  var delimiterRe = "[".concat(escapeString(delimiter), "]");
+  var route = start ? "^" : "";
+  for (var _i = 0, tokens_1 = tokens; _i < tokens_1.length; _i++) {
+    var token = tokens_1[_i];
+    if (typeof token === "string") {
+      route += escapeString(encode(token));
+    } else {
+      var prefix = escapeString(encode(token.prefix));
+      var suffix = escapeString(encode(token.suffix));
+      if (token.pattern) {
+        if (keys)
+          keys.push(token);
+        if (prefix || suffix) {
+          if (token.modifier === "+" || token.modifier === "*") {
+            var mod = token.modifier === "*" ? "?" : "";
+            route += "(?:".concat(prefix, "((?:").concat(token.pattern, ")(?:").concat(suffix).concat(prefix, "(?:").concat(token.pattern, "))*)").concat(suffix, ")").concat(mod);
+          } else {
+            route += "(?:".concat(prefix, "(").concat(token.pattern, ")").concat(suffix, ")").concat(token.modifier);
+          }
+        } else {
+          if (token.modifier === "+" || token.modifier === "*") {
+            throw new TypeError('Can not repeat "'.concat(token.name, '" without a prefix and suffix'));
+          }
+          route += "(".concat(token.pattern, ")").concat(token.modifier);
+        }
+      } else {
+        route += "(?:".concat(prefix).concat(suffix, ")").concat(token.modifier);
+      }
+    }
+  }
+  if (end) {
+    if (!strict)
+      route += "".concat(delimiterRe, "?");
+    route += !options.endsWith ? "$" : "(?=".concat(endsWithRe, ")");
+  } else {
+    var endToken = tokens[tokens.length - 1];
+    var isEndDelimited = typeof endToken === "string" ? delimiterRe.indexOf(endToken[endToken.length - 1]) > -1 : endToken === void 0;
+    if (!strict) {
+      route += "(?:".concat(delimiterRe, "(?=").concat(endsWithRe, "))?");
+    }
+    if (!isEndDelimited) {
+      route += "(?=".concat(delimiterRe, "|").concat(endsWithRe, ")");
+    }
+  }
+  return new RegExp(route, flags(options));
+}
+__name(tokensToRegexp, "tokensToRegexp");
+function pathToRegexp(path, keys, options) {
+  if (path instanceof RegExp)
+    return regexpToRegexp(path, keys);
+  if (Array.isArray(path))
+    return arrayToRegexp(path, keys, options);
+  return stringToRegexp(path, keys, options);
+}
+__name(pathToRegexp, "pathToRegexp");
+
+// ../node_modules/wrangler/templates/pages-template-worker.ts
+var escapeRegex = /[.+?^${}()|[\]\\]/g;
+function* executeRequest(request) {
+  const requestPath = new URL(request.url).pathname;
+  for (const route of [...routes].reverse()) {
+    if (route.method && route.method !== request.method) {
+      continue;
+    }
+    const routeMatcher = match(route.routePath.replace(escapeRegex, "\\$&"), {
+      end: false
+    });
+    const mountMatcher = match(route.mountPath.replace(escapeRegex, "\\$&"), {
+      end: false
+    });
+    const matchResult = routeMatcher(requestPath);
+    const mountMatchResult = mountMatcher(requestPath);
+    if (matchResult && mountMatchResult) {
+      for (const handler of route.middlewares.flat()) {
+        yield {
+          handler,
+          params: matchResult.params,
+          path: mountMatchResult.path
+        };
+      }
+    }
+  }
+  for (const route of routes) {
+    if (route.method && route.method !== request.method) {
+      continue;
+    }
+    const routeMatcher = match(route.routePath.replace(escapeRegex, "\\$&"), {
+      end: true
+    });
+    const mountMatcher = match(route.mountPath.replace(escapeRegex, "\\$&"), {
+      end: false
+    });
+    const matchResult = routeMatcher(requestPath);
+    const mountMatchResult = mountMatcher(requestPath);
+    if (matchResult && mountMatchResult && route.modules.length) {
+      for (const handler of route.modules.flat()) {
+        yield {
+          handler,
+          params: matchResult.params,
+          path: matchResult.path
+        };
+      }
+      break;
+    }
+  }
+}
+__name(executeRequest, "executeRequest");
+var pages_template_worker_default = {
+  async fetch(originalRequest, env, workerContext) {
+    let request = originalRequest;
+    const handlerIterator = executeRequest(request);
+    let data = {};
+    let isFailOpen = false;
+    const next = /* @__PURE__ */ __name(async (input, init) => {
+      if (input !== void 0) {
+        let url = input;
+        if (typeof input === "string") {
+          url = new URL(input, request.url).toString();
+        }
+        request = new Request(url, init);
+      }
+      const result = handlerIterator.next();
+      if (result.done === false) {
+        const { handler, params, path } = result.value;
+        const context = {
+          request: new Request(request.clone()),
+          functionPath: path,
+          next,
+          params,
+          get data() {
+            return data;
+          },
+          set data(value) {
+            if (typeof value !== "object" || value === null) {
+              throw new Error("context.data must be an object");
+            }
+            data = value;
+          },
+          env,
+          waitUntil: workerContext.waitUntil.bind(workerContext),
+          passThroughOnException: /* @__PURE__ */ __name(() => {
+            isFailOpen = true;
+          }, "passThroughOnException")
+        };
+        const response = await handler(context);
+        if (!(response instanceof Response)) {
+          throw new Error("Your Pages function should return a Response");
+        }
+        return cloneResponse(response);
+      } else if ("ASSETS") {
+        const response = await env["ASSETS"].fetch(request);
+        return cloneResponse(response);
+      } else {
+        const response = await fetch(request);
+        return cloneResponse(response);
+      }
+    }, "next");
+    try {
+      return await next();
+    } catch (error) {
+      if (isFailOpen) {
+        const response = await env["ASSETS"].fetch(request);
+        return cloneResponse(response);
+      }
+      throw error;
+    }
+  }
+};
+var cloneResponse = /* @__PURE__ */ __name((response) => (
+  // https://fetch.spec.whatwg.org/#null-body-status
+  new Response(
+    [101, 204, 205, 304].includes(response.status) ? null : response.body,
+    response
+  )
+), "cloneResponse");
+export {
+  pages_template_worker_default as default
+};
+
+------formdata-undici-059852027428--
