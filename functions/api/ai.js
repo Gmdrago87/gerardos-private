@@ -1,74 +1,61 @@
-/**
- * AI Handler
- * Placeholder for AI integration
- * Enhanced with better structure for future implementation
- */
-
-import { jsonResponse } from "../_shared/http.js";
-import { requireAuth } from "../_shared/github.js";
-import { AuthError, ValidationError, NotFoundError, handleError } from "../_shared/errors.js";
-
 export async function onRequestPost(context) {
-    try {
-        requireAuth(context);
-        
-        const { request } = context;
-        const body = await request.json();
-        
-        const { prompt, action, repoName, filePath, branch } = body;
-        
-        if (!prompt || typeof prompt !== 'string') {
-            throw new ValidationError('El prompt es obligatorio y debe ser una cadena de texto');
-        }
-        
-        if (prompt.length > 10000) {
-            throw new ValidationError('El prompt es demasiado largo (m\u00e1ximo 10000 caracteres)');
-        }
-        
-        // Check if AI is configured
-        const aiConfigured = context.env.AI_PROVIDER && context.env.AI_API_KEY;
-        
-        if (!aiConfigured) {
-            return jsonResponse({
-                success: false,
-                error: 'AI no configurada',
-                message: 'El proveedor de IA no est\u00e1 configurado. Configura AI_PROVIDER y AI_API_KEY en las variables de entorno.',
-                configured: false
-            }, 400);
-        }
-        
-        // For now, return a placeholder response
-        // In the future, this will integrate with actual AI providers
-        return jsonResponse({
-            success: true,
-            message: 'AI integration placeholder',
-            response: 'Esta funcionalidad est\u00e1 en desarrollo. Configura un proveedor de IA para habilitarla.',
-            configured: true,
-            provider: context.env.AI_PROVIDER || null
+    const { env, request } = context;
+    
+    // Check if AI binding exists
+    if (!env.AI) {
+        return new Response(JSON.stringify({ 
+            error: "La Inteligencia Artificial no está activada. Debes ir al panel de Cloudflare > Pages > Ajustes > Functions > Enlaces de AI, y añadir una variable llamada 'AI'." 
+        }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
         });
-        
-    } catch (error) {
-        return handleError(error, context);
     }
-}
 
-export async function onRequestGet(context) {
     try {
-        requireAuth(context);
+        const body = await request.json();
+        const { code, action } = body;
         
-        // Return AI configuration status
-        return jsonResponse({
-            configured: !!(context.env.AI_PROVIDER && context.env.AI_API_KEY),
-            provider: context.env.AI_PROVIDER || null,
-            features: {
-                codeAnalysis: true,
-                documentation: true,
-                suggestions: true,
-                chat: false
-            }
+        if (!code || !action) {
+            return new Response(JSON.stringify({ error: "Faltan parámetros (code, action)" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        let systemPrompt = "Eres un asistente experto en programación (GerardOS AI). Tu objetivo es ayudar al usuario de forma muy concisa y clara. Responde en español.";
+        let userPrompt = "";
+        
+        if (action === "explain") {
+            userPrompt = `Explícame de forma breve y clara qué hace este código:\n\n\`\`\`\n${code}\n\`\`\``;
+        } else if (action === "refactor") {
+            userPrompt = `Refactoriza este código para que sea más limpio y eficiente. Devuelve solo el código mejorado y una pequeñísima explicación:\n\n\`\`\`\n${code}\n\`\`\``;
+        } else if (action === "find_bugs") {
+            userPrompt = `Encuentra posibles bugs o errores de seguridad en este código:\n\n\`\`\`\n${code}\n\`\`\``;
+        } else if (action === "comment") {
+            userPrompt = `Añade comentarios profesionales (JSDoc o similar) a este código para documentarlo bien:\n\n\`\`\`\n${code}\n\`\`\``;
+        } else {
+            userPrompt = action + `\n\n\`\`\`\n${code}\n\`\`\``;
+        }
+
+        const messages = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+        ];
+
+        // Usamos Llama 3 8B Instruct (es rápido y excelente para código)
+        const response = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+            messages
         });
-        
-    } catch (error) {
-        return handleError(error, context);
+
+        return new Response(JSON.stringify({ result: response.response }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+        });
+
+    } catch (e) {
+        return new Response(JSON.stringify({ error: "Error en la IA: " + e.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
     }
 }

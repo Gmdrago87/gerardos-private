@@ -53,19 +53,13 @@ export function initAI() {
 }
 
 function getActiveCodeSnippet() {
-    if (window._currentMonacoEditor) {
-        const selection = window._currentMonacoEditor.getModel()?.getValueInRange(
-            window._currentMonacoEditor.getSelection()
-        );
-        if (selection && selection.trim()) return selection;
-        return window._currentMonacoEditor.getValue() || '';
-    }
-    return '';
+    const codeElement = document.querySelector('#viewer-code-content code') || document.querySelector('.file-viewer-body pre');
+    return codeElement ? codeElement.textContent : '';
 }
 
 export async function sendAIMessage(codeOrPrompt, action = 'custom') {
     appendChatMessage('user', action === 'custom' ? codeOrPrompt : `Acción enviada: [${action}]`);
-
+    
     const loadingId = appendChatMessage('ai', '<span class="loading-dots">GerardOS AI está pensando...</span>', true);
 
     try {
@@ -101,7 +95,7 @@ function appendChatMessage(sender, content, isLoading = false) {
     msgDiv.className = `ai-chat-msg ai-chat-msg--${sender}`;
 
     const icon = sender === 'user' ? 'user' : (sender === 'system' ? 'info' : 'bot');
-
+    
     msgDiv.innerHTML = `
         <div class="ai-msg-avatar ai-msg-avatar--${sender}">
             <i data-lucide="${icon}"></i>
@@ -126,7 +120,7 @@ function removeChatMessage(msgId) {
 
 function formatMarkdown(text) {
     if (!text) return '';
-
+    
     // Primero desinfectamos todo el HTML
     let safe = escapeHtml(text);
 

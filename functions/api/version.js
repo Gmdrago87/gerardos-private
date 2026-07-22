@@ -1,38 +1,41 @@
-/**
- * Version Handler
- * Returns application version information
- * Enhanced with more details
- */
-
-import { jsonResponse } from "../_shared/http.js";
-
-// Version information - can be updated via CI/CD
-const VERSION_INFO = {
-    version: "1.3.0",
-    name: "GerardOS Private",
-    fullSha: process.env.CF_PAGES_COMMIT_SHA || null,
-    shortSha: process.env.CF_PAGES_COMMIT_SHA ? process.env.CF_PAGES_COMMIT_SHA.substring(0, 7) : null,
-    buildDate: process.env.BUILD_DATE || new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-    nodeVersion: process.version,
-    features: {
-        authentication: true,
-        privateRepos: true,
-        fileEditor: true,
-        rateLimiting: true,
-        caching: true,
-        serviceWorker: true,
-        aiIntegration: false
-    },
-    security: {
-        csp: true,
-        hsts: true,
-        csrfProtection: true,
-        jwt: true,
-        secureCookies: true
-    }
-};
-
 export async function onRequestGet(context) {
-    return jsonResponse(VERSION_INFO);
+    const { env } = context;
+    
+    let sha = env.CF_PAGES_COMMIT_SHA || "";
+    let branch = env.CF_PAGES_BRANCH || "main";
+    
+    // Fallback: If CF_PAGES_COMMIT_SHA is not injected (e.g. in dev), fetch latest commit from GitHub API
+    if (!sha) {
+        try {
+            const ghRes = await fetch("https://api.github.com/repos/GerardMaestre/gerardos-privado/commits/main", {
+                headers: {
+                    "User-Agent": "GerardOS-Dashboard",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            });
+            if (ghRes.ok) {
+                const ghData = await ghRes.json();
+                sha = ghData.sha || "";
+            }
+        } catch (err) {
+            console.error("Error fetching fallback commit from GitHub:", err);
+        }
+    }
+
+    const shortSha = sha ? sha.substring(0, 7) : "latest";
+    const fullSha = sha || "";
+    const versionText = shortSha ? `v1.1.0 (${branch}@${shortSha})` : "v1.1.0";
+
+    return new Response(JSON.stringify({
+        sha: shortSha,
+        fullSha: fullSha,
+        branch: branch,
+        version: versionText
+    }), {
+        status: 200,
+        headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "public, max-age=60"
+        }
+    });
 }

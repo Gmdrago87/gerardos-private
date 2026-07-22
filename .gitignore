@@ -1,40 +1,10 @@
-# Dependencies
 node_modules/
-
-# Environment files
 .env
 .dev.vars
-
-# Wrangler
 .wrangler/
-worker-configuration.d.ts
-
-# Build artifacts
 *.zip
 *.log
-
-# Local database (deprecated)
 database.json
-
-# Legacy files
 Project_Repositorios_Github-main/
 _replace_token.js
 _upload_fix.js
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
-# Build output (if using bundler)
-public/bundle.js
-public/bundle.js.map

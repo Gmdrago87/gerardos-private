@@ -15,14 +15,12 @@ const DUMMY_COMMITS = [
     { hash: "i7j8k9l", message: "Remove console.log", code: "function init() {\n  <span class=\"diff-remove\">console.log('App started');</span>\n  start3DEngine();\n}" }
 ];
 
-let _topologyMouseHandler = null;
-
 export function initFuturisticEngine() {
     const btnOpen = document.getElementById("btn-futuristic-engine");
     const btnClose = document.getElementById("btn-close-futuristic");
     const engineContainer = document.getElementById("futuristic-engine");
-
-    if (!btnOpen || !engineContainer) return;
+    
+    if(!btnOpen || !engineContainer) return;
 
     btnOpen.addEventListener("click", () => {
         engineContainer.classList.remove("hidden");
@@ -46,7 +44,7 @@ export function initFuturisticEngine() {
         setActiveTab(tabs, tabs.topology);
         renderTopology3D();
     });
-
+    
     tabs.graph.addEventListener("click", () => {
         setActiveTab(tabs, tabs.graph);
         renderGraphCanvas();
@@ -72,7 +70,7 @@ function renderTopology3D() {
                 <div class="topology-item"><i data-lucide="database"></i> auth-service</div>
                 <div class="topology-item"><i data-lucide="server"></i> utils</div>
             </div>
-
+            
             <div class="topology-layer" style="transform: translateZ(0px) translateY(0px) rotateX(15deg) rotateY(-10deg); border-color: #3b82f6;">
                 <h3 style="color: #60a5fa; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);">Domain Layer</h3>
                 <div class="topology-item"><i data-lucide="cpu"></i> gerardos-core</div>
@@ -90,7 +88,7 @@ function renderTopology3D() {
     // Add parallax effect
     const scene = document.getElementById("topology-scene");
     document.addEventListener("mousemove", (e) => {
-        if (!document.getElementById("topology-scene")) return;
+        if(!document.getElementById("topology-scene")) return;
         const x = (window.innerWidth / 2 - e.pageX) / 50;
         const y = (window.innerHeight / 2 - e.pageY) / 50;
         scene.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
@@ -100,18 +98,18 @@ function renderTopology3D() {
 function renderGraphCanvas() {
     const container = document.getElementById("futuristic-canvas-container");
     container.innerHTML = ""; // Clear
-
+    
     // We use D3.js if available, or fallback to simple HTML
     if (window.d3) {
         // D3 Force Directed Graph implementation
         const width = container.clientWidth;
         const height = container.clientHeight;
-
+        
         const svg = d3.select(container).append("svg")
             .attr("width", "100%")
             .attr("height", "100%")
             .call(d3.zoom().on("zoom", function (event) {
-                svg.attr("transform", event.transform)
+               svg.attr("transform", event.transform)
             }))
             .append("g");
 
@@ -128,7 +126,7 @@ function renderGraphCanvas() {
         nodes.forEach(n => {
             n.deps.forEach(dep => {
                 const target = nodes.find(x => x.name === dep);
-                if (target) links.push({ source: n, target: target });
+                if(target) links.push({source: n, target: target});
             });
         });
 
@@ -177,24 +175,24 @@ function renderGraphCanvas() {
         });
 
         function drag(simulation) {
-            function dragstarted(event) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                event.subject.fx = event.subject.x;
-                event.subject.fy = event.subject.y;
-            }
-            function dragged(event) {
-                event.subject.fx = event.x;
-                event.subject.fy = event.y;
-            }
-            function dragended(event) {
-                if (!event.active) simulation.alphaTarget(0);
-                event.subject.fx = null;
-                event.subject.fy = null;
-            }
-            return d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended);
+          function dragstarted(event) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+          }
+          function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+          }
+          function dragended(event) {
+            if (!event.active) simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+          }
+          return d3.drag()
+              .on("start", dragstarted)
+              .on("drag", dragged)
+              .on("end", dragended);
         }
 
     } else {
@@ -223,7 +221,7 @@ function renderCommitTimeline() {
         const commit = DUMMY_COMMITS[index];
         hashSpan.innerText = commit.hash;
         msgSpan.innerText = commit.message;
-        viewer.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(commit.code) : commit.code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        viewer.innerHTML = commit.code;
     };
 
     slider.addEventListener("input", (e) => {
