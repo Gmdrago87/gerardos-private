@@ -69,7 +69,7 @@ export function clearCookie(headers, name, options = {}) {
         sameSite = 'Lax'
     } = options;
 
-    const cookie = `${encodeURIComponent(name)}=; Path=${path}; SameSite=${sameSite}; Max-Age=0`;
+    let cookie = `${encodeURIComponent(name)}=; Path=${path}; SameSite=${sameSite}; Max-Age=0`;
     if (secure) {
         cookie += '; Secure';
     }
