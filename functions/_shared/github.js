@@ -143,15 +143,9 @@ export async function requireAuth(context) {
         return jsonResponse({ error: "Sesión no válida" }, 401);
     }
     
-    if (session.token_exp && session.token_exp < Date.now()) {
-        return jsonResponse({ error: "Token de GitHub expirado" }, 401);
-    }
+    // El token JWT de la cookie ya fue verificado por _middleware.js
+    // por lo que context.data.session ya es seguro de usar aquí.
     
-    const payload = await verifyJwt(session.github_token, context.env.JWT_SECRET);
-    if (!payload) {
-        return jsonResponse({ error: "Token de sesión inválido o expirado" }, 401);
-    }
-
     return null;
 }
 
