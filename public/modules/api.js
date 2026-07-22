@@ -153,27 +153,32 @@ async function fetchWithRetry(url, options = {}, retryCount = 0) {
  * @returns {Promise<Object>} Response data
  */
 async function fetchWithErrorHandling(url, options = {}) {
+    console.log(`[API] Fetching URL: ${url}`, options);
     try {
         const res = await fetchWithRetry(url, options);
+        console.log(`[API] Response status for ${url}: ${res.status}`);
         
         if (res.status === 401) {
-            // Clear cache on unauthorized
+            console.warn(`[API] 401 Unauthorized for ${url}, clearing cache.`);
             clearCache();
             throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
         }
         
         if (res.status === 429) {
             const retryAfter = res.headers.get('Retry-After');
+            console.warn(`[API] 429 Rate Limit for ${url}`);
             throw new Error(ERROR_MESSAGES.RATE_LIMIT + (retryAfter ? ` (${retryAfter}s)` : ''));
         }
         
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({}));
+            console.error(`[API] Non-OK response payload for ${url}:`, errorData);
             const errorMessage = errorData.error || errorData.message || ERROR_MESSAGES.API;
             const errorCode = errorData.code || 'UNKNOWN_ERROR';
             
             // Handle specific error codes
             if (errorCode === 'NO_SESSION' || errorCode === 'INVALID_SESSION') {
+                console.warn(`[API] Session error code (${errorCode}) received, clearing cache.`);
                 clearCache();
                 throw new Error(ERROR_MESSAGES.SESSION_EXPIRED);
             }
@@ -181,9 +186,11 @@ async function fetchWithErrorHandling(url, options = {}) {
             throw new Error(errorMessage);
         }
         
-        return await res.json();
+        const data = await res.json();
+        console.log(`[API] Successful data received for ${url}:`, data);
+        return data;
     } catch (error) {
-        console.error('API Error:', error);
+        console.error(`[API] Error executing fetch for ${url}:`, error);
         throw error;
     }
 }

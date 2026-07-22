@@ -118,8 +118,11 @@ export async function onRequest(context) {
         return rateLimitResponse;
     }
 
+    console.log(`[Backend Middleware] Request ${request.method} ${path}`);
+
     // Fast path for public routes
     if (PUBLIC_PATHS.has(path)) {
+        console.log(`[Backend Middleware] Public path accessed: ${path}`);
         const response = await context.next();
         
         // Add rate limit headers to response
@@ -134,6 +137,7 @@ export async function onRequest(context) {
 
     // Check for JWT secret
     if (!env.JWT_SECRET) {
+        console.error('[Backend Middleware] Error: JWT_SECRET is missing in env!');
         return jsonResponse({
             error: "Servidor desconfigurado: falta JWT_SECRET",
             code: "SERVER_MISCONFIGURED",

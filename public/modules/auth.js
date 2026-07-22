@@ -31,11 +31,14 @@ export async function checkSession(forceCheck = false) {
     
     // Use cached state if it's recent and not forced
     if (!forceCheck && now - sessionState.lastChecked < SESSION_CHECK_INTERVAL) {
+        console.log('[Auth] Using cached session state:', sessionState.authenticated);
         return sessionState.authenticated;
     }
     
+    console.log('[Auth] Checking session with server... forceCheck =', forceCheck);
     try {
         const session = await apiCheckSession();
+        console.log('[Auth] Server returned session data:', session);
         const authenticated = session.authenticated === true;
         const user = authenticated ? session.user : null;
         const expiration = authenticated && session.user?.expiresAt ? new Date(session.user.expiresAt) : null;
@@ -50,13 +53,17 @@ export async function checkSession(forceCheck = false) {
             lastChecked: now
         };
         
+        console.log(`[Auth] Session state updated: authenticated=${authenticated}, user=${user?.login || 'none'}`);
+
         // If session is about to expire, schedule a check sooner
         if (isExpiring) {
+            console.warn('[Auth] Session is expiring soon! Scheduling re-check...');
             setTimeout(() => checkSession(true), SESSION_WARNING_THRESHOLD);
         }
         
         return authenticated;
     } catch (e) {
+        console.error('[Auth] Error checking session from server:', e);
         sessionState = {
             authenticated: false,
             user: null,

@@ -212,24 +212,31 @@ async function initApp() {
         window.history.replaceState({}, document.title, newUrl);
     }
 
+    console.log('[App] Initializing app...');
     updateLoadingStatus('Verificando sesión...');
     try {
-        const session = await checkSession();
-        if (!session.authenticated) {
+        const isAuthenticated = await checkSession();
+        console.log('[App] Session check result:', isAuthenticated);
+        if (!isAuthenticated) {
+            console.log('[App] User is not authenticated. Showing login screen.');
             showLoginScreen();
             return;
         }
 
+        console.log('[App] User is authenticated! Hiding login screen.');
         hideLoginScreen();
         updateLoadingStatus('Conectando con GitHub...');
 
         const cached = getCachedData();
         if (cached) {
+            console.log('[App] Found cached data, using cached success.');
             handleCachedSuccess(cached);
             return;
         }
+        console.log('[App] No cache found, fetching fresh data from API...');
         await fetchFreshOrFallback();
     } catch (error) {
+        console.error('[App] Critical error during initApp:', error);
         if (error.message === "UNAUTHORIZED") {
             showLoginScreen();
         } else {

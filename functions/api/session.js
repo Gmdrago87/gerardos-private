@@ -13,10 +13,12 @@ import { AuthError, ServerConfigError, handleError } from "../_shared/errors.js"
 export async function onRequestGet(context) {
     const { request, env } = context;
     
+    console.log('[Backend API /session] Checking session cookie...');
     // Get session cookie
     const token = getCookie(request, "session");
     
     if (!token) {
+        console.log('[Backend API /session] No session cookie found.');
         return jsonResponse({
             authenticated: false,
             error: "No session",
@@ -25,6 +27,7 @@ export async function onRequestGet(context) {
     }
 
     if (!env.JWT_SECRET) {
+        console.error('[Backend API /session] Error: JWT_SECRET missing in server env.');
         return jsonResponse({
             authenticated: false,
             error: "Server misconfigured",
