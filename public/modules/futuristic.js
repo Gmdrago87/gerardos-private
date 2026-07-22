@@ -223,7 +223,7 @@ function renderCommitTimeline() {
         const commit = DUMMY_COMMITS[index];
         hashSpan.innerText = commit.hash;
         msgSpan.innerText = commit.message;
-        viewer.innerHTML = commit.code;
+        viewer.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(commit.code) : commit.code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     };
 
     slider.addEventListener("input", (e) => {

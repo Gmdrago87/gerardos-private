@@ -21,7 +21,7 @@ async function loadVersionInfo() {
         elements.forEach(el => {
             if (data.version) {
                 if (data.fullSha) {
-                    el.innerHTML = `<a href="https://github.com/GerardMaestre/gerardos-privado/commit/${data.fullSha}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;" title="Ver commit en GitHub">${data.version}</a>`;
+                    el.innerHTML = `<a href="https://github.com/GerardMaestre/gerardos-privado/commit/${escapeHtml(data.fullSha)}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;" title="Ver commit en GitHub">${escapeHtml(data.version)}</a>`;
                 } else {
                     el.textContent = data.version;
                 }
@@ -504,7 +504,7 @@ async function loadCommitsList(repoName, branch) {
 
         commits.forEach(c => {
             const date = new Date(c.commit.author.date).toLocaleDateString();
-            const avatar = c.author ? `<img src="${c.author.avatar_url}" class="commit-avatar">` : '<div class="commit-avatar-placeholder"></div>';
+            const avatar = c.author ? `<img src="${escapeHtml(c.author.avatar_url)}" class="commit-avatar">` : '<div class="commit-avatar-placeholder"></div>';
             listHtml += `
                 <div class="commit-item">
                     ${avatar}

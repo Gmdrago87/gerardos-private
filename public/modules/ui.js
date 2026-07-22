@@ -490,7 +490,7 @@ export function renderFileContent(content, path, element) {
     const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext);
     
     if (isImage) {
-        codeViewer.innerHTML = `<img src="${content}" class="max-w-full max-h-full object-contain" alt="${path}">`;
+        codeViewer.innerHTML = `<img src="${escapeHtml(content)}" class="max-w-full max-h-full object-contain" alt="${escapeHtml(path)}">`;
     } else if (isMarkdown) {
         renderReadme(content);
     } else {

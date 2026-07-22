@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ============================================
    DevRepo - Modern Glassmorphism Styles
    Simplified version - Removed macOS design code

@@ -4,7 +4,7 @@
  * Fixed: No longer caches external CDNs that have CORS issues
  */
 
-const CACHE_NAME = 'gerardos-private-v5';
+const CACHE_NAME = 'gerardos-private-v6';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -145,12 +145,34 @@ async function handleApiRequest(event) {
 async function handleStaticRequest(event) {
     const url = new URL(event.request.url);
     const requestPath = url.pathname;
-    
-    // Try to serve from cache first
     const cache = await caches.open(CACHE_NAME);
+
+    // Estrategia Network First para HTML y JS para evitar quedarse atascados
+    if (requestPath === '/' || requestPath === '/index.html' || requestPath.endsWith('.js')) {
+        try {
+            const response = await fetch(event.request);
+            if (response.ok) {
+                const responseClone = response.clone();
+                await cache.put(event.request, responseClone);
+            }
+            console.log(`[SW] Serving from network: ${requestPath}`);
+            return response;
+        } catch (error) {
+            console.log(`[SW] Network failed, falling back to cache: ${requestPath}`);
+            const cachedResponse = await cache.match(event.request);
+            if (cachedResponse) return cachedResponse;
+            throw error;
+        }
+    }
+
+    // Para el resto (CSS, imágenes) usamos Cache First con Stale While Revalidate
     const cachedResponse = await cache.match(event.request);
-    
     if (cachedResponse) {
+        // Fetch new version in background
+        fetch(event.request).then(response => {
+            if (response.ok) cache.put(event.request, response.clone());
+        }).catch(() => {});
+        
         console.log(`[SW] Serving from cache: ${requestPath}`);
         return cachedResponse;
     }
@@ -158,13 +180,10 @@ async function handleStaticRequest(event) {
     // Fallback to network
     try {
         const response = await fetch(event.request);
-        
-        // Cache successful responses
         if (response.ok) {
             const responseClone = response.clone();
             await cache.put(event.request, responseClone);
         }
-        
         return response;
     } catch (error) {
         console.error(`[SW] Network error for ${requestPath}:`, error);
