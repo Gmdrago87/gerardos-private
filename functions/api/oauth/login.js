@@ -25,7 +25,7 @@ export async function onRequestGet(context) {
 
     if (missingVars.length > 0) {
         console.error(`[API] Error: Faltan variables de configuración para OAuth: ${missingVars.join(", ")}`);
-        return new Response(`El servidor no está configurado correctamente. Faltan las variables de entorno en Cloudflare Pages: ${missingVars.join(", ")}. Por favor configúralas en el panel de Cloudflare Pages (Settings > Environment variables).`, { status: 500 });
+        return Response.redirect(`${url.origin}/?error=missing_config&details=${encodeURIComponent(missingVars.join(","))}`, 302);
     }
 
     try {

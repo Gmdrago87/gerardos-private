@@ -28,12 +28,12 @@ export async function onRequestGet(context) {
     // Validate required parameters
     if (!code) {
         console.error("[API] Error: Falta el código de autorización.");
-        return new Response("Falta el código de autorización.", { status: 400 });
+        return Response.redirect(`${url.origin}/?error=missing_code`, 302);
     }
 
     if (!state || state !== storedState) {
         console.error("[API] Error: Token CSRF (state) inválido o expirado.");
-        return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
+        return Response.redirect(`${url.origin}/?error=invalid_state`, 302);
     }
 
     // Get configuration from environment (NO DEFAULT VALUES - must be configured)
@@ -50,7 +50,7 @@ export async function onRequestGet(context) {
 
     if (missingVars.length > 0) {
         console.error(`[API] Error: Faltan variables OAuth en env: ${missingVars.join(", ")}`);
-        return new Response(`El servidor no está configurado correctamente. Faltan las variables de entorno en Cloudflare Pages: ${missingVars.join(", ")}. Por favor configúralas en el panel de Cloudflare Pages (Settings > Environment variables).`, { status: 500 });
+        return Response.redirect(`${url.origin}/?error=missing_config&details=${encodeURIComponent(missingVars.join(","))}`, 302);
     }
 
     try {

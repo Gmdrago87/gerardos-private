@@ -177,6 +177,23 @@ async function initApp() {
     initAI();
     initFuturisticEngine();
     loadVersionInfo();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error')) {
+        const errType = urlParams.get('error');
+        const details = urlParams.get('details');
+        
+        let msg = 'Ocurrió un error durante la autenticación.';
+        if (errType === 'missing_config') msg = `Faltan variables de entorno en el servidor (${details}). Configúralas en Cloudflare Pages.`;
+        if (errType === 'missing_code') msg = 'No se recibió el código de autorización de GitHub.';
+        if (errType === 'invalid_state') msg = 'Error de seguridad: estado de sesión inválido o expirado.';
+        
+        showCustomAlert({ title: 'Error de Autenticación', message: msg, type: 'error' });
+        
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+
     updateLoadingStatus('Verificando sesión...');
     try {
         const session = await checkSession();
