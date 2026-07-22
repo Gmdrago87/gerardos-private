@@ -420,9 +420,16 @@
             <!-- Motor Futurista (Oculto por defecto) -->
             <div id="futuristic-engine" class="futuristic-engine hidden absolute inset-0 z-50 bg-background">
                 <div id="futuristic-canvas-container" class="futuristic-canvas-container w-full h-full"></div>
-                <div id="futuristic-overlay" class="absolute top-4 left-4 z-10 glass-panel p-4 rounded-xl">
-                    <h2 class="font-headline-md mb-2">Visualización Espacial</h2>
-                    <button id="btn-close-futuristic" class="px-3 py-1 bg-error/20 text-error rounded-md text-sm border border-error/50">Salir 3D</button>
+                <div id="futuristic-overlay" class="absolute top-4 left-4 z-10 glass-panel p-4 rounded-xl flex flex-col gap-4">
+                    <div>
+                        <h2 class="font-headline-md mb-2 text-on-surface">Visualización Espacial</h2>
+                        <button id="btn-close-futuristic" class="px-3 py-1 bg-error/20 text-error rounded-md text-sm border border-error/50 hover:bg-error/30 transition-colors">Salir 3D</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-view-topology" class="futuristic-tab active px-3 py-1 bg-surface-container border border-outline-variant/30 rounded-md text-xs text-on-surface hover:bg-surface-variant">Topología 3D</button>
+                        <button id="btn-view-graph" class="futuristic-tab px-3 py-1 bg-surface-container border border-outline-variant/30 rounded-md text-xs text-on-surface hover:bg-surface-variant">Grafo Infinito</button>
+                        <button id="btn-view-commits" class="futuristic-tab px-3 py-1 bg-surface-container border border-outline-variant/30 rounded-md text-xs text-on-surface hover:bg-surface-variant">Timeline Commits</button>
+                    </div>
                 </div>
             </div>
         </main>

@@ -1066,6 +1066,7 @@ function initStaticListeners() {
 
 function initScrollBtn() {
     const scrollBtn = document.getElementById('scroll-to-top');
+    if (!scrollBtn) return; // Safely return if the new design doesn't have a scroll-to-top button
     const winContent = document.getElementById('mac-window-content');
     const useWindowScroll = document.body.classList.contains('web-mode');
     if (winContent && !useWindowScroll) {
