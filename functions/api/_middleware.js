@@ -1,12 +1,13 @@
 /**
  * API Middleware for authentication and authorization
+ * Enhanced with better security checks and error handling
  */
 
 import { jsonResponse } from "../_shared/http.js";
 import { verifyJwt } from "../_shared/jwt.js";
 import { isAllowedUser, getRepoOwner } from "../_shared/github.js";
 import { getCookie, clearCookie } from "../_shared/cookies.js";
-import { AuthError, ForbiddenError, handleError } from "../_shared/errors.js";
+import { AuthError, ForbiddenError, ServerConfigError, handleError } from "../_shared/errors.js";
 import { applyRateLimit, getRateLimitHeaders } from "../_shared/rateLimit.js";
 
 // Public paths that don't require authentication
@@ -30,6 +31,7 @@ const RATE_LIMITS = {
     "/api/oauth/callback": { limit: 5, window: 60 * 1000 },
     "/api/repos": { limit: 30, window: 60 * 1000 },
     "/api/repos/*": { limit: 60, window: 60 * 1000 },
+    "/api/session": { limit: 10, window: 60 * 1000 },
     "default": { limit: 100, window: 60 * 1000 }
 };
 
@@ -77,6 +79,30 @@ function getEndpointForRateLimit(path) {
 }
 
 /**
+ * Validate request origin and headers
+ * @param {Request} request - The request
+ * @param {URL} url - Parsed URL
+ * @returns {boolean} True if valid
+ */
+function validateRequestHeaders(request, url) {
+    // Check for suspicious headers
+    const suspiciousHeaders = [
+        'x-forwarded-for',
+        'x-real-ip',
+        'cf-connecting-ip'
+    ];
+    
+    for (const header of suspiciousHeaders) {
+        const value = request.headers.get(header);
+        if (value && value.includes('localhost') && url.hostname !== 'localhost') {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+/**
  * API Middleware
  */
 export async function onRequest(context) {
@@ -87,7 +113,7 @@ export async function onRequest(context) {
     // Apply rate limiting first
     const endpoint = getEndpointForRateLimit(path);
     const rateLimitConfig = getRateLimitConfig(endpoint);
-    const rateLimitResponse = applyRateLimit(request, endpoint, rateLimitConfig);
+    const rateLimitResponse = await applyRateLimit(request, endpoint, { ...rateLimitConfig, env });
     if (rateLimitResponse) {
         return rateLimitResponse;
     }
@@ -97,7 +123,7 @@ export async function onRequest(context) {
         const response = await context.next();
         
         // Add rate limit headers to response
-        const rateLimitHeaders = getRateLimitHeaders(request, endpoint);
+        const rateLimitHeaders = await getRateLimitHeaders(request, endpoint, { ...rateLimitConfig, env });
         const newResponse = new Response(response.body, response);
         for (const [key, value] of Object.entries(rateLimitHeaders)) {
             newResponse.headers.set(key, value);
@@ -109,9 +135,18 @@ export async function onRequest(context) {
     // Check for JWT secret
     if (!env.JWT_SECRET) {
         return jsonResponse({
-            error: "Servidor desconfigurado",
-            code: "SERVER_MISCONFIGURED"
+            error: "Servidor desconfigurado: falta JWT_SECRET",
+            code: "SERVER_MISCONFIGURED",
+            documentation: "https://github.com/Gmdrago87/gerardos-private#configuraci\u00f3n"
         }, 500);
+    }
+
+    // Validate request headers
+    if (!validateRequestHeaders(request, url)) {
+        return jsonResponse({
+            error: "Solicitud sospechosa detectada",
+            code: "SUSPICIOUS_REQUEST"
+        }, 403);
     }
 
     // Validate CSRF/Origin for mutable methods
@@ -126,7 +161,7 @@ export async function onRequest(context) {
     const token = getCookie(request, "session");
     if (!token) {
         return jsonResponse({
-            error: "No autorizado: sesión no iniciada",
+            error: "No autorizado: sesi\u00f3n no iniciada",
             code: "NO_SESSION"
         }, 401);
     }
@@ -145,7 +180,7 @@ export async function onRequest(context) {
         });
         
         return new Response(JSON.stringify({
-            error: "Sesión inválida o expirada",
+            error: "Sesi\u00f3n inv\u00e1lida o expirada",
             code: "INVALID_SESSION"
         }), {
             status: 401,
@@ -163,23 +198,31 @@ export async function onRequest(context) {
         });
         
         return jsonResponse({
-            error: "Sesión expirada o inválida",
-            code: "INVALID_SESSION"
+            error: payload ? "Usuario no autorizado" : "Sesi\u00f3n expirada o inv\u00e1lida",
+            code: payload ? "FORBIDDEN" : "INVALID_SESSION"
         }, 401);
+    }
+
+    // Check if token is about to expire (within 5 minutes)
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp - now < 300) { // 5 minutes
+        // Token is about to expire, but we still allow the request
+        // The frontend should handle refresh
+        console.warn(`[API] Token expiring soon for user: ${payload.sub}`);
     }
 
     // Attach session to context
     context.data = {
         ...context.data,
         session: payload,
-        repoOwner: getRepoOwner(context)
+        repoOwner: getRepoOwner({ ...context, data: { session: payload } })
     };
 
     // Process request
     const response = await context.next();
     
     // Add rate limit headers to response
-    const rateLimitHeaders = getRateLimitHeaders(request, endpoint);
+    const rateLimitHeaders = await getRateLimitHeaders(request, endpoint, { ...rateLimitConfig, env });
     const newResponse = new Response(response.body, response);
     for (const [key, value] of Object.entries(rateLimitHeaders)) {
         newResponse.headers.set(key, value);

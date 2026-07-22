@@ -1,5 +1,6 @@
 /**
  * Utility functions for GerardOS Private Dashboard
+ * Enhanced with better error handling and security
  */
 
 // Configuration constants
@@ -36,19 +37,40 @@ export const LANG_COLORS = Object.freeze({
     'Shell': '#89e051',
     'Dockerfile': '#384d54',
     'Markdown': '#083fa1',
-    'JSON': '#292929'
+    'JSON': '#292929',
+    'YAML': '#cb171e',
+    'TOML': '#9c4221',
+    'SCSS': '#c6538c',
+    'Sass': '#c6538c',
+    'Less': '#1d365d',
+    'GraphQL': '#e10098'
 });
 
 // Error messages
 export const ERROR_MESSAGES = Object.freeze({
     API: 'Error al conectar con la API',
-    TREE: 'Error al obtener el árbol de archivos',
+    TREE: 'Error al obtener el \u00e1rbol de archivos',
     FILE: 'Error al obtener el archivo',
     UNAUTHORIZED: 'UNAUTHORIZED',
-    NETWORK: 'Error de red. Verifica tu conexión.',
+    NETWORK: 'Error de red. Verifica tu conexi\u00f3n.',
     NOT_FOUND: 'Recurso no encontrado',
     RATE_LIMIT: 'Demasiadas peticiones. Espera un momento.',
-    SESSION_EXPIRED: 'Sesión expirada. Por favor, inicia sesión nuevamente.'
+    SESSION_EXPIRED: 'Sesi\u00f3n expirada. Por favor, inicia sesi\u00f3n nuevamente.',
+    INVALID_INPUT: 'Entrada inv\u00e1lida',
+    FORBIDDEN: 'No tienes permiso para realizar esta acci\u00f3n'
+});
+
+// Success messages
+export const SUCCESS_MESSAGES = Object.freeze({
+    REPO_CREATED: 'Repositorio creado correctamente',
+    REPO_DELETED: 'Repositorio eliminado correctamente',
+    REPO_UPDATED: 'Repositorio actualizado correctamente',
+    FILE_SAVED: 'Archivo guardado correctamente',
+    FILE_DELETED: 'Archivo eliminado correctamente',
+    ISSUE_CREATED: 'Issue creado correctamente',
+    ISSUE_UPDATED: 'Issue actualizado correctamente',
+    LOGIN_SUCCESS: 'Sesion iniciada correctamente',
+    LOGOUT_SUCCESS: 'Sesion cerrada correctamente'
 });
 
 /**
@@ -199,9 +221,9 @@ export function formatRelativeTime(date) {
     const months = Math.floor(days / 30);
     const years = Math.floor(days / 365);
     
-    if (years > 0) return `hace ${years} año${years > 1 ? 's' : ''}`;
+    if (years > 0) return `hace ${years} a\u00f1o${years > 1 ? 's' : ''}`;
     if (months > 0) return `hace ${months} mes${months > 1 ? 'es' : ''}`;
-    if (days > 0) return `hace ${days} día${days > 1 ? 's' : ''}`;
+    if (days > 0) return `hace ${days} d\u00eda${days > 1 ? 's' : ''}`;
     if (hours > 0) return `hace ${hours} hora${hours > 1 ? 's' : ''}`;
     if (minutes > 0) return `hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
     if (seconds > 10) return `hace ${seconds} segundos`;
@@ -216,7 +238,7 @@ export function formatRelativeTime(date) {
 export function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
@@ -308,50 +330,262 @@ export async function copyToClipboard(text) {
 }
 
 /**
- * Get URL parameter
- * @param {string} name - Parameter name
- * @returns {string|null} Parameter value or null
+ * Get language color for repository
+ * @param {string} language - Language name
+ * @returns {string} Color hex code
  */
-export function getUrlParam(name) {
-    const url = new URL(window.location.href);
-    return url.searchParams.get(name);
+export function getLanguageColor(language) {
+    if (!language) return '#8b949e';
+    return LANG_COLORS[language] || '#8b949e';
 }
 
 /**
- * Set URL parameter
- * @param {string} name - Parameter name
- * @param {string} value - Parameter value
+ * Get language icon class
+ * @param {string} language - Language name
+ * @returns {string} Material icon name
  */
-export function setUrlParam(name, value) {
-    const url = new URL(window.location.href);
-    url.searchParams.set(name, value);
-    window.history.pushState({}, '', url.toString());
+export function getLanguageIcon(language) {
+    const icons = {
+        'JavaScript': 'javascript',
+        'TypeScript': 'typescript',
+        'Python': 'python',
+        'HTML': 'html',
+        'CSS': 'css',
+        'Vue': 'vuejs',
+        'React': 'react',
+        'Java': 'java',
+        'C++': 'c_plus_plus',
+        'C#': 'c_sharp',
+        'Go': 'golang',
+        'Rust': 'rust',
+        'PHP': 'php',
+        'Ruby': 'ruby',
+        'Swift': 'swift',
+        'Kotlin': 'kotlin',
+        'Shell': 'terminal',
+        'Dockerfile': 'docker',
+        'Markdown': 'description',
+        'JSON': 'code'
+    };
+    return icons[language] || 'code';
 }
 
 /**
- * Remove URL parameter
- * @param {string} name - Parameter name
+ * Format repository name for display
+ * @param {string} name - Repository name
+ * @returns {string} Formatted name
  */
-export function removeUrlParam(name) {
-    const url = new URL(window.location.href);
-    url.searchParams.delete(name);
-    window.history.pushState({}, '', url.toString());
+export function formatRepoName(name) {
+    if (!name) return '';
+    // Replace hyphens and underscores with spaces
+    return name.replace(/[-_]/g, ' ');
 }
 
 /**
- * Check if running in production
- * @returns {boolean} True if in production
+ * Get repository visibility icon
+ * @param {boolean} isPrivate - Whether repository is private
+ * @returns {string} Material icon name
  */
-export function isProduction() {
-    return process.env.NODE_ENV === 'production' || 
-           window.location.protocol === 'https:' ||
-           window.location.hostname.includes('pages.dev');
+export function getVisibilityIcon(isPrivate) {
+    return isPrivate ? 'lock' : 'public';
 }
 
 /**
- * Check if running in development
- * @returns {boolean} True if in development
+ * Get repository visibility text
+ * @param {boolean} isPrivate - Whether repository is private
+ * @returns {string} Visibility text
  */
-export function isDevelopment() {
-    return !isProduction();
+export function getVisibilityText(isPrivate) {
+    return isPrivate ? 'Privado' : 'P\u00fablico';
+}
+
+/**
+ * Get star count text
+ * @param {number} count - Star count
+ * @returns {string} Formatted star count
+ */
+export function formatStarCount(count) {
+    if (count >= 1000) {
+        return (count / 1000).toFixed(1) + 'k';
+    }
+    return count.toString();
+}
+
+/**
+ * Get fork count text
+ * @param {number} count - Fork count
+ * @returns {string} Formatted fork count
+ */
+export function formatForkCount(count) {
+    return formatStarCount(count);
+}
+
+/**
+ * Check if repository is a fork
+ * @param {Object} repo - Repository object
+ * @returns {boolean} True if fork
+ */
+export function isFork(repo) {
+    return repo.fork === true;
+}
+
+/**
+ * Get repository license text
+ * @param {Object} license - License object
+ * @returns {string} License text
+ */
+export function getLicenseText(license) {
+    if (!license) return 'Sin licencia';
+    return license.name || license.key || 'Licencia desconocida';
+}
+
+/**
+ * Get repository topics as string
+ * @param {Array} topics - Array of topics
+ * @returns {string} Topics string
+ */
+export function getTopicsString(topics) {
+    if (!topics || topics.length === 0) return '';
+    return topics.join(', ');
+}
+
+/**
+ * Get repository homepage URL
+ * @param {string} homepage - Homepage URL
+ * @returns {string} Sanitized homepage URL
+ */
+export function getHomepageUrl(homepage) {
+    if (!homepage) return null;
+    return sanitizeUrl(homepage);
+}
+
+/**
+ * Get repository HTML URL
+ * @param {Object} repo - Repository object
+ * @returns {string} Repository HTML URL
+ */
+export function getRepoHtmlUrl(repo) {
+    if (!repo) return '#';
+    return sanitizeUrl(repo.html_url || repo.htmlUrl || '#');
+}
+
+/**
+ * Get repository clone URL
+ * @param {Object} repo - Repository object
+ * @returns {string} Repository clone URL
+ */
+export function getRepoCloneUrl(repo) {
+    if (!repo) return '';
+    return repo.clone_url || repo.cloneUrl || repo.ssh_url || repo.sshUrl || '';
+}
+
+/**
+ * Get repository SSH URL
+ * @param {Object} repo - Repository object
+ * @returns {string} Repository SSH URL
+ */
+export function getRepoSshUrl(repo) {
+    if (!repo) return '';
+    return repo.ssh_url || repo.sshUrl || '';
+}
+
+/**
+ * Get default branch name
+ * @param {Object} repo - Repository object
+ * @returns {string} Default branch name
+ */
+export function getDefaultBranch(repo) {
+    return repo.default_branch || repo.defaultBranch || 'main';
+}
+
+/**
+ * Check if user is the owner of the repository
+ * @param {Object} repo - Repository object
+ * @param {string} username - Current username
+ * @returns {boolean} True if owner
+ */
+export function isRepoOwner(repo, username) {
+    if (!repo || !username) return false;
+    return repo.owner?.login === username || repo.owner?.login === username.toLowerCase();
+}
+
+/**
+ * Get repository owner login
+ * @param {Object} repo - Repository object
+ * @returns {string} Owner login
+ */
+export function getRepoOwnerLogin(repo) {
+    return repo?.owner?.login || '';
+}
+
+/**
+ * Get repository owner avatar URL
+ * @param {Object} repo - Repository object
+ * @returns {string} Owner avatar URL
+ */
+export function getRepoOwnerAvatar(repo) {
+    return repo?.owner?.avatar_url || repo?.owner?.avatarUrl || '';
+}
+
+/**
+ * Get repository description
+ * @param {Object} repo - Repository object
+ * @returns {string} Repository description
+ */
+export function getRepoDescription(repo) {
+    return repo?.description || 'Sin descripci\u00f3n';
+}
+
+/**
+ * Get repository created at date
+ * @param {Object} repo - Repository object
+ * @returns {string} Formatted created date
+ */
+export function getRepoCreatedAt(repo) {
+    return formatDate(repo?.created_at || repo?.createdAt);
+}
+
+/**
+ * Get repository updated at date
+ * @param {Object} repo - Repository object
+ * @returns {string} Formatted updated date
+ */
+export function getRepoUpdatedAt(repo) {
+    return formatDate(repo?.updated_at || repo?.updatedAt);
+}
+
+/**
+ * Get repository pushed at date
+ * @param {Object} repo - Repository object
+ * @returns {string} Formatted pushed date
+ */
+export function getRepoPushedAt(repo) {
+    return formatDate(repo?.pushed_at || repo?.pushedAt);
+}
+
+/**
+ * Get repository size
+ * @param {Object} repo - Repository object
+ * @returns {string} Formatted size
+ */
+export function getRepoSize(repo) {
+    return formatFileSize((repo?.size || 0) * 1024);
+}
+
+/**
+ * Get repository open issues count
+ * @param {Object} repo - Repository object
+ * @returns {number} Open issues count
+ */
+export function getOpenIssuesCount(repo) {
+    return repo?.open_issues_count || repo?.openIssuesCount || 0;
+}
+
+/**
+ * Get repository watchers count
+ * @param {Object} repo - Repository object
+ * @returns {number} Watchers count
+ */
+export function getWatchersCount(repo) {
+    return repo?.watchers_count || repo?.watchersCount || 0;
 }

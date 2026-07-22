@@ -1,25 +1,34 @@
 {
   "name": "gerardos-private",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
-  "description": "GerardOS Private Dashboard - Versión privada y segura del explorador de proyectos GitHub",
+  "description": "GerardOS Private Dashboard - Versi\u00f3n privada y segura del explorador de proyectos GitHub",
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('.wrangler/tmp', { recursive: true, force: true })\"",
-    "clean:all": "rm -rf .wrangler node_modules public/bundle.js public/bundle.js.map",
+    "clean:all": "rm -rf .wrangler node_modules public/bundle.js public/bundle.js.map public/style.min.css",
     "prestart": "npm run clean",
     "start": "wrangler pages dev public --port 8789 --env-file .dev.vars",
+    "start:local": "wrangler pages dev public --port 8789 --local --env-file .dev.vars",
     "build": "node scripts/build.js",
     "build:css": "node scripts/build-css.js",
     "build:js": "node scripts/build-js.js",
     "build:all": "npm run build:js && npm run build:css",
+    "build:prod": "npm run clean:all && npm run build:all",
     "deploy": "wrangler pages deploy public",
     "deploy:prod": "npm run build:all && wrangler pages deploy public",
+    "deploy:dev": "npm run build:all && wrangler pages deploy public --env-file .dev.vars",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "node scripts/lint-js.js",
     "lint:css": "node scripts/lint-css.js",
+    "lint:fix": "npm run lint:js -- --fix && npm run lint:css -- --fix",
     "test": "node scripts/test.js",
+    "test:watch": "nodemon --exec \"node scripts/test.js\"",
     "audit": "npm audit",
-    "prepare": "npm run build:all"
+    "audit:fix": "npm audit fix",
+    "prepare": "npm run build:all",
+    "dev": "npm run build:all && npm run start",
+    "serve": "node serve.js",
+    "generate": "node generate.js"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
@@ -37,12 +46,18 @@
     "dashboard",
     "cloudflare",
     "pages",
-    "workers"
+    "workers",
+    "private",
+    "secure"
   ],
   "author": "GerardMaestre",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Gmdrago87/gerardos-private.git"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/Gmdrago87/gerardos-private/issues"
+  },
+  "homepage": "https://github.com/Gmdrago87/gerardos-private#readme"
 }

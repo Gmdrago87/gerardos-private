@@ -1,9 +1,20 @@
 /**
  * API Client for GerardOS Private Dashboard
  * Handles all API requests to the backend
+ * Enhanced with better error handling and retry logic
  */
 
 import { USERNAME, CACHE_KEY_USER, CACHE_KEY_REPOS, CACHE_KEY_TIME, CACHE_DURATION, ERROR_MESSAGES } from './utils.js';
+
+// API base URL (can be configured for different environments)
+const API_BASE = '';
+
+// Retry configuration
+const RETRY_CONFIG = {
+    maxRetries: 3,
+    retryDelay: 1000, // 1 second
+    retryableStatuses: [429, 502, 503, 504]
+};
 
 /**
  * Get cached data from localStorage
@@ -94,6 +105,48 @@ function repoPath(repoName) {
 }
 
 /**
+ * Sleep for a specified duration
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise<void>} Promise that resolves after the delay
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetch with retry logic
+ * @param {string} url - URL to fetch
+ * @param {Object} options - Fetch options
+ * @param {number} retryCount - Current retry count
+ * @returns {Promise<Response>} Response
+ */
+async function fetchWithRetry(url, options = {}, retryCount = 0) {
+    try {
+        const res = await fetch(url, { credentials: 'include', ...options });
+        
+        // Check if we should retry
+        if (RETRY_CONFIG.retryableStatuses.includes(res.status) && retryCount < RETRY_CONFIG.maxRetries) {
+            const retryAfter = res.headers.get('Retry-After');
+            const delay = retryAfter ? parseInt(retryAfter) * 1000 : RETRY_CONFIG.retryDelay * Math.pow(2, retryCount);
+            
+            console.warn(`[API] Request failed with status ${res.status}, retrying in ${delay}ms (attempt ${retryCount + 1})`);
+            await sleep(delay);
+            return fetchWithRetry(url, options, retryCount + 1);
+        }
+        
+        return res;
+    } catch (error) {
+        if (retryCount < RETRY_CONFIG.maxRetries) {
+            const delay = RETRY_CONFIG.retryDelay * Math.pow(2, retryCount);
+            console.warn(`[API] Network error, retrying in ${delay}ms (attempt ${retryCount + 1})`);
+            await sleep(delay);
+            return fetchWithRetry(url, options, retryCount + 1);
+        }
+        throw error;
+    }
+}
+
+/**
  * Fetch data from API with error handling
  * @param {string} url - API endpoint
  * @param {Object} options - Fetch options
@@ -101,15 +154,31 @@ function repoPath(repoName) {
  */
 async function fetchWithErrorHandling(url, options = {}) {
     try {
-        const res = await fetch(url, { credentials: 'include', ...options });
+        const res = await fetchWithRetry(url, options);
         
         if (res.status === 401) {
+            // Clear cache on unauthorized
+            clearCache();
             throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
+        }
+        
+        if (res.status === 429) {
+            const retryAfter = res.headers.get('Retry-After');
+            throw new Error(ERROR_MESSAGES.RATE_LIMIT + (retryAfter ? ` (${retryAfter}s)` : ''));
         }
         
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({}));
-            throw new Error(errorData.error || errorData.message || ERROR_MESSAGES.API);
+            const errorMessage = errorData.error || errorData.message || ERROR_MESSAGES.API;
+            const errorCode = errorData.code || 'UNKNOWN_ERROR';
+            
+            // Handle specific error codes
+            if (errorCode === 'NO_SESSION' || errorCode === 'INVALID_SESSION') {
+                clearCache();
+                throw new Error(ERROR_MESSAGES.SESSION_EXPIRED);
+            }
+            
+            throw new Error(errorMessage);
         }
         
         return await res.json();
@@ -175,11 +244,11 @@ export async function fetchFileContent(repoName, branch, filePath) {
  * @param {boolean} isPrivate - Whether repository is private
  * @returns {Promise<Object>} New repository data
  */
-export async function createRepo(name, description, isPrivate) {
+export async function createRepo(name, description = '', isPrivate = false, autoInit = true) {
     const res = await fetchWithErrorHandling('/api/repos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, isPrivate })
+        body: JSON.stringify({ name, description, isPrivate, autoInit })
     });
     return res;
 }
@@ -199,18 +268,28 @@ export async function deleteRepo(name) {
 }
 
 /**
+ * Update repository
+ * @param {string} name - Repository name
+ * @param {Object} updates - Repository updates
+ * @returns {Promise<Object>} Update result
+ */
+export async function updateRepo(name, updates) {
+    const res = await fetchWithErrorHandling(`/api/repos/${repoPath(name)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+    });
+    return res;
+}
+
+/**
  * Update repository visibility
  * @param {string} name - Repository name
  * @param {boolean} isPrivate - Whether to make private
  * @returns {Promise<Object>} Update result
  */
 export async function updateRepoVisibility(name, isPrivate) {
-    const res = await fetchWithErrorHandling(`/api/repos/${repoPath(name)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ private: isPrivate })
-    });
-    return res;
+    return updateRepo(name, { private: isPrivate });
 }
 
 /**
@@ -247,7 +326,7 @@ export async function fetchBranches(repoName) {
  * @param {string} message - Commit message
  * @returns {Promise<Object>} Save result
  */
-export async function saveFileContent(repoName, branch, filePath, content, message) {
+export async function saveFileContent(repoName, branch, filePath, content, message = 'Update file') {
     const url = `/api/repos/${repoPath(repoName)}/actions?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(filePath)}`;
     const res = await fetchWithErrorHandling(url, {
         method: 'POST',
@@ -265,7 +344,7 @@ export async function saveFileContent(repoName, branch, filePath, content, messa
  * @param {string} message - Commit message
  * @returns {Promise<Object>} Deletion result
  */
-export async function deleteFile(repoName, branch, filePath, message) {
+export async function deleteFile(repoName, branch, filePath, message = 'Delete file') {
     const url = `/api/repos/${repoPath(repoName)}/actions?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(filePath)}`;
     const res = await fetchWithErrorHandling(url, {
         method: 'DELETE',
@@ -298,7 +377,7 @@ export async function fetchIssues(repoName, state = 'all', page = 1, perPage = 3
  * @param {Array} assignees - Issue assignees
  * @returns {Promise<Object>} New issue data
  */
-export async function createIssue(repoName, title, body, labels = [], assignees = []) {
+export async function createIssue(repoName, title, body = '', labels = [], assignees = []) {
     const url = `/api/repos/${repoPath(repoName)}/issues`;
     const res = await fetchWithErrorHandling(url, {
         method: 'POST',
@@ -348,26 +427,30 @@ export async function checkSession() {
         }
         return await res.json();
     } catch (e) {
+        console.error('Session check error:', e);
         return { authenticated: false, error: e.message };
     }
 }
 
 /**
- * Login via OAuth
+ * Login - redirect to OAuth
+ * @returns {void}
  */
 export function login() {
     window.location.href = '/api/oauth/login';
 }
 
 /**
- * Logout
+ * Logout - clear session and redirect
+ * @returns {Promise<void>}
  */
 export async function logout() {
     try {
-        await fetch('/api/logout', { credentials: 'include' });
-    } finally {
-        window.location.href = '/';
+        await fetch('/api/logout', { method: 'GET', credentials: 'include' });
+    } catch (e) {
+        console.error('Logout error:', e);
     }
+    window.location.href = '/';
 }
 
 /**
@@ -385,15 +468,29 @@ export async function getVersion() {
 }
 
 /**
- * AI API call
- * @param {Object} params - AI parameters
+ * Call AI endpoint
+ * @param {Object} data - AI request data
  * @returns {Promise<Object>} AI response
  */
-export async function callAI(params) {
+export async function callAI(data) {
     const res = await fetchWithErrorHandling('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params)
+        body: JSON.stringify(data)
     });
     return res;
+}
+
+/**
+ * Get AI configuration
+ * @returns {Promise<Object>} AI configuration
+ */
+export async function getAIConfig() {
+    try {
+        const res = await fetch('/api/ai', { credentials: 'include' });
+        if (!res.ok) return { configured: false };
+        return await res.json();
+    } catch (e) {
+        return { configured: false, error: e.message };
+    }
 }
