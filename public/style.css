@@ -98,6 +98,31 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
+/* ===== NEW BENTO CLASSES ===== */
+.squircle-sm {
+  border-radius: 14px;
+}
+
+.magnetic-hover {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.magnetic-hover:hover {
+  transform: translateY(-4px) scale(1.02);
+  z-index: 10;
+}
+
+.glass-panel-hover:hover {
+  background: rgba(42, 42, 45, 0.7);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.status-dot-success {
+  background-color: var(--accent-tertiary);
+  box-shadow: 0 0 8px var(--accent-tertiary);
+}
+
 /* ===== SQUIRCLE DESIGN ===== */
 .squircle {
   border-radius: var(--radius-xl);
@@ -200,10 +225,7 @@ body {
   background: rgba(139, 144, 160, 0.5);
 }
 
-/* ===== HIDDEN ===== */
-.hidden {
-  display: none !important;
-}
+/* ===== REMOVED HIDDEN OVERRIDE PARA NO ROMPER TAILWIND ===== */
 
 /* ===== LOADING SCREEN ===== */
 .loading-screen {
