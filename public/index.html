@@ -576,41 +576,58 @@
                 </div>
 
                 <!-- ===== FILTERS AND SORT ===== -->
-                <div class="flex flex-wrap items-center gap-4 mb-stack-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-on-surface-variant">filter_list</span>
-                        <select id="filter-lang" class="bg-surface-container-high border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary/50" onchange="applyFilters()">
-                            <option value="all">All Languages</option>
-                        </select>
+                <div id="section-repos">
+                    <!-- ===== TOOLBAR ===== -->
+                    <div class="toolbar flex flex-wrap items-center gap-4 mb-stack-lg p-4 glass-card rounded-xl">
+                        <div class="flex-1 relative min-w-[200px]">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                            <input type="text" id="search-input" class="w-full bg-surface-container-high border border-outline-variant/30 rounded-lg pl-10 pr-4 py-2 text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-on-surface-variant/50 transition-all" placeholder="Buscar repositorios...">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant">filter_list</span>
+                            <select id="filter-lang" class="bg-surface-container-high border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary/50" onchange="applyFilters()">
+                                <option value="all">All Languages</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant">sort</span>
+                            <select id="sort-select" class="bg-surface-container-high border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary/50" onchange="applySorting()">
+                                <option value="updated">Recently Updated</option>
+                                <option value="stars">Most Stars</option>
+                                <option value="forks">Most Forks</option>
+                                <option value="name">Name (A-Z)</option>
+                            </select>
+                        </div>
+                        <button id="refresh-data-btn" class="px-4 py-2 bg-surface-container-high border border-outline-variant/30 rounded-lg text-on-surface hover:bg-surface-variant/50 transition-colors flex items-center gap-2" onclick="forceRefreshData()">
+                            <span class="material-symbols-outlined">refresh</span>
+                            Refresh
+                        </button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-on-surface-variant">sort</span>
-                        <select id="sort-select" class="bg-surface-container-high border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary/50" onchange="applySorting()">
-                            <option value="updated">Recently Updated</option>
-                            <option value="stars">Most Stars</option>
-                            <option value="forks">Most Forks</option>
-                            <option value="name">Name (A-Z)</option>
-                        </select>
+
+                    <!-- ===== REPOSITORY GRID ===== -->
+                    <div id="repos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-stack-md">
+                        <!-- Repository cards will be inserted here by JavaScript -->
                     </div>
-                    <button id="refresh-data-btn" class="px-4 py-2 bg-surface-container-high border border-outline-variant/30 rounded-lg text-on-surface hover:bg-surface-variant/50 transition-colors flex items-center gap-2" onclick="forceRefreshData()">
-                        <span class="material-symbols-outlined">refresh</span>
-                        Refresh
-                    </button>
+
+                    <!-- ===== LOAD MORE ===== -->
+                    <div class="load-more-section flex justify-center mt-stack-lg">
+                        <button id="load-more-btn" class="btn-load-more hidden px-6 py-3 bg-surface-container-high border border-outline-variant/30 rounded-xl text-on-surface hover:bg-surface-variant/50 transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined">expand_more</span>
+                            Cargar más proyectos
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                        <p id="showing-count" class="text-on-surface-variant text-sm mt-4 text-center"></p>
+                    </div>
                 </div>
 
-                <!-- ===== REPOSITORY GRID ===== -->
-                <div id="repos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-stack-md">
-                    <!-- Repository cards will be inserted here by JavaScript -->
-                </div>
-
-                <!-- ===== LOAD MORE ===== -->
-                <div class="load-more-section flex justify-center mt-stack-lg">
-                    <button id="load-more-btn" class="btn-load-more hidden px-6 py-3 bg-surface-container-high border border-outline-variant/30 rounded-xl text-on-surface hover:bg-surface-variant/50 transition-colors flex items-center gap-2">
-                        <span class="material-symbols-outlined">expand_more</span>
-                        Cargar más proyectos
-                        <span class="material-symbols-outlined">expand_more</span>
-                    </button>
-                    <p id="showing-count" class="text-on-surface-variant text-sm mt-4 text-center"></p>
+                <!-- ===== PLACEHOLDER SECTION ===== -->
+                <div id="section-placeholder" class="hidden">
+                    <div class="glass-card rounded-xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+                        <span class="material-symbols-outlined text-6xl text-on-surface-variant mb-4 opacity-50">construction</span>
+                        <h2 id="placeholder-title" class="font-headline-lg text-on-surface mb-2">En Construcción</h2>
+                        <p id="placeholder-desc" class="font-body-md text-on-surface-variant max-w-md mx-auto">Selecciona un repositorio para ver esta información a nivel de proyecto, o espera a futuras actualizaciones de la plataforma.</p>
+                        <button class="mt-8 px-6 py-2 bg-primary/20 text-primary border border-primary/30 rounded-lg hover:bg-primary/30 transition-colors" onclick="window.showSection('repos')">Volver al Dashboard</button>
+                    </div>
                 </div>
 
                 <!-- ===== FOOTER ===== -->

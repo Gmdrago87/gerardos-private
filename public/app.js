@@ -403,6 +403,7 @@ function openRepoModal(repo) {
     const modal = document.getElementById('modal');
     if (modal) {
         modal.classList.remove('hidden');
+        if (window.loadMonacoEditor) window.loadMonacoEditor();
         loadRepoData(repo);
     }
 }
@@ -446,9 +447,10 @@ async function loadRepoData(repo) {
     
     // Fetch repo tree
     try {
-        const tree = await fetchRepoTree(repo.owner.login, repo.name);
-        if (tree && fileTree) {
-            renderFileTree(tree, repo);
+        const branch = repo.default_branch || 'main';
+        const treeData = await fetchRepoTree(repo.name, branch);
+        if (treeData && treeData.tree && fileTree) {
+            renderFileTree(treeData.tree, repo);
         }
     } catch (error) {
         console.error('Error loading repo tree:', error);
@@ -461,35 +463,132 @@ async function loadRepoData(repo) {
             `;
         }
     }
+
+    // Load Kanban issues
+    loadKanban(repo.name);
+    
+    // Load Actions
+    loadActions(repo.name);
 }
 
-function renderFileTree(tree, repo) {
+async function loadKanban(repoName) {
+    const todoList = document.getElementById('kanban-todo');
+    const progressList = document.getElementById('kanban-progress');
+    const doneList = document.getElementById('kanban-done');
+    if (!todoList || !progressList || !doneList) return;
+    
+    todoList.innerHTML = '<div class="text-on-surface-variant text-sm p-2">Cargando issues...</div>';
+    progressList.innerHTML = '';
+    doneList.innerHTML = '';
+    
+    try {
+        const issues = await fetchIssues(repoName);
+        todoList.innerHTML = '';
+        if (issues && issues.length > 0) {
+            issues.forEach(issue => {
+                const issueId = issue.number;
+                const state = issue.state;
+                const isAssigned = issue.assignees && issue.assignees.length > 0;
+                
+                const html = `
+                    <div class="bg-surface-container-high p-3 rounded-lg mb-2 text-sm border border-outline-variant/30 cursor-pointer hover:bg-surface-variant/50 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-label-mono text-xs text-on-surface-variant">#${issueId}</span>
+                            <span class="material-symbols-outlined text-[14px] text-on-surface-variant">more_horiz</span>
+                        </div>
+                        <p class="font-body-md text-on-surface mb-2">${escapeHtml(issue.title)}</p>
+                        <div class="flex items-center gap-2">
+                            ${issue.labels ? issue.labels.map(l => `<span class="px-2 py-0.5 rounded bg-surface-container-highest text-[10px] border border-white/5" style="color: #${l.color || '666'}">${escapeHtml(l.name)}</span>`).join('') : ''}
+                        </div>
+                    </div>
+                `;
+                
+                if (state === 'closed') {
+                    doneList.innerHTML += html;
+                } else if (isAssigned) {
+                    progressList.innerHTML += html;
+                } else {
+                    todoList.innerHTML += html;
+                }
+            });
+        } else {
+            todoList.innerHTML = '<div class="text-on-surface-variant text-sm p-2">No hay tareas pendientes.</div>';
+        }
+    } catch (err) {
+        todoList.innerHTML = `<div class="text-error text-sm p-2">Error: ${err.message}</div>`;
+    }
+}
+
+async function loadActions(repoName) {
+    const log = document.getElementById('actions-log');
+    if (!log) return;
+    
+    log.innerHTML = '<div class="animate-pulse">Cargando workflows...</div>';
+    
+    try {
+        const data = await fetchActions(repoName);
+        if (data && data.workflow_runs && data.workflow_runs.length > 0) {
+            log.innerHTML = data.workflow_runs.map(run => {
+                const status = run.conclusion || run.status;
+                const isSuccess = status === 'success';
+                const color = isSuccess ? 'text-green-400' : (status === 'failure' ? 'text-error' : 'text-yellow-400');
+                const icon = isSuccess ? 'check_circle' : (status === 'failure' ? 'cancel' : 'sync');
+                
+                return `
+                    <div class="flex items-start gap-3 p-3 border-b border-outline-variant/20 hover:bg-white/5 transition-colors">
+                        <span class="material-symbols-outlined ${color} text-[20px]">${icon}</span>
+                        <div>
+                            <p class="font-body-md text-on-surface">${escapeHtml(run.name)} <span class="text-on-surface-variant text-sm ml-2">#${run.run_number}</span></p>
+                            <p class="font-label-mono text-xs text-on-surface-variant mt-1">${escapeHtml(run.display_title)} - ${new Date(run.updated_at).toLocaleString()}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            log.innerHTML = '<div class="p-4">No se encontraron workflows de GitHub Actions.</div>';
+        }
+    } catch (err) {
+        log.innerHTML = `<div class="text-error p-4">Error cargando actions: ${err.message}</div>`;
+    }
+}
+
+function renderFileTree(files, repo) {
     const fileTree = document.getElementById('file-tree');
     if (!fileTree) return;
     
-    // Simple tree rendering - in a real implementation, you'd have a proper tree structure
-    fileTree.innerHTML = `
-        <div class="tree-item active" data-path="README.md" onclick="selectFile(this, '${repo.owner.login}', '${repo.name}', 'README.md')">
-            <span class="material-symbols-outlined icon">description</span>
-            <span class="name">README.md</span>
-        </div>
-        <div class="tree-item" data-path="src" onclick="toggleFolder(this)">
-            <span class="material-symbols-outlined icon">folder</span>
-            <span class="name">src</span>
-        </div>
-        <div class="tree-item" data-path=".github" onclick="toggleFolder(this)">
-            <span class="material-symbols-outlined icon">folder</span>
-            <span class="name">.github</span>
-        </div>
-    `;
+    fileTree.innerHTML = '';
+    const branch = repo.default_branch || 'main';
+    
+    let html = '';
+    const sortedFiles = [...files].sort((a, b) => {
+        if (a.type === b.type) return a.path.localeCompare(b.path);
+        return a.type === 'tree' ? -1 : 1;
+    });
+
+    sortedFiles.forEach(item => {
+        const parts = item.path.split('/');
+        const name = parts.pop();
+        const indent = (parts.length * 12) + 8;
+        const isDir = item.type === 'tree';
+        const icon = isDir ? 'folder' : 'description';
+        const onclick = isDir ? `onclick="toggleFolder(this)"` : `onclick="selectFile(this, '${repo.name}', '${branch}', '${item.path}')"`;
+        html += `
+        <div class="tree-item flex items-center gap-2 p-2 hover:bg-white/5 cursor-pointer rounded transition-colors text-on-surface-variant hover:text-on-surface" data-path="${item.path}" ${onclick} style="padding-left: ${indent}px">
+            <span class="material-symbols-outlined text-[16px]">${icon}</span>
+            <span class="name text-sm truncate">${escapeHtml(name)}</span>
+        </div>`;
+    });
+    fileTree.innerHTML = html;
 }
 
-async function selectFile(element, owner, repo, path) {
+async function selectFile(element, repoName, branch, path) {
     // Update active state
     document.querySelectorAll('.tree-item').forEach(item => {
         item.classList.remove('active');
+        item.style.backgroundColor = '';
     });
     element.classList.add('active');
+    element.style.backgroundColor = 'rgba(255,255,255,0.1)';
     
     // Load file content
     const codeViewer = document.getElementById('code-viewer');
@@ -505,7 +604,7 @@ async function selectFile(element, owner, repo, path) {
     }
     
     try {
-        const content = await fetchFileContent(owner, repo, path);
+        const content = await fetchFileContent(repoName, branch, path);
         if (codeViewer) {
             renderFileContent(path, content);
         }
@@ -537,9 +636,36 @@ function renderFileContent(path, content) {
     const ext = path.split('.').pop();
     const language = getLanguageFromExtension(ext);
     
-    codeViewer.innerHTML = `
-        <pre class="language-${language}"><code>${escapeHtml(content)}</code></pre>
-    `;
+    codeViewer.innerHTML = '<div id="monaco-editor-container" style="width:100%; height:100%;"></div>';
+    
+    if (window.monacoReady && window.require) {
+        window.require(['vs/editor/editor.main'], function () {
+            if (window.currentEditor) {
+                window.currentEditor.dispose();
+            }
+            window.currentEditor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+                value: content,
+                language: language,
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'JetBrains Mono, monospace'
+            });
+            
+            const saveBtn = document.getElementById('modal-save-btn');
+            if (saveBtn) {
+                saveBtn.classList.remove('hidden');
+                saveBtn.onclick = () => {
+                    alert('Save logic to be implemented!');
+                };
+            }
+        });
+    } else {
+        codeViewer.innerHTML = `
+            <pre class="language-${language}" style="height:100%; width:100%; overflow:auto; margin:0; padding:16px;"><code>${escapeHtml(content)}</code></pre>
+        `;
+    }
 }
 
 function getLanguageFromExtension(ext) {
@@ -1031,4 +1157,40 @@ window.forceRefreshData = forceRefreshData;
 window.closeModal = closeModal;
 window.applyFilters = applyFilters;
 window.applySorting = applySorting;
-window.showSection = function(section) { showToast('Navegando a ' + section + '...', 'info'); };
+window.showSection = function(section) {
+    const reposSection = document.getElementById('section-repos');
+    const placeholderSection = document.getElementById('section-placeholder');
+    const placeholderTitle = document.getElementById('placeholder-title');
+    
+    // Update active state in sidebar (if possible)
+    document.querySelectorAll('aside nav a').forEach(a => {
+        if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(section)) {
+            a.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant/50');
+            a.classList.add('bg-primary-container', 'text-on-primary-container');
+        } else {
+            a.classList.add('text-on-surface-variant', 'hover:bg-surface-variant/50');
+            a.classList.remove('bg-primary-container', 'text-on-primary-container');
+        }
+    });
+    
+    if (section === 'repos') {
+        if (reposSection) reposSection.classList.remove('hidden');
+        if (placeholderSection) placeholderSection.classList.add('hidden');
+    } else {
+        if (reposSection) reposSection.classList.add('hidden');
+        if (placeholderSection) {
+            placeholderSection.classList.remove('hidden');
+            const titles = {
+                'pull-requests': 'Pull Requests',
+                'issues': 'Issues',
+                'actions': 'GitHub Actions',
+                'insights': 'Insights',
+                'docs': 'Documentación',
+                'support': 'Soporte'
+            };
+            if (placeholderTitle) {
+                placeholderTitle.textContent = titles[section] || 'En Construcción';
+            }
+        }
+    }
+};
