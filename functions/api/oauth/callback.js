@@ -41,8 +41,9 @@ export async function onRequestGet(context) {
     }
 
     if (state !== storedState) {
-        console.error("[API] Error: Token CSRF (state) no coincide o expirado.");
-        return new Response("Error de seguridad: la sesión de login expiró o es inválida.", { status: 403 });
+        const cookieHeader = request.headers.get("Cookie") || "Ninguna";
+        console.error(`[API] Error: Token CSRF (state) no coincide o expirado. URL state: ${state}, Cookie state: ${storedState}, All Cookies: ${cookieHeader}`);
+        return new Response(`Error de seguridad: la sesión de login expiró o es inválida.\n\nDetalles de depuración:\n- URL state: ${state}\n- Cookie state: ${storedState}\n- Cookies recibidas: ${cookieHeader}\n\nPosible causa: Estás accediendo desde 127.0.0.1 pero GitHub redirige a localhost (o viceversa), o tu navegador bloqueó la cookie (prueba usar modo incógnito o deshabilitar bloqueadores).`, { status: 403 });
     }
 
     const clientId = env.GITHUB_CLIENT_ID;
