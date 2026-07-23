@@ -348,9 +348,21 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('[PWA] Service Worker registrado:', reg.scope))
-                    .catch(err => console.log('[PWA] Error Service Worker:', err));
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('[PWA] Service Worker registrado:', reg.scope);
+                    
+                    // Escuchar actualizaciones del Service Worker
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            // Cuando el nuevo SW toma el control, recargamos la página
+                            if (newWorker.state === 'activated') {
+                                console.log('[PWA] Nueva versión disponible. Recargando página...');
+                                window.location.reload();
+                            }
+                        });
+                    });
+                }).catch(err => console.log('[PWA] Error Service Worker:', err));
             });
         }
     </script>
