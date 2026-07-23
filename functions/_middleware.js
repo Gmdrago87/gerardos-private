@@ -5,7 +5,7 @@ const SECURITY_HEADERS = Object.freeze({
     "X-XSS-Protection": "1; mode=block",
     "Referrer-Policy": "no-referrer",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), notifications=(), midi=(), sync-xhr=(), usb=()",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), midi=(), sync-xhr=(), usb=()",
     "Access-Control-Allow-Origin": "https://gerardos-private.pages.dev",
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",

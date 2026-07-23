@@ -124,8 +124,9 @@ export async function onRequestGet(context) {
 
         // 5. Establecer la cookie (con expiración de 15 minutos) y redirigir al inicio, además de limpiar oauth_state
         const isSecure = new URL(request.url).protocol === "https:";
-        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 15}${isSecure ? '; Secure' : ''}`;
-        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecure ? '; Secure' : ''}`;
+        const sameSiteStr = isSecure ? 'SameSite=None; Secure' : 'SameSite=Lax';
+        let cookieString = `session=${encodeURIComponent(jwt)}; Path=/; HttpOnly; Max-Age=${60 * 15}; ${sameSiteStr}`;
+        let clearStateCookie = `oauth_state=; Path=/; HttpOnly; Max-Age=0; ${sameSiteStr}`;
 
         const responseHeaders = new Headers();
         responseHeaders.set("Location", "/");

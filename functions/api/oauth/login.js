@@ -12,12 +12,26 @@ export async function onRequestGet(context) {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scope)}&state=${state}`;
 
     const isSecure = new URL(request.url).protocol === "https:";
-    let cookieString = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${isSecure ? '; Secure' : ''}`;
+    const cookieString = `oauth_state=${state}; Path=/; HttpOnly; Max-Age=600; ${isSecure ? 'SameSite=None; Secure' : 'SameSite=Lax'}`;
 
-    return new Response(null, {
-        status: 302,
+    // Usamos un redirect HTML en lugar de un 302 HTTP para asegurar que el navegador 
+    // procese y guarde la cookie 'oauth_state' antes de navegar a GitHub (evita bugs en Safari/Brave).
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0;url=${githubAuthUrl}">
+    <title>Redirigiendo a GitHub...</title>
+</head>
+<body>
+    <p>Redirigiendo a GitHub para autenticación...</p>
+    <script>window.location.href = "${githubAuthUrl}";</script>
+</body>
+</html>`;
+
+    return new Response(html, {
+        status: 200,
         headers: {
-            "Location": githubAuthUrl,
+            "Content-Type": "text/html; charset=utf-8",
             "Set-Cookie": cookieString
         }
     });
