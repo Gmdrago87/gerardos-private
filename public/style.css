@@ -313,6 +313,10 @@ body {
   justify-content: center;
 }
 
+.modal.hidden {
+  display: none !important;
+}
+
 .modal__backdrop {
   position: absolute;
   inset: 0;
